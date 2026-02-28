@@ -475,6 +475,7 @@ export class DeckGLMap {
       renderWorldCopies: false,
       attributionControl: false,
       interactive: true,
+      localIdeographFontFamily: "'Cairo', 'Tajawal', 'Noto Sans Arabic', sans-serif",
       ...(MAP_INTERACTION_MODE === 'flat'
         ? {
           maxPitch: 0,
@@ -712,6 +713,22 @@ export class DeckGLMap {
             }
           } catch (e) {
             console.warn(`[DeckGLMap] Failed to update layout property for layer ${layer.id}`, e);
+          }
+        }
+
+        // Ensure Arabic fonts are available in the font stack when Arabic locale is active
+        if (lang === 'ar' && layer.layout['text-font']) {
+          const currentFonts = layer.layout['text-font'] as string[];
+          if (Array.isArray(currentFonts)) {
+            const newFonts = [...currentFonts];
+            if (!newFonts.includes('Noto Sans Arabic Regular')) newFonts.push('Noto Sans Arabic Regular');
+            if (!newFonts.includes('Cairo')) newFonts.push('Cairo');
+            if (!newFonts.includes('Tajawal')) newFonts.push('Tajawal');
+            if (!newFonts.includes('Arial Unicode MS Regular')) newFonts.push('Arial Unicode MS Regular');
+
+            if (JSON.stringify(newFonts) !== JSON.stringify(currentFonts)) {
+              this.maplibreMap?.setLayoutProperty(layer.id, 'text-font', newFonts);
+            }
           }
         }
       }
