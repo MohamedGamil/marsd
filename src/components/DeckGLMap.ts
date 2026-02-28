@@ -46,7 +46,7 @@ import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import type { WeatherAlert } from '@/services/weather';
 import { escapeHtml } from '@/utils/sanitize';
 import { tokenizeForMatch, matchKeyword, matchesAnyKeyword, findMatchingKeywords } from '@/utils/keyword-match';
-import { t, getCurrentLanguage, getLocalizedGeoName } from '@/services/i18n';
+import { t, getCurrentLanguage, getLocalizedGeoName, getLocalizedCountryName } from '@/services/i18n';
 import arGeoFallbacks from '@/locales/geo/ar';
 import { debounce, rafSchedule, getCurrentTheme } from '@/utils/index';
 import {
@@ -597,59 +597,57 @@ export class DeckGLMap {
       "VN", "VU", "WF", "WS", "YE", "YT", "ZA", "ZM", "ZW", "002", "019", "142", "150", "009"
     ];
 
-    const matchExpr: any[] = ['match', ['get', 'name_en']];
+    const matchExpr: any[] = ['match', ['to-string', ['get', 'name_en']]];
     const addedKeys = new Set<string>();
 
     const addFallbackPair = (enName: string, localName: string) => {
-      if (!addedKeys.has(enName) && enName && localName) {
+      if (!addedKeys.has(enName) && enName && localName && enName !== localName) {
         matchExpr.push(enName, localName);
         addedKeys.add(enName);
       }
     };
 
-    try {
-      const enNames = new Intl.DisplayNames(['en'], { type: 'region' });
-      const localNames = new Intl.DisplayNames([lang], { type: 'region' });
-      for (const c of FALLBACK_CODES) {
-        try {
-          const en = enNames.of(c);
-          const local = localNames.of(c);
-          // Prevent the ISO code itself from leaking in if English name isn't found
-          if (en && local && en !== local && en !== c) {
-            addFallbackPair(en, local);
-          }
-        } catch (e) { }
-      }
-      try {
-        addFallbackPair("United States of America", localNames.of("US")!);
-        addFallbackPair("Russia", localNames.of("RU")!);
-        addFallbackPair("Russian Federation", localNames.of("RU")!);
-        addFallbackPair("South Korea", localNames.of("KR")!);
-        addFallbackPair("North Korea", localNames.of("KP")!);
-        addFallbackPair("Iran", localNames.of("IR")!);
-        addFallbackPair("Syria", localNames.of("SY")!);
-        addFallbackPair("Czech Republic", localNames.of("CZ")!);
-      } catch (e) { }
+    // Use the comprehensive resolution logic already built in i18n service
+    for (const c of FALLBACK_CODES) {
+      // We only need fallback definitions if the english map name differs from localized!
+      // To do that, we get the English name by forcing 'en' resolution, and compare.
+      // But wait, the map has English labels already. So if we map English -> Localized, it works.
+      // Let's get the English name of the country code:
+      let enName = '';
+      try { const d = new Intl.DisplayNames(['en'], { type: 'region' }); enName = d.of(c) || ''; } catch { continue; }
 
-      // Inject geographic dictionary for non-English locales
-      // The shared dictionary is imported from @/locales/geo/ar
-      if (lang === 'ar') {
-        for (const [enName, arName] of Object.entries(arGeoFallbacks)) {
-          addFallbackPair(enName, arName as string);
-        }
+      if (enName) {
+        const localName = getLocalizedCountryName(c);
+        addFallbackPair(enName, localName);
       }
-    } catch (e) { }
+    }
 
-    matchExpr.push(['get', 'name_en']); // Final fallback clause for mapLibre match
+    // Add common geographic anomalies and explicit non-ISO mappings using the i18n geo dictionary
+    const knownAnomalies = [
+      "United States of America", "Russia", "Russian Federation", "South Korea",
+      "North Korea", "Iran", "Syria", "Czech Republic"
+    ];
+    for (const name of knownAnomalies) {
+      const localName = getLocalizedGeoName(name);
+      addFallbackPair(name, localName);
+    }
+
+    if (lang === 'ar') {
+      for (const [enName, arName] of Object.entries(arGeoFallbacks)) {
+        addFallbackPair(enName, arName as string);
+      }
+    }
+
+    matchExpr.push(['to-string', ['get', 'name_en']]); // Final fallback clause for mapLibre match
 
     // Build a second match expression that matches against the generic 'name' field
     // Many CARTO features only have 'name' (English) without a separate 'name_en'
-    const matchExprByName: any[] = ['match', ['get', 'name']];
+    const matchExprByName: any[] = ['match', ['to-string', ['get', 'name']]];
     // Copy all the same en→local pairs (skip first 2 items: 'match' and the get-expr)
     for (let i = 2; i < matchExpr.length - 1; i += 2) {
       matchExprByName.push(matchExpr[i], matchExpr[i + 1]);
     }
-    matchExprByName.push(['get', 'name']); // terminal fallback
+    matchExprByName.push(['to-string', ['get', 'name']]); // terminal fallback
 
     const fallbackField = matchExpr.length > 3 ? matchExpr : ['get', 'name_en'];
     const fallbackByName = matchExprByName.length > 3 ? matchExprByName : ['get', 'name'];
