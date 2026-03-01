@@ -2,6 +2,7 @@ import { escapeHtml } from '@/utils/sanitize';
 import { t } from '@/services/i18n';
 import { trackSearchUsed } from '@/services/analytics';
 import { COMMANDS, type Command } from '@/config/commands';
+import { debounce } from '@/utils';
 
 interface CommandResult {
   command: Command;
@@ -48,11 +49,13 @@ export class SearchModal {
   private placeholder: string;
   private hint: string;
   private activePanelIds: Set<string> = new Set();
+  private debouncedSearch: () => void;
 
   constructor(container: HTMLElement, options?: SearchModalOptions) {
     this.container = container;
     this.placeholder = options?.placeholder || t('modals.search.placeholder');
     this.hint = options?.hint || t('modals.search.hint');
+    this.debouncedSearch = debounce(() => this.handleSearch(), 150);
     this.loadRecentSearches();
   }
 
@@ -126,7 +129,7 @@ export class SearchModal {
     this.input = this.overlay.querySelector('.search-input');
     this.resultsList = this.overlay.querySelector('.search-results');
 
-    this.input?.addEventListener('input', () => this.handleSearch());
+    this.input?.addEventListener('input', this.debouncedSearch);
     this.input?.addEventListener('keydown', (e) => this.handleKeydown(e));
 
     this.container.appendChild(this.overlay);

@@ -36,14 +36,23 @@ export class CountryTimeline {
   private tooltip: HTMLDivElement | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private currentEvents: TimelineEvent[] = [];
+  private boundVisibilityHandler!: () => void;
 
   constructor(container: HTMLElement) {
     this.container = container;
     this.createTooltip();
     this.resizeObserver = new ResizeObserver(() => {
+      if (document.hidden) return;
       if (this.currentEvents.length > 0) this.render(this.currentEvents);
     });
     this.resizeObserver.observe(this.container);
+
+    this.boundVisibilityHandler = () => {
+      if (!document.hidden && this.currentEvents.length > 0) {
+        this.render(this.currentEvents);
+      }
+    };
+    document.addEventListener('visibilitychange', this.boundVisibilityHandler);
 
     window.addEventListener('theme-changed', () => {
       // Re-create tooltip with new theme colors
@@ -268,6 +277,7 @@ export class CountryTimeline {
   }
 
   destroy(): void {
+    document.removeEventListener('visibilitychange', this.boundVisibilityHandler);
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;

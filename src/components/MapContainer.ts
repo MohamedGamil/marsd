@@ -73,6 +73,8 @@ export class MapContainer {
   private svgMap: MapComponent | null = null;
   private initialState: MapContainerState;
   private useDeckGL: boolean;
+  private pauseReasons = new Set<string>();
+  private boundVisibilityHandler!: () => void;
 
   constructor(container: HTMLElement, initialState: MapContainerState) {
     this.container = container;
@@ -83,6 +85,11 @@ export class MapContainer {
     this.useDeckGL = this.shouldUseDeckGL();
 
     this.init();
+
+    this.boundVisibilityHandler = () => {
+      this.setRenderPaused(document.hidden, 'visibility');
+    };
+    document.addEventListener('visibilitychange', this.boundVisibilityHandler);
   }
 
   private hasWebGLSupport(): boolean {
@@ -635,9 +642,15 @@ export class MapContainer {
     }
   }
 
-  public setRenderPaused(paused: boolean): void {
+  public setRenderPaused(paused: boolean, reason: string = 'manual'): void {
+    if (paused) {
+      this.pauseReasons.add(reason);
+    } else {
+      this.pauseReasons.delete(reason);
+    }
+    const isPaused = this.pauseReasons.size > 0;
     if (this.useDeckGL) {
-      this.deckGLMap?.setRenderPaused(paused);
+      this.deckGLMap?.setRenderPaused(isPaused);
     }
   }
 
@@ -651,6 +664,7 @@ export class MapContainer {
   }
 
   public destroy(): void {
+    document.removeEventListener('visibilitychange', this.boundVisibilityHandler);
     if (this.useDeckGL) {
       this.deckGLMap?.destroy();
     } else {

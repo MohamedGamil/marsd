@@ -743,6 +743,7 @@ export class DeckGLMap {
 
   private setupResizeObserver(): void {
     this.resizeObserver = new ResizeObserver(() => {
+      if (document.hidden) return;
       if (this.maplibreMap) {
         this.maplibreMap.resize();
       }
