@@ -22,23 +22,51 @@ export class ProgressChartsPanel extends Panel {
   private resizeObserver: ResizeObserver | null = null;
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   private tooltip: HTMLDivElement | null = null;
+  private intersectionObserver: IntersectionObserver | null = null;
+  private isVisible: boolean = false;
+  private hasRendered: boolean = false;
 
   constructor() {
     super({ id: 'progress', title: 'Human Progress', trackActivity: false });
+    this.setupIntersectionObserver();
     this.setupResizeObserver();
   }
 
+  private setupIntersectionObserver(): void {
+    this.intersectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        this.isVisible = entry.isIntersecting;
+        if (this.isVisible && !this.hasRendered && this.datasets.length > 0) {
+          this.renderAllCharts();
+        }
+      });
+    }, { rootMargin: '200px 0px' });
+    this.intersectionObserver.observe(this.element);
+  }
+
   /**
-   * Set chart data and render all 4 area charts.
+   * Set chart data. Charts are actually rendered only when visible.
    */
   public setData(datasets: ProgressDataSet[]): void {
     this.datasets = datasets;
+    this.hasRendered = false;
+
+    if (this.isVisible) {
+      this.renderAllCharts();
+    } else {
+      // Show placeholder until visible
+      this.content.innerHTML = '<div class="progress-charts-empty" style="padding:16px;color:var(--text-dim);text-align:center;">Graphs suspended off-screen...</div>';
+    }
+  }
+
+  private renderAllCharts(): void {
+    if (this.datasets.length === 0) return;
 
     // Clear existing content
     replaceChildren(this.content);
 
     // Filter out empty datasets
-    const valid = datasets.filter(ds => ds.data.length > 0);
+    const valid = this.datasets.filter(ds => ds.data.length > 0);
     if (valid.length === 0) {
       this.content.innerHTML = '<div class="progress-charts-empty" style="padding:16px;color:var(--text-dim);text-align:center;">No progress data available</div>';
       return;
@@ -51,6 +79,8 @@ export class ProgressChartsPanel extends Panel {
     for (const dataset of valid) {
       this.renderChart(dataset);
     }
+
+    this.hasRendered = true;
   }
 
   /**
@@ -326,12 +356,12 @@ export class ProgressChartsPanel extends Panel {
    */
   private setupResizeObserver(): void {
     this.resizeObserver = new ResizeObserver(() => {
-      if (this.datasets.length === 0) return;
+      if (this.datasets.length === 0 || document.hidden) return;
       if (this.resizeDebounceTimer) {
         clearTimeout(this.resizeDebounceTimer);
       }
       this.resizeDebounceTimer = setTimeout(() => {
-        this.setData(this.datasets);
+        this.renderAllCharts();
       }, RESIZE_DEBOUNCE_MS);
     });
     this.resizeObserver.observe(this.content);
@@ -344,6 +374,10 @@ export class ProgressChartsPanel extends Panel {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
+    }
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+      this.intersectionObserver = null;
     }
     if (this.resizeDebounceTimer) {
       clearTimeout(this.resizeDebounceTimer);

@@ -16,6 +16,7 @@ export class PositiveNewsFeedPanel extends Panel {
   private filteredItems: NewsItem[] = [];
   private filterButtons: Map<string, HTMLButtonElement> = new Map();
   private filterClickHandlers: Map<HTMLButtonElement, () => void> = new Map();
+  private lastRenderedHash: string | null = null;
 
   constructor() {
     super({ id: 'positive-feed', title: 'Good News Feed', showCount: true, trackActivity: true });
@@ -102,6 +103,12 @@ export class PositiveNewsFeedPanel extends Panel {
    * Attaches a delegated click handler for share buttons.
    */
   private renderCards(items: NewsItem[]): void {
+    const hash = items.map(i => i.link).join('|');
+    if (this.lastRenderedHash === hash) {
+      return; // Skip DOM update if the items haven't structurally changed
+    }
+    this.lastRenderedHash = hash;
+
     this.filteredItems = items;
 
     if (items.length === 0) {
@@ -132,7 +139,7 @@ export class PositiveNewsFeedPanel extends Panel {
     if (!item) return;
 
     // Fire-and-forget share
-    shareHappyCard(item).catch(() => {});
+    shareHappyCard(item).catch(() => { });
 
     // Brief visual feedback
     shareBtn.classList.add('shared');

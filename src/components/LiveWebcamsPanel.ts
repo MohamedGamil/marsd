@@ -333,6 +333,10 @@ export class LiveWebcamsPanel extends Panel {
     this.boundVisibilityHandler = () => {
       if (document.hidden) {
         if (this.idleTimeout) clearTimeout(this.idleTimeout);
+        // Aggressive backgrounding: immediately cull streams when tab is hidden
+        this.isIdle = true;
+        this.destroyIframes();
+        this.content.innerHTML = '<div class="webcam-placeholder">Webcams paused (background)</div>';
       } else {
         if (this.isIdle) {
           this.isIdle = false;
