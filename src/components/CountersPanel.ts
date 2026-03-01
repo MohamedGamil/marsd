@@ -20,10 +20,44 @@ export class CountersPanel extends Panel {
   private animFrameId: number | null = null;
   private valueElements: Map<string, HTMLElement> = new Map();
 
+  private isVisible = true;
+  private isTicking = false;
+  private observer: IntersectionObserver | null = null;
+  private boundVisibilityChange: () => void;
+
   constructor() {
     super({ id: 'counters', title: 'Live Counters', trackActivity: false });
     this.createCounterGrid();
-    this.startTicking();
+
+    this.boundVisibilityChange = () => this.handleVisibilityChange();
+    document.addEventListener('visibilitychange', this.boundVisibilityChange);
+
+    this.setupIntersectionObserver();
+  }
+
+  private setupIntersectionObserver(): void {
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        this.isVisible = entry.isIntersecting;
+        this.updateTickingState();
+      });
+    }, { rootMargin: '100px 0px' });
+
+    this.observer.observe(this.element);
+  }
+
+  private handleVisibilityChange(): void {
+    this.updateTickingState();
+  }
+
+  private updateTickingState(): void {
+    const shouldTick = this.isVisible && !document.hidden;
+
+    if (shouldTick && !this.isTicking) {
+      this.startTicking();
+    } else if (!shouldTick && this.isTicking) {
+      this.stopTicking();
+    }
   }
 
   /**
@@ -88,7 +122,29 @@ export class CountersPanel extends Panel {
    */
   public startTicking(): void {
     if (this.animFrameId !== null) return; // Already ticking
+    this.isTicking = true;
+
+    // Do an immediate update first so values aren't stale when it comes into view
+    this.updateValues();
     this.animFrameId = requestAnimationFrame(this.tick);
+  }
+
+  public stopTicking(): void {
+    this.isTicking = false;
+    if (this.animFrameId !== null) {
+      cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
+    }
+  }
+
+  private updateValues(): void {
+    for (const metric of COUNTER_METRICS) {
+      const el = this.valueElements.get(metric.id);
+      if (el) {
+        const value = getCounterValue(metric);
+        el.textContent = formatCounterValue(value, metric.formatPrecision);
+      }
+    }
   }
 
   /**
@@ -97,25 +153,27 @@ export class CountersPanel extends Panel {
    * to avoid layout thrashing at 60fps.
    */
   private tick = (): void => {
-    for (const metric of COUNTER_METRICS) {
-      const el = this.valueElements.get(metric.id);
-      if (el) {
-        const value = getCounterValue(metric);
-        el.textContent = formatCounterValue(value, metric.formatPrecision);
-      }
+    this.updateValues();
+    if (this.isTicking) {
+      this.animFrameId = requestAnimationFrame(this.tick);
     }
-    this.animFrameId = requestAnimationFrame(this.tick);
   };
 
   /**
    * Clean up animation frame and call parent destroy.
    */
   public destroy(): void {
-    if (this.animFrameId !== null) {
-      cancelAnimationFrame(this.animFrameId);
-      this.animFrameId = null;
+    this.stopTicking();
+
+    document.removeEventListener('visibilitychange', this.boundVisibilityChange);
+
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
     }
+
     this.valueElements.clear();
     super.destroy();
   }
 }
+

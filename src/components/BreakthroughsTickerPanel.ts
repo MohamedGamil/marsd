@@ -12,10 +12,27 @@ import { escapeHtml, sanitizeUrl } from '@/utils/sanitize';
  */
 export class BreakthroughsTickerPanel extends Panel {
   private tickerTrack: HTMLElement | null = null;
+  private lastHash: string = '';
+  private observer: IntersectionObserver | null = null;
+  private isVisible: boolean = true;
 
   constructor() {
     super({ id: 'breakthroughs', title: 'Breakthroughs', trackActivity: false });
     this.createTickerDOM();
+    this.setupIntersectionObserver();
+  }
+
+  private setupIntersectionObserver(): void {
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        this.isVisible = entry.isIntersecting;
+        if (this.tickerTrack) {
+          this.tickerTrack.style.animationPlayState = this.isVisible ? 'running' : 'paused';
+        }
+      });
+    }, { rootMargin: '50px 0px' });
+
+    this.observer.observe(this.element);
   }
 
   /**
@@ -44,10 +61,18 @@ export class BreakthroughsTickerPanel extends Panel {
     if (!this.tickerTrack) return;
 
     if (items.length === 0) {
-      this.tickerTrack.innerHTML =
-        '<span class="ticker-item ticker-placeholder">No science breakthroughs yet</span>';
+      if (this.lastHash !== 'empty') {
+        this.tickerTrack.innerHTML =
+          '<span class="ticker-item ticker-placeholder">No science breakthroughs yet</span>';
+        this.lastHash = 'empty';
+      }
       return;
     }
+
+    // Memoization check: basic hash based on titles
+    const newHash = items.map(i => i.title).join('|');
+    if (this.lastHash === newHash) return;
+    this.lastHash = newHash;
 
     // Build HTML for one set of items
     const itemsHtml = items
@@ -68,6 +93,10 @@ export class BreakthroughsTickerPanel extends Panel {
    * Clean up animation and call parent destroy.
    */
   public destroy(): void {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
     if (this.tickerTrack) {
       this.tickerTrack.style.animationPlayState = 'paused';
       this.tickerTrack = null;
@@ -75,3 +104,4 @@ export class BreakthroughsTickerPanel extends Panel {
     super.destroy();
   }
 }
+

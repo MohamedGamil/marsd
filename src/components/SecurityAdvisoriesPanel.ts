@@ -38,6 +38,19 @@ export class SecurityAdvisoriesPanel extends Panel {
 
   public setData(advisories: SecurityAdvisory[]): void {
     const prevCount = this.advisories.length;
+
+    // Memoization check: if the array length and top ID are the same, skip render
+    // Assumes advisories are sorted by newest first.
+    if (
+      prevCount === advisories.length &&
+      prevCount > 0 &&
+      advisories.length > 0 &&
+      this.advisories[0]?.link === advisories[0]?.link &&
+      this.advisories[0]?.title === advisories[0]?.title
+    ) {
+      return;
+    }
+
     this.advisories = advisories;
     this.setCount(advisories.length);
 

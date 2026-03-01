@@ -141,7 +141,7 @@ export class IntelligenceFindingsBadge {
   private playSound(): void {
     if (this.audioEnabled && this.audio) {
       this.audio.currentTime = 0;
-      this.audio.play().catch(() => {});
+      this.audio.play().catch(() => { });
     }
   }
 
@@ -229,7 +229,33 @@ export class IntelligenceFindingsBadge {
 
   private startRefresh(): void {
     document.addEventListener('wm:intelligence-updated', this.boundUpdate);
-    this.refreshInterval = setInterval(this.boundUpdate, REFRESH_INTERVAL_MS);
+    document.addEventListener('visibilitychange', this.boundVisibilityChange);
+    this.scheduleNextRefresh();
+  }
+
+  private boundVisibilityChange = () => {
+    if (document.hidden) {
+      if (this.refreshInterval) {
+        clearTimeout(this.refreshInterval);
+        this.refreshInterval = null;
+      }
+    } else {
+      // Resume polling immediately on focus
+      this.boundUpdate();
+      this.scheduleNextRefresh();
+    }
+  };
+
+  private scheduleNextRefresh(): void {
+    if (this.refreshInterval) {
+      clearTimeout(this.refreshInterval);
+    }
+    this.refreshInterval = setTimeout(() => {
+      this.boundUpdate();
+      if (!document.hidden) {
+        this.scheduleNextRefresh();
+      }
+    }, REFRESH_INTERVAL_MS);
   }
 
   public update(): void {
@@ -538,11 +564,12 @@ export class IntelligenceFindingsBadge {
 
   public destroy(): void {
     if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
+      clearTimeout(this.refreshInterval);
     }
     if (this.pendingUpdateFrame) {
       cancelAnimationFrame(this.pendingUpdateFrame);
     }
+    document.removeEventListener('visibilitychange', this.boundVisibilityChange);
     document.removeEventListener('wm:intelligence-updated', this.boundUpdate);
     document.removeEventListener('click', this.boundCloseDropdown);
     this.badge.remove();
