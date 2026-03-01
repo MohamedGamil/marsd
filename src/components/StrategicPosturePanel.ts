@@ -41,7 +41,7 @@ export class StrategicPosturePanel extends Panel {
   }
 
   private async reaugmentVessels(): Promise<void> {
-    if (!this.isPanelVisible() || this.postures.length === 0) return;
+    if (!this.isPanelVisible() || this.postures.length === 0 || document.hidden) return;
     console.log('[StrategicPosturePanel] Re-augmenting with vessels...');
     await this.augmentWithVessels();
     this.render();

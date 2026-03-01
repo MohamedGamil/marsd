@@ -49,12 +49,16 @@ export class ServiceStatusPanel extends Panel {
   private lastServicesJson = '';
 
   public async fetchStatus(): Promise<boolean> {
+    const wasLoading = this.loading;
+    const hadError = this.error !== null;
+    let changed = false;
+
     try {
       const data = await fetchServiceStatuses();
       if (!data.success) throw new Error('Failed to load status');
 
       const fingerprint = data.services.map(s => `${s.name}:${s.status}`).join(',');
-      const changed = fingerprint !== this.lastServicesJson;
+      changed = fingerprint !== this.lastServicesJson;
       this.lastServicesJson = fingerprint;
       this.services = data.services;
       this.error = null;
@@ -63,10 +67,13 @@ export class ServiceStatusPanel extends Panel {
       if (this.isAbortError(err)) return false;
       this.error = err instanceof Error ? err.message : 'Failed to fetch';
       console.error('[ServiceStatus] Fetch error:', err);
-      return true;
+      return true; // Errors always imply a change to display
     } finally {
       this.loading = false;
-      this.render();
+      // Only rebuild the DOM if the data actually changed or we transitioned states
+      if (changed || wasLoading || hadError !== (this.error !== null)) {
+        this.render();
+      }
     }
   }
 

@@ -328,7 +328,15 @@ export class NewsPanel extends Panel {
     }
   }
 
+  private lastFlatRenderHash: string | null = null;
+
   private renderFlat(items: NewsItem[]): void {
+    const hash = items.map(i => i.link).join('|');
+    if (this.lastFlatRenderHash === hash) {
+      return; // Skip DOM update if items haven't structurally changed
+    }
+    this.lastFlatRenderHash = hash;
+
     this.setCount(items.length);
     this.currentHeadlines = items
       .slice(0, 5)
