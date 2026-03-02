@@ -45,7 +45,7 @@ import { invokeTauri } from '@/services/tauri-bridge';
 import { dataFreshness } from '@/services/data-freshness';
 import { mlWorker } from '@/services/ml-worker';
 import { UnifiedSettings } from '@/components/UnifiedSettings';
-import { t, changeLanguage } from '@/services/i18n';
+import { t, changeLanguage, getCurrentLanguage } from '@/services/i18n';
 import { TvModeController } from '@/services/tv-mode';
 
 export interface EventHandlerCallbacks {
@@ -418,7 +418,23 @@ export class EventHandlerManager implements AppModule {
     const el = document.getElementById('headerClock');
     if (!el) return;
     const tick = () => {
-      el.textContent = new Date().toUTCString().replace('GMT', 'UTC');
+      const now = new Date();
+      try {
+        const lang = getCurrentLanguage() || 'en';
+        el.textContent = new Intl.DateTimeFormat(lang === 'ar' ? 'ar-EG' : lang, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          timeZoneName: 'short',
+          timeZone: 'UTC'
+        }).format(now);
+      } catch (e) {
+        el.textContent = now.toUTCString().replace('GMT', 'UTC');
+      }
     };
     tick();
     this.clockIntervalId = setInterval(tick, 1000);

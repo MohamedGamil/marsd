@@ -55,11 +55,12 @@
 
   /* Font stack */
   --font-mono: 'SF Mono', 'Monaco', 'Cascadia Code', 'Fira Code', 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+  --font-ar: 'Cairo', 'Tajawal', 'Geeza Pro', 'SF Arabic', 'Tahoma', system-ui, sans-serif;
   --font-body: var(--font-mono);
 }
 
 [dir="rtl"] {
-  --font-body: 'Cairo', 'Tajawal', 'Geeza Pro', 'SF Arabic', 'Tahoma', system-ui, sans-serif;
+  --font-body: var(--font-ar);
 }
 
 :lang(zh-CN),
