@@ -273,12 +273,12 @@ All four dashboard variants (World Monitor, Tech Monitor, Finance Monitor, Happy
 
 | Hostname | Variant |
 | --- | --- |
-| `tech.worldmonitor.app` | `tech` |
-| `finance.worldmonitor.app` | `finance` |
-| `happy.worldmonitor.app` | `happy` |
-| `worldmonitor.app` (default) | `full` |
+| `tech.marsd.app` | `tech` |
+| `finance.marsd.app` | `finance` |
+| `happy.marsd.app` | `happy` |
+| `marsd.app` (default) | `full` |
 
-On the desktop app, the variant is stored in `localStorage['worldmonitor-variant']` and can be switched without rebuilding. The variant selector in the header bar navigates between deployed domains on the web or toggles the localStorage value on desktop.
+On the desktop app, the variant is stored in `localStorage['marsd-variant']` and can be switched without rebuilding. The variant selector in the header bar navigates between deployed domains on the web or toggles the localStorage value on desktop.
 
 This architecture replaced the original multi-deployment approach (separate Vercel projects per variant) and provides several advantages:
 
@@ -386,7 +386,7 @@ Every data-fetching panel uses a circuit breaker that prevents cascading failure
 
 **Per-feed circuit breakers** (RSS) — each RSS feed URL has an independent failure counter. After 2 consecutive failures, the feed enters a 5-minute cooldown during which no fetch attempts are made. The feed automatically re-enters the pool after the cooldown expires. This prevents a single misconfigured or downed feed from consuming fetch budget and slowing the entire news refresh cycle.
 
-**Per-panel circuit breakers** (data panels) — panels that fetch from API endpoints use IndexedDB-backed persistent caches (`worldmonitor_persistent_cache` store) with TTL envelopes. When a fetch succeeds, the result is stored with an expiration timestamp. On subsequent loads, the circuit breaker serves the cached result immediately and attempts a background refresh. If the background refresh fails, the stale cached data continues to display — panels never go blank due to transient API failures. Cache entries survive page reloads and browser restarts.
+**Per-panel circuit breakers** (data panels) — panels that fetch from API endpoints use IndexedDB-backed persistent caches (`marsd_persistent_cache` store) with TTL envelopes. When a fetch succeeds, the result is stored with an expiration timestamp. On subsequent loads, the circuit breaker serves the cached result immediately and attempts a background refresh. If the background refresh fails, the stale cached data continues to display — panels never go blank due to transient API failures. Cache entries survive page reloads and browser restarts.
 
 The circuit breaker degrades gracefully across storage tiers: IndexedDB (primary, up to device quota) → localStorage fallback (5MB limit) → in-memory Map (session-only). When device storage quota is exhausted (common on mobile Safari), a global `_storageQuotaExceeded` flag disables all further writes while reads continue normally.
 
@@ -474,7 +474,7 @@ The Sentry SDK initialization includes a `beforeSend` hook and `ignoreErrors` li
 
 ### Error Tracking & Production Hardening
 
-Sentry captures unhandled exceptions and promise rejections in production, with environment-aware routing (production on `worldmonitor.app`, preview on `*.vercel.app`, disabled on localhost and Tauri desktop).
+Sentry captures unhandled exceptions and promise rejections in production, with environment-aware routing (production on `marsd.app`, preview on `*.vercel.app`, disabled on localhost and Tauri desktop).
 
 The configuration includes 30+ `ignoreErrors` patterns that suppress noise from:
 
@@ -491,4 +491,4 @@ A custom `beforeSend` hook provides second-stage filtering: it suppresses single
 
 **Storage quota management** — when a device's localStorage or IndexedDB quota is exhausted (common on mobile Safari with its 5MB limit), a global `_storageQuotaExceeded` flag disables all further write attempts across both the persistent cache (IndexedDB + localStorage fallback) and the utility `saveToStorage()` function. The flag is set on the first `DOMException` with `name === 'QuotaExceededError'` or `code === 22`, and prevents cascading errors from repeated failed writes. Read operations continue normally — cached data remains accessible, only new writes are suppressed.
 
-Transactions are sampled at 10% to balance observability with cost. Release tracking (`worldmonitor@{version}`) enables regression detection across deployments.
+Transactions are sampled at 10% to balance observability with cost. Release tracking (`marsd@{version}`) enables regression detection across deployments.
