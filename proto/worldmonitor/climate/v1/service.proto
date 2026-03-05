@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package worldmonitor.climate.v1;
+package marsd.climate.v1;
 
 import "sebuf/http/annotations.proto";
-import "worldmonitor/climate/v1/list_climate_anomalies.proto";
+import "marsd/climate/v1/list_climate_anomalies.proto";
 
 // ClimateService provides APIs for climate anomaly data sourced from Open-Meteo.
 service ClimateService {

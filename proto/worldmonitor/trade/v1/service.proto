@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package worldmonitor.trade.v1;
+package marsd.trade.v1;
 
 import "sebuf/http/annotations.proto";
-import "worldmonitor/trade/v1/get_trade_restrictions.proto";
-import "worldmonitor/trade/v1/get_tariff_trends.proto";
-import "worldmonitor/trade/v1/get_trade_flows.proto";
-import "worldmonitor/trade/v1/get_trade_barriers.proto";
+import "marsd/trade/v1/get_trade_restrictions.proto";
+import "marsd/trade/v1/get_tariff_trends.proto";
+import "marsd/trade/v1/get_trade_flows.proto";
+import "marsd/trade/v1/get_trade_barriers.proto";
 
 // Trade policy intelligence from WTO data sources.
 service TradeService {

@@ -1,8 +1,8 @@
 // Non-sebuf: returns XML/HTML, stays as standalone Vercel function
 export const config = { runtime: 'edge' };
 
-const RELEASES_URL = 'https://api.github.com/repos/koala73/worldmonitor/releases/latest';
-const RELEASES_PAGE = 'https://github.com/koala73/worldmonitor/releases/latest';
+const RELEASES_URL = 'https://api.github.com/repos/MohamedGamil/marsd/releases/latest';
+const RELEASES_PAGE = 'https://github.com/MohamedGamil/marsd/releases/latest';
 
 const PLATFORM_PATTERNS = {
   'windows-exe': (name) => name.endsWith('_x64-setup.exe'),
@@ -14,8 +14,8 @@ const PLATFORM_PATTERNS = {
 };
 
 const VARIANT_IDENTIFIERS = {
-  full: ['worldmonitor'],
-  world: ['worldmonitor'],
+  full: ['marsd'],
+  world: ['marsd'],
   tech: ['techmonitor'],
   finance: ['financemonitor'],
 };
@@ -51,7 +51,7 @@ export default async function handler(req) {
     const res = await fetch(RELEASES_URL, {
       headers: {
         'Accept': 'application/vnd.github+json',
-        'User-Agent': 'WorldMonitor-Download-Redirect',
+        'User-Agent': 'Marsd-Download-Redirect',
       },
     });
 

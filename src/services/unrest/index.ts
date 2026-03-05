@@ -2,7 +2,7 @@ import {
   UnrestServiceClient,
   type UnrestEvent,
   type ListUnrestEventsResponse,
-} from '@/generated/client/worldmonitor/unrest/v1/service_client';
+} from '@/generated/client/marsd/unrest/v1/service_client';
 import type { SocialUnrestEvent, ProtestSeverity, ProtestEventType, ProtestSource } from '@/types';
 import { createCircuitBreaker } from '@/utils';
 

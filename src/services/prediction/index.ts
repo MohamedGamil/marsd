@@ -1,4 +1,4 @@
-import { PredictionServiceClient } from '@/generated/client/worldmonitor/prediction/v1/service_client';
+import { PredictionServiceClient } from '@/generated/client/marsd/prediction/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
 import { SITE_VARIANT } from '@/config';
 import { isDesktopRuntime } from '@/services/runtime';
@@ -461,8 +461,8 @@ export async function fetchCountryMarkets(country: string): Promise<PredictionMa
           const candidates = eventTitleMatches
             ? event.markets.filter(m => !m.closed && !isExpired(m.endDate))
             : event.markets.filter(m =>
-                !m.closed && !isExpired(m.endDate) &&
-                variants.some(v => (m.question ?? '').toLowerCase().includes(v)));
+              !m.closed && !isExpired(m.endDate) &&
+              variants.some(v => (m.question ?? '').toLowerCase().includes(v)));
           if (candidates.length === 0) continue;
 
           const topMarket = candidates.reduce((best, m) => {

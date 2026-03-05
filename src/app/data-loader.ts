@@ -85,10 +85,10 @@ import { getHydratedData } from '@/services/bootstrap';
 import { canQueueAiClassification, AI_CLASSIFY_MAX_PER_FEED } from '@/services/ai-classify-queue';
 import { classifyWithAI } from '@/services/threat-classifier';
 import { ingestHeadlines } from '@/services/trending-keywords';
-import type { ListFeedDigestResponse } from '@/generated/client/worldmonitor/news/v1/service_client';
-import type { GetSectorSummaryResponse, ListMarketQuotesResponse } from '@/generated/client/worldmonitor/market/v1/service_client';
+import type { ListFeedDigestResponse } from '@/generated/client/marsd/news/v1/service_client';
+import type { GetSectorSummaryResponse, ListMarketQuotesResponse } from '@/generated/client/marsd/market/v1/service_client';
 import { mountCommunityWidget } from '@/components/CommunityWidget';
-import { ResearchServiceClient } from '@/generated/client/worldmonitor/research/v1/service_client';
+import { ResearchServiceClient } from '@/generated/client/marsd/research/v1/service_client';
 import {
   MarketPanel,
   HeatmapPanel,
@@ -129,7 +129,7 @@ import { fetchKindnessData } from '@/services/kindness-data';
 import { getPersistentCache, setPersistentCache } from '@/services/persistent-cache';
 import { fetchCachedRiskScores } from '@/services/cached-risk-scores';
 import type { ThreatLevel as ClientThreatLevel } from '@/services/threat-classifier';
-import type { NewsItem as ProtoNewsItem, ThreatLevel as ProtoThreatLevel } from '@/generated/client/worldmonitor/news/v1/service_client';
+import type { NewsItem as ProtoNewsItem, ThreatLevel as ProtoThreatLevel } from '@/generated/client/marsd/news/v1/service_client';
 
 const PROTO_TO_CLIENT_LEVEL: Record<ProtoThreatLevel, ClientThreatLevel> = {
   THREAT_LEVEL_UNSPECIFIED: 'info',

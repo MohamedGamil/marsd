@@ -16,7 +16,7 @@ import { validateApiKey } from '../api/_api-key.js';
 import { mapErrorToResponse } from './error-mapper';
 import { checkRateLimit } from './_shared/rate-limit';
 import { drainResponseHeaders } from './_shared/response-headers';
-import type { ServerOptions } from '../src/generated/server/worldmonitor/seismology/v1/service_server';
+import type { ServerOptions } from '../src/generated/server/marsd/seismology/v1/service_server';
 
 export const serverOptions: ServerOptions = { onError: mapErrorToResponse };
 

@@ -2674,6 +2674,7 @@ body.live-news-fullscreen-active .panels-grid>*:not(.live-news-fullscreen) {
 
 /* Mobile: make toolbars swipeable (horizontal scroll) */
 @media (max-width: 768px) {
+
   /* Live News channels */
   .live-news-switcher {
     flex-wrap: nowrap;
@@ -2726,6 +2727,7 @@ body.live-news-fullscreen-active .panels-grid>*:not(.live-news-fullscreen) {
     flex: 0 0 auto;
   }
 }
+
 /* News Items */
 .item {
   padding: 8px 0;
@@ -10234,7 +10236,7 @@ a.prediction-link:hover {
     display: none !important;
   }
 
-  /* Mobile: show "World Monitor" instead of "MONITOR" */
+  /* Mobile: show "Marsd" instead of "MONITOR" */
   .logo {
     display: none;
   }

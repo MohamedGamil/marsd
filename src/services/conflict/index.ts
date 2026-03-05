@@ -8,7 +8,7 @@ import {
   type GetHumanitarianSummaryResponse,
   type IranEvent,
   type ListIranEventsResponse,
-} from '@/generated/client/worldmonitor/conflict/v1/service_client';
+} from '@/generated/client/marsd/conflict/v1/service_client';
 import type { UcdpGeoEvent, UcdpEventType } from '@/types';
 import { createCircuitBreaker } from '@/utils';
 

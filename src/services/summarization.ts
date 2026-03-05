@@ -13,7 +13,7 @@ import { BETA_MODE } from '@/config/beta';
 import { isFeatureAvailable, type RuntimeFeatureId } from './runtime-config';
 import { trackLLMUsage, trackLLMFailure } from './analytics';
 import { getCurrentLanguage } from './i18n';
-import { NewsServiceClient, type SummarizeArticleResponse } from '@/generated/client/worldmonitor/news/v1/service_client';
+import { NewsServiceClient, type SummarizeArticleResponse } from '@/generated/client/marsd/news/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
 import { buildSummaryCacheKey } from '@/utils/summary-cache-key';
 
@@ -49,9 +49,9 @@ interface ApiProviderDef {
 }
 
 const API_PROVIDERS: ApiProviderDef[] = [
-  { featureId: 'aiOllama',      provider: 'ollama',     label: 'Ollama' },
-  { featureId: 'aiGroq',        provider: 'groq',       label: 'Groq AI' },
-  { featureId: 'aiOpenRouter',  provider: 'openrouter', label: 'OpenRouter' },
+  { featureId: 'aiOllama', provider: 'ollama', label: 'Ollama' },
+  { featureId: 'aiGroq', provider: 'groq', label: 'Groq AI' },
+  { featureId: 'aiOpenRouter', provider: 'openrouter', label: 'OpenRouter' },
 ];
 
 let lastAttemptedProvider = 'none';
@@ -208,7 +208,7 @@ async function generateSummaryInternal(
         const browserResult = await tryBrowserT5(headlines, 'summarization-beta');
         if (browserResult) {
           const groqProvider = API_PROVIDERS.find(p => p.provider === 'groq');
-          if (groqProvider && !options?.skipCloudProviders) tryApiProvider(groqProvider, headlines, geoContext).catch(() => {});
+          if (groqProvider && !options?.skipCloudProviders) tryApiProvider(groqProvider, headlines, geoContext).catch(() => { });
 
           return browserResult;
         }
@@ -222,7 +222,7 @@ async function generateSummaryInternal(
     } else {
       const totalSteps = API_PROVIDERS.length + 2;
       if (mlWorker.isAvailable && !options?.skipBrowserFallback) {
-        mlWorker.loadModel('summarization-beta').catch(() => {});
+        mlWorker.loadModel('summarization-beta').catch(() => { });
       }
 
       // API providers while model loads

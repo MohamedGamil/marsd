@@ -15,7 +15,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-WorldMonitor-Key"
+          "value": "Content-Type, Authorization, X-Marsd-Key"
         }
       ]
     },

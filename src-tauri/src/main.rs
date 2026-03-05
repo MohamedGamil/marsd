@@ -19,7 +19,7 @@ use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager, RunEvent, Webview, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
 const DEFAULT_LOCAL_API_PORT: u16 = 46123;
-const KEYRING_SERVICE: &str = "world-monitor";
+const KEYRING_SERVICE: &str = "marsd";
 const LOCAL_API_LOG_FILE: &str = "local-api.log";
 const DESKTOP_LOG_FILE: &str = "desktop.log";
 const MENU_FILE_SETTINGS_ID: &str = "file.settings";
@@ -49,7 +49,7 @@ const SUPPORTED_SECRET_KEYS: [&str; 25] = [
     "UCDP_ACCESS_TOKEN",
     "OLLAMA_API_URL",
     "OLLAMA_MODEL",
-    "WORLDMONITOR_API_KEY",
+    "MARSD_API_KEY",
     "WTO_API_KEY",
     "AVIATIONSTACK_API",
     "ICAO_API_KEY",
@@ -563,7 +563,7 @@ fn open_settings_window(app: &AppHandle) -> Result<(), String> {
     }
 
     let _settings_window = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
-        .title("World Monitor Settings")
+        .title("Marsd Settings")
         .inner_size(980.0, 600.0)
         .min_inner_size(820.0, 480.0)
         .resizable(true)
@@ -600,7 +600,7 @@ fn open_live_channels_window(app: &AppHandle, base_url: Option<String>) -> Resul
     };
 
     let _live_channels_window = WebviewWindowBuilder::new(app, "live-channels", url)
-    .title("Channel management - World Monitor")
+    .title("Channel management - Marsd")
     .inner_size(680.0, 760.0)
     .min_inner_size(520.0, 600.0)
     .resizable(true)
@@ -664,7 +664,7 @@ fn build_app_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     )?;
 
     let about_metadata = AboutMetadata {
-        name: Some("World Monitor".into()),
+        name: Some("Marsd".into()),
         version: Some(env!("CARGO_PKG_VERSION").into()),
         copyright: Some("\u{00a9} 2025 Elie Habib".into()),
         website: Some("https://marsd.app".into()),
@@ -672,7 +672,7 @@ fn build_app_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         ..Default::default()
     };
     let about_item =
-        PredefinedMenuItem::about(handle, Some("About World Monitor"), Some(about_metadata))?;
+        PredefinedMenuItem::about(handle, Some("About Marsd"), Some(about_metadata))?;
     let github_item = MenuItem::with_id(
         handle,
         MENU_HELP_GITHUB_ID,
@@ -735,7 +735,7 @@ fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
             }
         }
         MENU_HELP_GITHUB_ID => {
-            let _ = open_in_shell("https://github.com/koala73/worldmonitor");
+            let _ = open_in_shell("https://github.com/MohamedGamil/marsd");
         }
         #[cfg(feature = "devtools")]
         MENU_HELP_DEVTOOLS_ID => {
@@ -1308,7 +1308,7 @@ fn main() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while running world-monitor tauri application")
+        .expect("error while running marsd tauri application")
         .run(|app, event| {
             match &event {
                 // macOS: hide window on close instead of quitting (standard behavior)

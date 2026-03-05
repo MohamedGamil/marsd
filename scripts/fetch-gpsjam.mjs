@@ -20,7 +20,7 @@ const DATA_DIR = path.resolve(__dirname, 'data');
 
 const REDIS_KEY = 'intelligence:gpsjam:v1';
 const BASE_URL = 'https://gpsjam.org/data';
-const UA = 'Mozilla/5.0 (compatible; WorldMonitor/1.0)';
+const UA = 'Mozilla/5.0 (compatible; Marsd/1.0)';
 
 // ---------------------------------------------------------------------------
 // CLI args

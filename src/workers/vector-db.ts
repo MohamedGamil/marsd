@@ -1,6 +1,6 @@
 import { hashString } from '@/utils/hash';
 
-const DB_NAME = 'worldmonitor_vector_store';
+const DB_NAME = 'marsd_vector_store';
 const DB_VERSION = 1;
 const STORE_NAME = 'embeddings';
 const MAX_VECTORS = 5000;
@@ -28,7 +28,7 @@ let queue: Promise<unknown> = Promise.resolve();
 
 function enqueue<T>(fn: () => Promise<T>): Promise<T> {
   const task = queue.then(fn, () => fn());
-  queue = task.then(() => {}, () => {});
+  queue = task.then(() => { }, () => { });
   return task;
 }
 

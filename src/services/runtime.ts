@@ -532,7 +532,7 @@ export function installRuntimeFetchPatch(): void {
       try {
         const { getSecretState, secretsReady } = await import('@/services/runtime-config');
         await Promise.race([secretsReady, new Promise<void>(r => setTimeout(r, 2000))]);
-        const wmKeyState = getSecretState('WORLDMONITOR_API_KEY');
+        const wmKeyState = getSecretState('MARSD_API_KEY');
         if (!wmKeyState.present || !wmKeyState.valid) {
           allowCloudFallback = false;
         }
@@ -550,9 +550,9 @@ export function installRuntimeFetchPatch(): void {
       const cloudHeaders = new Headers(init?.headers);
       if (KEYED_CLOUD_API_PATTERN.test(target)) {
         const { getRuntimeConfigSnapshot } = await import('@/services/runtime-config');
-        const wmKeyValue = getRuntimeConfigSnapshot().secrets['WORLDMONITOR_API_KEY']?.value;
+        const wmKeyValue = getRuntimeConfigSnapshot().secrets['MARSD_API_KEY']?.value;
         if (wmKeyValue) {
-          cloudHeaders.set('X-WorldMonitor-Key', wmKeyValue);
+          cloudHeaders.set('X-Marsd-Key', wmKeyValue);
         }
       }
       return nativeFetch(cloudUrl, { ...init, headers: cloudHeaders });
@@ -610,7 +610,7 @@ export function installRuntimeFetchPatch(): void {
   (window as unknown as Record<string, unknown>).__wmFetchPatched = true;
 }
 
-const ALLOWED_REDIRECT_HOSTS = /^https:\/\/([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)*worldmonitor\.app(:\d+)?$/;
+const ALLOWED_REDIRECT_HOSTS = /^https:\/\/([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)*marsd\.app(:\d+)?$/;
 
 function isAllowedRedirectTarget(url: string): boolean {
   try {

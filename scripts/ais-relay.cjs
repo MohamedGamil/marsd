@@ -2159,7 +2159,7 @@ function ciiAcledFetch() {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${ACLED_ACCESS_TOKEN}`,
-        'User-Agent': 'Mozilla/5.0 (WorldMonitor Railway Seed)',
+        'User-Agent': 'Mozilla/5.0 (Marsd Railway Seed)',
       },
       timeout: 15000,
     }, (resp) => {
@@ -3485,7 +3485,7 @@ function _attemptOpenSkyTokenFetch(clientId, clientSecret) {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Content-Length': Buffer.byteLength(postData),
-        'User-Agent': 'WorldMonitor/1.0',
+        'User-Agent': 'Marsd/1.0',
       },
       timeout: 10000
     }, (res) => {
@@ -3560,7 +3560,7 @@ function _openskyRawFetch(url, token) {
       family: 4,
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'WorldMonitor/1.0',
+        'User-Agent': 'Marsd/1.0',
         'Authorization': `Bearer ${token}`,
       },
       timeout: 15000,
@@ -3884,7 +3884,7 @@ function handleWorldBankRequest(req, res) {
   const request = https.get(wbUrl, {
     headers: {
       'Accept': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (compatible; WorldMonitor/1.0; +https://marsd.app)',
+      'User-Agent': 'Mozilla/5.0 (compatible; Marsd/1.0; +https://marsd.app)',
     },
     timeout: 15000,
   }, (response) => {

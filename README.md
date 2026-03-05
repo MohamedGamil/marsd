@@ -24,10 +24,10 @@
 
 <p align="center">
   <a href="./docs/DOCUMENTATION.md"><strong>Full Documentation</strong></a> &nbsp;·&nbsp;
-  <a href="https://github.com/MohamedGamil/worldmonitor/releases/latest"><strong>All Releases</strong></a>
+  <a href="https://github.com/MohamedGamil/marsd/releases/latest"><strong>All Releases</strong></a>
 </p>
 
-![Marsd Dashboard](new-world-monitor.png)
+![Marsd Dashboard](new-marsd.png)
 
 ---
 
@@ -113,7 +113,7 @@ Two rendering engines are available, switchable at runtime via Settings or the `
 - **World Brief** — LLM-synthesized summary of top global developments with a 4-tier provider fallback chain: Ollama (local) → Groq (cloud) → OpenRouter (cloud) → browser-side T5 (Transformers.js). Each tier is attempted with a 5-second timeout before falling through to the next, so the UI is never blocked. Results are Redis-cached (24h TTL) and content-deduplicated so identical headlines across concurrent users trigger exactly one LLM call
 - **Local LLM Support** — Ollama and LM Studio (any OpenAI-compatible endpoint) run AI summarization entirely on local hardware. No API keys required, no data leaves the machine. The desktop app auto-discovers available models from the local instance and populates a selection dropdown, filtering out embedding-only models. Default fallback model: `llama3.1:8b`
 - **AI Deduction & Forecasting** — an interactive geopolitical analysis tool where analysts enter a free-text query (e.g., "What will happen in the next 24 hours in the Middle East?") and receive an LLM-generated near-term timeline deduction. The panel auto-populates context from the 15 most recent live headlines via `buildNewsContext()`, so the AI always has current situational awareness. Other panels can pre-fill and auto-submit queries via the `wm:deduct-context` custom event for seamless cross-panel deep-linking into contextual forecasts. Results are Redis-cached (1-hour TTL) by query hash to avoid redundant LLM calls
-- **Headline Memory (RAG)** — an opt-in client-side Retrieval-Augmented Generation system. When enabled in Settings, every incoming RSS headline is embedded using an ONNX model (`all-MiniLM-L6-v2`, 384-dimensional float32 vectors) running in a dedicated Web Worker, then stored in IndexedDB (`worldmonitor_vector_store`, capped at 5,000 vectors with LRU eviction by ingestion time). Any component can semantically search the headline archive using natural-language queries — results are ranked by brute-force cosine similarity and returned in score order. The entire pipeline runs locally in the browser with zero server dependency, enabling persistent semantic intelligence across sessions
+- **Headline Memory (RAG)** — an opt-in client-side Retrieval-Augmented Generation system. When enabled in Settings, every incoming RSS headline is embedded using an ONNX model (`all-MiniLM-L6-v2`, 384-dimensional float32 vectors) running in a dedicated Web Worker, then stored in IndexedDB (`marsd_vector_store`, capped at 5,000 vectors with LRU eviction by ingestion time). Any component can semantically search the headline archive using natural-language queries — results are ranked by brute-force cosine similarity and returned in score order. The entire pipeline runs locally in the browser with zero server dependency, enabling persistent semantic intelligence across sessions
 - **Hybrid Threat Classification** — instant keyword classifier with async LLM override for higher-confidence results
 - **Focal Point Detection** — correlates entities across news, military activity, protests, outages, and markets to identify convergence
 - **Country Instability Index** — real-time stability scores for every country with incoming data using weighted multi-signal blend. 23 curated tier-1 nations have tuned baseline risk profiles; all other countries receive universal scoring with sensible defaults when any event data (protests, conflicts, outages, displacement, climate anomalies) is detected. A **CII choropleth heatmap** paints every country on both flat and 3D globe views in a five-stop gradient (green → yellow → orange → red → dark-red) based on live instability scores (0–100), enabling analysts to scan global risk distribution at a glance. Clicking any country row in the CII panel navigates directly to that country's full intelligence brief
@@ -1262,7 +1262,7 @@ A single codebase produces four specialized dashboards, each with distinct feeds
 
 **Build-time selection** — the `VITE_VARIANT` environment variable controls which configuration is bundled. A Vite HTML plugin transforms meta tags, Open Graph data, PWA manifest, and JSON-LD structured data at build time. Each variant tree-shakes unused data files — the finance build excludes military base coordinates and APT group data, while the geopolitical build excludes stock exchange listings.
 
-**Runtime switching** — a variant selector in the header bar (🌍 WORLD | 💻 TECH | 📈 FINANCE | 😊 HAPPY) navigates between deployed domains on the web, or sets `localStorage['worldmonitor-variant']` in the desktop app to switch without rebuilding.
+**Runtime switching** — a variant selector in the header bar (🌍 WORLD | 💻 TECH | 📈 FINANCE | 😊 HAPPY) navigates between deployed domains on the web, or sets `localStorage['marsd-variant']` in the desktop app to switch without rebuilding.
 
 ---
 
@@ -1324,7 +1324,7 @@ Several non-obvious algorithmic choices are worth explaining:
 
 ### Vanilla TypeScript Architecture
 
-World Monitor is written in vanilla TypeScript — no frontend framework (React, Vue, Svelte, Angular) is used. This is a deliberate architectural decision, not an oversight.
+Marsd is written in vanilla TypeScript — no frontend framework (React, Vue, Svelte, Angular) is used. This is a deliberate architectural decision, not an oversight.
 
 **Why no framework:**
 
@@ -1412,7 +1412,7 @@ This pattern is enforced project-wide across all panel subclasses. In E2E tests,
 
 ### Single-Deployment Variant Consolidation
 
-All four dashboard variants (World Monitor, Tech Monitor, Finance Monitor, Happy Monitor) serve from a **single Vercel deployment**. The variant is determined at runtime by hostname detection:
+All four dashboard variants (Marsd, Tech Monitor, Finance Monitor, Happy Monitor) serve from a **single Vercel deployment**. The variant is determined at runtime by hostname detection:
 
 | Hostname | Variant |
 | --- | --- |
@@ -1421,7 +1421,7 @@ All four dashboard variants (World Monitor, Tech Monitor, Finance Monitor, Happy
 | `happy.marsd.app` | `happy` |
 | `marsd.app` (default) | `full` |
 
-On the desktop app, the variant is stored in `localStorage['worldmonitor-variant']` and can be switched without rebuilding. The variant selector in the header bar navigates between deployed domains on the web or toggles the localStorage value on desktop.
+On the desktop app, the variant is stored in `localStorage['marsd-variant']` and can be switched without rebuilding. The variant selector in the header bar navigates between deployed domains on the web or toggles the localStorage value on desktop.
 
 This architecture replaced the original multi-deployment approach (separate Vercel projects per variant) and provides several advantages:
 
@@ -1699,7 +1699,7 @@ Every data-fetching panel uses a circuit breaker that prevents cascading failure
 
 **Per-feed circuit breakers** (RSS) — each RSS feed URL has an independent failure counter. After 2 consecutive failures, the feed enters a 5-minute cooldown during which no fetch attempts are made. The feed automatically re-enters the pool after the cooldown expires. This prevents a single misconfigured or downed feed from consuming fetch budget and slowing the entire news refresh cycle.
 
-**Per-panel circuit breakers** (data panels) — panels that fetch from API endpoints use IndexedDB-backed persistent caches (`worldmonitor_persistent_cache` store) with TTL envelopes. When a fetch succeeds, the result is stored with an expiration timestamp. On subsequent loads, the circuit breaker serves the cached result immediately and attempts a background refresh. If the background refresh fails, the stale cached data continues to display — panels never go blank due to transient API failures. Cache entries survive page reloads and browser restarts.
+**Per-panel circuit breakers** (data panels) — panels that fetch from API endpoints use IndexedDB-backed persistent caches (`marsd_persistent_cache` store) with TTL envelopes. When a fetch succeeds, the result is stored with an expiration timestamp. On subsequent loads, the circuit breaker serves the cached result immediately and attempts a background refresh. If the background refresh fails, the stale cached data continues to display — panels never go blank due to transient API failures. Cache entries survive page reloads and browser restarts.
 
 The circuit breaker degrades gracefully across storage tiers: IndexedDB (primary, up to device quota) → localStorage fallback (5MB limit) → in-memory Map (session-only). When device storage quota is exhausted (common on mobile Safari), a global `_storageQuotaExceeded` flag disables all further writes while reads continue normally.
 
@@ -1822,7 +1822,7 @@ A custom `beforeSend` hook provides second-stage filtering: it suppresses single
 
 **Storage quota management** — when a device's localStorage or IndexedDB quota is exhausted (common on mobile Safari with its 5MB limit), a global `_storageQuotaExceeded` flag disables all further write attempts across both the persistent cache (IndexedDB + localStorage fallback) and the utility `saveToStorage()` function. The flag is set on the first `DOMException` with `name === 'QuotaExceededError'` or `code === 22`, and prevents cascading errors from repeated failed writes. Read operations continue normally — cached data remains accessible, only new writes are suppressed.
 
-Transactions are sampled at 10% to balance observability with cost. Release tracking (`worldmonitor@{version}`) enables regression detection across deployments.
+Transactions are sampled at 10% to balance observability with cost. Release tracking (`marsd@{version}`) enables regression detection across deployments.
 
 ---
 
@@ -1830,8 +1830,8 @@ Transactions are sampled at 10% to balance observability with cost. Release trac
 
 ```bash
 # Clone and run
-git clone https://github.com/MohamedGamil/worldmonitor.git
-cd worldmonitor
+git clone https://github.com/MohamedGamil/marsd.git
+cd marsd
 npm install
 vercel dev       # Runs frontend + all 60+ API edge functions
 ```
@@ -2182,7 +2182,7 @@ GNU Affero General Public License v3.0 (AGPL-3.0) — see [LICENSE](LICENSE) for
 
 ## Author
 
-**Elie Habib** — [GitHub](https://github.com/koala73)
+**Elie Habib** — [GitHub](https://github.com/MohamedGamil)
 
 ---
 
@@ -2228,9 +2228,9 @@ If you discover a vulnerability, please see our [Security Policy](./SECURITY.md)
 
 ## Star History
 
-<a href="https://api.star-history.com/svg?repos=MohamedGamil/worldmonitor&type=Date">
+<a href="https://api.star-history.com/svg?repos=MohamedGamil/marsd&type=Date">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=MohamedGamil/worldmonitor&type=Date&type=Date&theme=dark" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=MohamedGamil/worldmonitor&type=Date&type=Date" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=MohamedGamil/marsd&type=Date&type=Date&theme=dark" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=MohamedGamil/marsd&type=Date&type=Date" />
  </picture>
 </a>

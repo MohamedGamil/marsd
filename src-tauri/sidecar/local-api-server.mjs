@@ -104,7 +104,7 @@ const ALLOWED_ENV_KEYS = new Set([
   'OTX_API_KEY', 'ABUSEIPDB_API_KEY', 'WINGBITS_API_KEY', 'WS_RELAY_URL',
   'VITE_OPENSKY_RELAY_URL', 'OPENSKY_CLIENT_ID', 'OPENSKY_CLIENT_SECRET',
   'AISSTREAM_API_KEY', 'VITE_WS_RELAY_URL', 'FINNHUB_API_KEY', 'NASA_FIRMS_API_KEY',
-  'OLLAMA_API_URL', 'OLLAMA_MODEL', 'WORLDMONITOR_API_KEY', 'WTO_API_KEY',
+  'OLLAMA_API_URL', 'OLLAMA_MODEL', 'MARSD_API_KEY', 'WTO_API_KEY',
   'AVIATIONSTACK_API', 'ICAO_API_KEY', 'UCDP_ACCESS_TOKEN',
 ]);
 
@@ -524,8 +524,8 @@ const SIDECAR_ALLOWED_ORIGINS = [
   /^https?:\/\/tauri\.localhost(:\d+)?$/,
   // Only allow exact domain or single-level subdomains (e.g. preview-xyz.marsd.app).
   // The previous (.*\.)? pattern was overly broad. Anchored to prevent spoofing
-  // via domains like worldmonitorEVIL.vercel.app.
-  /^https:\/\/([a-z0-9-]+\.)?worldmonitor\.app$/,
+  // via domains like marsdEVIL.vercel.app.
+  /^https:\/\/([a-z0-9-]+\.)?marsd\.app$/,
 ];
 
 function getSidecarCorsOrigin(req) {

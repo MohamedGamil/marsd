@@ -21,7 +21,7 @@ import {
   type BisPolicyRate,
   type BisExchangeRate,
   type BisCreditToGdp,
-} from '@/generated/client/worldmonitor/economic/v1/service_client';
+} from '@/generated/client/marsd/economic/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
 import { getCSSColor } from '@/utils';
 import { isFeatureAvailable } from '../runtime-config';

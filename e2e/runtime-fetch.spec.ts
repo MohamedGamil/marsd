@@ -116,7 +116,7 @@ test.describe('desktop runtime routing guardrails', () => {
       delete globalWindow.__wmFetchPatched;
 
       // Set a valid WM API key so cloud fallback is allowed
-      await runtimeConfig.setSecretValue('WORLDMONITOR_API_KEY' as import('/src/services/runtime-config.ts').RuntimeSecretKey, 'wm_test_key_1234567890abcdef');
+      await runtimeConfig.setSecretValue('MARSD_API_KEY' as import('/src/services/runtime-config.ts').RuntimeSecretKey, 'wm_test_key_1234567890abcdef');
 
       try {
         runtime.installRuntimeFetchPatch();
@@ -142,7 +142,7 @@ test.describe('desktop runtime routing guardrails', () => {
         } else {
           globalWindow.__TAURI__ = previousTauri;
         }
-        await runtimeConfig.setSecretValue('WORLDMONITOR_API_KEY' as import('/src/services/runtime-config.ts').RuntimeSecretKey, '');
+        await runtimeConfig.setSecretValue('MARSD_API_KEY' as import('/src/services/runtime-config.ts').RuntimeSecretKey, '');
       }
     });
 
@@ -329,7 +329,7 @@ test.describe('desktop runtime routing guardrails', () => {
         __TAURI__?: { core?: { invoke?: (command: string) => Promise<unknown> } };
       };
       const previousTauri = globalWindow.__TAURI__;
-      const releaseUrl = 'https://github.com/koala73/worldmonitor/releases/latest';
+      const releaseUrl = 'https://github.com/MohamedGamil/marsd/releases/latest';
 
       const updaterProto = DesktopUpdater.prototype as unknown as {
         resolveUpdateDownloadUrl: (releaseUrl: string) => Promise<string>;
@@ -378,7 +378,7 @@ test.describe('desktop runtime routing guardrails', () => {
 
     expect(result.macArm).toBe('https://marsd.app/api/download?platform=macos-arm64&variant=full');
     expect(result.windowsX64).toBe('https://marsd.app/api/download?platform=windows-exe&variant=full');
-    expect(result.linuxFallback).toBe('https://github.com/koala73/worldmonitor/releases/latest');
+    expect(result.linuxFallback).toBe('https://github.com/MohamedGamil/marsd/releases/latest');
   });
 
   test('MapContainer falls back to SVG when WebGL2 is unavailable', async ({ page }) => {
@@ -725,7 +725,7 @@ test.describe('desktop runtime routing guardrails', () => {
     expect(result.hasIso3Field).toBe(false);
   });
 
-  test('cloud fallback blocked without WorldMonitor API key', async ({ page }) => {
+  test('cloud fallback blocked without Marsd API key', async ({ page }) => {
     await page.goto('/tests/runtime-harness.html');
 
     const result = await page.evaluate(async () => {
@@ -796,7 +796,7 @@ test.describe('desktop runtime routing guardrails', () => {
     expect(result.localCalls).toBeGreaterThan(0);
   });
 
-  test('cloud fallback allowed with valid WorldMonitor API key', async ({ page }) => {
+  test('cloud fallback allowed with valid Marsd API key', async ({ page }) => {
     await page.goto('/tests/runtime-harness.html');
 
     const result = await page.evaluate(async () => {
@@ -825,8 +825,8 @@ test.describe('desktop runtime routing guardrails', () => {
 
         if (url.includes('marsd.app') && init?.headers) {
           const h = new Headers(init.headers);
-          const wmKey = h.get('X-WorldMonitor-Key');
-          if (wmKey) capturedHeaders['X-WorldMonitor-Key'] = wmKey;
+          const wmKey = h.get('X-Marsd-Key');
+          if (wmKey) capturedHeaders['X-Marsd-Key'] = wmKey;
         }
 
         if (url.includes('127.0.0.1:46123/api/market/v1/test')) {
@@ -843,7 +843,7 @@ test.describe('desktop runtime routing guardrails', () => {
       delete globalWindow.__wmFetchPatched;
 
       const testKey = 'wm_test_key_1234567890abcdef';
-      await runtimeConfig.setSecretValue('WORLDMONITOR_API_KEY' as import('/src/services/runtime-config.ts').RuntimeSecretKey, testKey);
+      await runtimeConfig.setSecretValue('MARSD_API_KEY' as import('/src/services/runtime-config.ts').RuntimeSecretKey, testKey);
 
       try {
         runtime.installRuntimeFetchPatch();
@@ -855,7 +855,7 @@ test.describe('desktop runtime routing guardrails', () => {
           status: response.status,
           hasQuotes: Array.isArray(body.quotes),
           cloudCalls: calls.filter(u => u.includes('marsd.app')).length,
-          wmKeyHeader: capturedHeaders['X-WorldMonitor-Key'] || null,
+          wmKeyHeader: capturedHeaders['X-Marsd-Key'] || null,
         };
       } finally {
         window.fetch = originalFetch;
@@ -865,7 +865,7 @@ test.describe('desktop runtime routing guardrails', () => {
         } else {
           globalWindow.__TAURI__ = previousTauri;
         }
-        await runtimeConfig.setSecretValue('WORLDMONITOR_API_KEY' as import('/src/services/runtime-config.ts').RuntimeSecretKey, '');
+        await runtimeConfig.setSecretValue('MARSD_API_KEY' as import('/src/services/runtime-config.ts').RuntimeSecretKey, '');
       }
     });
 

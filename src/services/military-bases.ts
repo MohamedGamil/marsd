@@ -3,7 +3,7 @@ import {
   type ListMilitaryBasesResponse,
   type MilitaryBaseEntry,
   type MilitaryBaseCluster,
-} from '@/generated/client/worldmonitor/military/v1/service_client';
+} from '@/generated/client/marsd/military/v1/service_client';
 import type { MilitaryBase, MilitaryBaseType, MilitaryBaseEnriched } from '@/types';
 
 const client = new MilitaryServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });

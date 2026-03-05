@@ -16,7 +16,7 @@ export function loadEnvFile(metaUrl) {
     join(__dirname, '..', '..', '.env.local'),
   ];
   if (process.env.HOME) {
-    candidates.push(join(process.env.HOME, 'Documents/GitHub/worldmonitor', '.env.local'));
+    candidates.push(join(process.env.HOME, 'Documents/GitHub/marsd', '.env.local'));
   }
   for (const envPath of candidates) {
     if (!existsSync(envPath)) continue;
@@ -133,7 +133,7 @@ export async function atomicPublish(canonicalKey, data, validateFn, ttlSeconds) 
   }
 
   // Cleanup staging
-  await redisDel(url, token, stagingKey).catch(() => {});
+  await redisDel(url, token, stagingKey).catch(() => { });
 
   return { payloadBytes, recordCount: Array.isArray(data) ? data.length : null };
 }

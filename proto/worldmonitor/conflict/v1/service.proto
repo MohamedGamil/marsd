@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package worldmonitor.conflict.v1;
+package marsd.conflict.v1;
 
 import "sebuf/http/annotations.proto";
-import "worldmonitor/conflict/v1/list_acled_events.proto";
-import "worldmonitor/conflict/v1/list_ucdp_events.proto";
-import "worldmonitor/conflict/v1/get_humanitarian_summary.proto";
-import "worldmonitor/conflict/v1/list_iran_events.proto";
+import "marsd/conflict/v1/list_acled_events.proto";
+import "marsd/conflict/v1/list_ucdp_events.proto";
+import "marsd/conflict/v1/get_humanitarian_summary.proto";
+import "marsd/conflict/v1/list_iran_events.proto";
 
 // ConflictService provides APIs for armed conflict data from ACLED, UCDP, and HAPI/HDX.
 service ConflictService {

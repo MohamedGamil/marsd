@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package worldmonitor.conflict.v1;
+package marsd.conflict.v1;
 
 message ListIranEventsRequest {}
 

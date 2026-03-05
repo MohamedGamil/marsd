@@ -3,7 +3,7 @@ import {
   type GetDisplacementSummaryResponse as ProtoResponse,
   type CountryDisplacement as ProtoCountry,
   type DisplacementFlow as ProtoFlow,
-} from '@/generated/client/worldmonitor/displacement/v1/service_client';
+} from '@/generated/client/marsd/displacement/v1/service_client';
 import { createCircuitBreaker, getCSSColor } from '@/utils';
 
 // ─── Consumer-friendly types (matching legacy shape exactly) ───

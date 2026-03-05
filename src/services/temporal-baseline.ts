@@ -2,7 +2,7 @@
 // Detects when current activity levels deviate from historical baselines
 // Backed by InfrastructureService RPCs (GetTemporalBaseline, RecordBaselineSnapshot)
 
-import { InfrastructureServiceClient } from '@/generated/client/worldmonitor/infrastructure/v1/service_client';
+import { InfrastructureServiceClient } from '@/generated/client/marsd/infrastructure/v1/service_client';
 
 export type TemporalEventType =
   | 'military_flights'
@@ -98,7 +98,7 @@ export async function updateAndCheck(
   metrics: Array<{ type: TemporalEventType; region: string; count: number }>
 ): Promise<TemporalAnomaly[]> {
   // Fire-and-forget the update
-  reportMetrics(metrics).catch(() => {});
+  reportMetrics(metrics).catch(() => { });
 
   // Check anomalies in parallel
   const results = await Promise.allSettled(

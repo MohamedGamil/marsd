@@ -28,7 +28,7 @@ const readSrc = (relPath) => readFileSync(resolve(root, relPath), 'utf-8');
 // ========================================================================
 
 describe('ChokepointInfo proto has ais_disruptions field', () => {
-  const proto = readSrc('proto/worldmonitor/supply_chain/v1/supply_chain_data.proto');
+  const proto = readSrc('proto/marsd/supply_chain/v1/supply_chain_data.proto');
 
   it('declares ais_disruptions as int32 at field 11', () => {
     assert.match(proto, /int32\s+ais_disruptions\s*=\s*11/,
@@ -54,8 +54,8 @@ describe('ChokepointInfo proto has ais_disruptions field', () => {
 // ========================================================================
 
 describe('Generated types include aisDisruptions', () => {
-  const clientSrc = readSrc('src/generated/client/worldmonitor/supply_chain/v1/service_client.ts');
-  const serverSrc = readSrc('src/generated/server/worldmonitor/supply_chain/v1/service_server.ts');
+  const clientSrc = readSrc('src/generated/client/marsd/supply_chain/v1/service_client.ts');
+  const serverSrc = readSrc('src/generated/server/marsd/supply_chain/v1/service_server.ts');
 
   it('client ChokepointInfo has aisDisruptions: number', () => {
     assert.match(clientSrc, /aisDisruptions:\s*number/,
@@ -97,8 +97,8 @@ describe('OpenAPI spec includes aisDisruptions', () => {
 describe('Cache keys bumped to v2', () => {
   const bootstrapSrc = readSrc('api/bootstrap.js');
   const cacheKeysSrc = readSrc('server/_shared/cache-keys.ts');
-  const chokepointSrc = readSrc('server/worldmonitor/supply-chain/v1/get-chokepoint-status.ts');
-  const mineralsSrc = readSrc('server/worldmonitor/supply-chain/v1/get-critical-minerals.ts');
+  const chokepointSrc = readSrc('server/marsd/supply-chain/v1/get-chokepoint-status.ts');
+  const mineralsSrc = readSrc('server/marsd/supply-chain/v1/get-critical-minerals.ts');
 
   it('bootstrap.js chokepoints key is v2', () => {
     assert.match(bootstrapSrc, /chokepoints:\s*'supply_chain:chokepoints:v2'/);
@@ -137,7 +137,7 @@ describe('Cache keys bumped to v2', () => {
 // ========================================================================
 
 describe('Chokepoint handler v2 changes', () => {
-  const src = readSrc('server/worldmonitor/supply-chain/v1/get-chokepoint-status.ts');
+  const src = readSrc('server/marsd/supply-chain/v1/get-chokepoint-status.ts');
 
   it('uses 5-minute Redis TTL', () => {
     assert.match(src, /REDIS_CACHE_TTL\s*=\s*300/,
@@ -184,8 +184,8 @@ describe('Chokepoint handler v2 changes', () => {
 // ========================================================================
 
 describe('Minerals handler v2 changes', () => {
-  const handlerSrc = readSrc('server/worldmonitor/supply-chain/v1/get-critical-minerals.ts');
-  const dataSrc = readSrc('server/worldmonitor/supply-chain/v1/_minerals-data.ts');
+  const handlerSrc = readSrc('server/marsd/supply-chain/v1/get-critical-minerals.ts');
+  const dataSrc = readSrc('server/marsd/supply-chain/v1/_minerals-data.ts');
 
   it('slices to top 3 producers (not 5)', () => {
     assert.match(handlerSrc, /\.slice\(0,\s*3\)/,
@@ -222,7 +222,7 @@ describe('Minerals handler v2 changes', () => {
 // ========================================================================
 
 describe('Shipping handler v2 changes', () => {
-  const src = readSrc('server/worldmonitor/supply-chain/v1/get-shipping-rates.ts');
+  const src = readSrc('server/marsd/supply-chain/v1/get-shipping-rates.ts');
 
   it('uses full name "Deep Sea Freight Producer Price Index"', () => {
     assert.match(src, /Deep Sea Freight Producer Price Index/);
@@ -352,7 +352,7 @@ describe('Locale tab labels updated', () => {
 
 describe('Minerals data structural integrity', () => {
   // Direct import of the .mjs-compatible scoring, then validate against data file
-  const dataSrc = readSrc('server/worldmonitor/supply-chain/v1/_minerals-data.ts');
+  const dataSrc = readSrc('server/marsd/supply-chain/v1/_minerals-data.ts');
 
   it('every entry has required fields', () => {
     // Parse entries from the source to validate structure
@@ -410,7 +410,7 @@ import {
   THREAT_LEVEL,
   warningComponent,
   aisComponent,
-} from '../server/worldmonitor/supply-chain/v1/_scoring.mjs';
+} from '../server/marsd/supply-chain/v1/_scoring.mjs';
 
 describe('Scoring integration with v2 minerals (top-3 slicing)', () => {
   it('HHI with 3 producers sums correctly', () => {
@@ -527,7 +527,7 @@ describe('Composite disruption score', () => {
 // 14. Chokepoint threat config + expanded keywords (behavioural)
 // ========================================================================
 
-import { CHOKEPOINTS, THREAT_CONFIG_LAST_REVIEWED } from '../server/worldmonitor/supply-chain/v1/get-chokepoint-status.ts';
+import { CHOKEPOINTS, THREAT_CONFIG_LAST_REVIEWED } from '../server/marsd/supply-chain/v1/get-chokepoint-status.ts';
 
 const cpById = Object.fromEntries(CHOKEPOINTS.map(cp => [cp.id, cp]));
 

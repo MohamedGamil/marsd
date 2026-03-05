@@ -8,7 +8,7 @@ import {
   type PriceQuote as ProtoPriceQuote,
   type AviationNewsItem as ProtoAviationNews,
   type CabinClass,
-} from '@/generated/client/worldmonitor/aviation/v1/service_client';
+} from '@/generated/client/marsd/aviation/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
 
 // ---- Consumer-friendly display types ----

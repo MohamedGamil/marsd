@@ -4,7 +4,7 @@ import {
   IntelligenceServiceClient,
   type GdeltArticle as ProtoGdeltArticle,
   type SearchGdeltDocumentsResponse,
-} from '@/generated/client/worldmonitor/intelligence/v1/service_client';
+} from '@/generated/client/marsd/intelligence/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
 
 export interface GdeltArticle {

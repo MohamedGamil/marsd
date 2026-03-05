@@ -1,4 +1,4 @@
-# World Monitor — Bug Registry
+# Marsd — Bug Registry
 
 Bugs are prefixed with `BUG-` and a three-digit number.
 Each entry includes severity, description, affected files, and dependencies on other items.
@@ -87,7 +87,7 @@ Implement the pending live-stream detection using the `youtubei.js` library alre
 | **Depends on** | — |
 
 **Description**
-`PANEL_ORDER_MIGRATION_KEY` is `worldmonitor-panel-order-v1.9` but the `console.log` says `"Migrated panel order to v1.8 layout"`.
+`PANEL_ORDER_MIGRATION_KEY` is `marsd-panel-order-v1.9` but the `console.log` says `"Migrated panel order to v1.8 layout"`.
 This is confusing for anyone debugging migrations.
 
 **AI instructions**

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to World Monitor are documented here.
+All notable changes to Marsd are documented here.
 
 ## [2.5.25] - 2026-03-04
 
@@ -461,7 +461,7 @@ All notable changes to World Monitor are documented here.
 
 ### Security
 
-- **CORS hardening**: Tighten Vercel preview deployment regex to block origin spoofing (`worldmonitorEVIL.vercel.app`)
+- **CORS hardening**: Tighten Vercel preview deployment regex to block origin spoofing (`marsdEVIL.vercel.app`)
 - **Sidecar auth bypass**: Move `/api/local-env-update` behind `LOCAL_API_TOKEN` auth check
 - **Env key allowlist**: Restrict sidecar env mutations to 18 known secret keys (matching `SUPPORTED_SECRET_KEYS`)
 - **postMessage validation**: Add `origin` and `source` checks on incoming messages in LiveNewsPanel

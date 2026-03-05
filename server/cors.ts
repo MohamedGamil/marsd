@@ -6,8 +6,8 @@
  */
 
 const PRODUCTION_PATTERNS: RegExp[] = [
-  /^https:\/\/(.*\.)?worldmonitor\.app$/,
-  /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
+  /^https:\/\/(.*\.)?marsd\.app$/,
+  /^https:\/\/marsd-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/tauri\.localhost(:\d+)?$/,
   /^https?:\/\/[a-z0-9-]+\.tauri\.localhost(:\d+)?$/i,
   /^tauri:\/\/localhost$/,
@@ -34,7 +34,7 @@ export function getCorsHeaders(req: Request): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-WorldMonitor-Key',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Marsd-Key',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   };

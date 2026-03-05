@@ -4,7 +4,7 @@ import { getUSNIRegionApproxCoords, getUSNIRegionCoords } from '@/config/militar
 import {
   MilitaryServiceClient,
   type GetUSNIFleetReportResponse,
-} from '@/generated/client/worldmonitor/military/v1/service_client';
+} from '@/generated/client/marsd/military/v1/service_client';
 
 const client = new MilitaryServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });
 

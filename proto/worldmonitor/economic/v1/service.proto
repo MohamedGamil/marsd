@@ -1,16 +1,16 @@
 syntax = "proto3";
 
-package worldmonitor.economic.v1;
+package marsd.economic.v1;
 
 import "sebuf/http/annotations.proto";
-import "worldmonitor/economic/v1/get_fred_series.proto";
-import "worldmonitor/economic/v1/list_world_bank_indicators.proto";
-import "worldmonitor/economic/v1/get_energy_prices.proto";
-import "worldmonitor/economic/v1/get_macro_signals.proto";
-import "worldmonitor/economic/v1/get_energy_capacity.proto";
-import "worldmonitor/economic/v1/get_bis_policy_rates.proto";
-import "worldmonitor/economic/v1/get_bis_exchange_rates.proto";
-import "worldmonitor/economic/v1/get_bis_credit.proto";
+import "marsd/economic/v1/get_fred_series.proto";
+import "marsd/economic/v1/list_world_bank_indicators.proto";
+import "marsd/economic/v1/get_energy_prices.proto";
+import "marsd/economic/v1/get_macro_signals.proto";
+import "marsd/economic/v1/get_energy_capacity.proto";
+import "marsd/economic/v1/get_bis_policy_rates.proto";
+import "marsd/economic/v1/get_bis_exchange_rates.proto";
+import "marsd/economic/v1/get_bis_credit.proto";
 
 // EconomicService provides APIs for macroeconomic data from FRED, World Bank, and EIA.
 service EconomicService {

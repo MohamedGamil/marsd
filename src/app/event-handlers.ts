@@ -297,7 +297,7 @@ export class EventHandlerManager implements AppModule {
           if (variant && variant !== SITE_VARIANT) {
             e.preventDefault();
             trackVariantSwitch(SITE_VARIANT, variant);
-            localStorage.setItem('worldmonitor-variant', variant);
+            localStorage.setItem('marsd-variant', variant);
             window.location.reload();
           }
         });
@@ -407,7 +407,7 @@ export class EventHandlerManager implements AppModule {
         if (variant && variant !== SITE_VARIANT) {
           if (this.ctx.isDesktopApp || isLocalDev) {
             trackVariantSwitch(SITE_VARIANT, variant);
-            localStorage.setItem('worldmonitor-variant', variant);
+            localStorage.setItem('marsd-variant', variant);
             window.location.reload();
           } else {
             const hosts: Record<string, string> = {
@@ -804,7 +804,7 @@ export class EventHandlerManager implements AppModule {
       getLocalizedPanelName: (key: string, fallback: string) => this.getLocalizedPanelName(key, fallback),
       resetLayout: () => {
         localStorage.removeItem(this.ctx.PANEL_SPANS_KEY);
-        localStorage.removeItem('worldmonitor-panel-col-spans');
+        localStorage.removeItem('marsd-panel-col-spans');
         localStorage.removeItem(this.ctx.PANEL_ORDER_KEY);
         localStorage.removeItem(this.ctx.PANEL_ORDER_KEY + '-bottom');
         localStorage.removeItem('map-height');

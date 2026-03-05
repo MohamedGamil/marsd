@@ -37,7 +37,7 @@ test('accepts custom origin parameter', async () => {
 test('uses dedicated parentOrigin for iframe postMessage target', async () => {
   const response = await handler(makeRequest('?videoId=iEpJwprxDdk&origin=https://marsd.app&parentOrigin=https://tauri.localhost'));
   const html = await response.text();
-  assert.match(html, /playerVars:\{[^}]*origin:"https:\/\/worldmonitor\.app"/);
+  assert.match(html, /playerVars:\{[^}]*origin:"https:\/\/marsd\.app"/);
   assert.match(html, /parentOrigin="https:\/\/tauri\.localhost"/);
   assert.match(html, /if\(allowedOrigin!==['"]\*['"]&&e\.origin!==allowedOrigin\)return/);
 });
@@ -46,5 +46,5 @@ test('does not accept wildcard parentOrigin query parameter', async () => {
   const response = await handler(makeRequest('?videoId=iEpJwprxDdk&origin=https://marsd.app&parentOrigin=*'));
   const html = await response.text();
   assert.equal(html.includes('parentOrigin="*"'), false);
-  assert.match(html, /parentOrigin="https:\/\/worldmonitor\.app"/);
+  assert.match(html, /parentOrigin="https:\/\/marsd\.app"/);
 });

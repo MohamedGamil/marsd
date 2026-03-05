@@ -71,7 +71,7 @@ const MAX_TRACKED_TERMS = 10000;
 const MAX_AUTO_SUMMARIES_PER_HOUR = 5;
 const MIN_TOKEN_LENGTH = 3;
 const MIN_SPIKE_SOURCE_COUNT = 2;
-const CONFIG_KEY = 'worldmonitor-trending-config-v1';
+const CONFIG_KEY = 'marsd-trending-config-v1';
 const ML_ENTITY_MIN_CONFIDENCE = 0.75;
 const ML_ENTITY_BATCH_SIZE = 20;
 const ML_ENTITY_TYPES = new Set(['PER', 'ORG', 'LOC', 'MISC']);
@@ -165,7 +165,7 @@ function persistConfig(config: TrendingConfig): void {
   if (!isStorageAvailable()) return;
   try {
     localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-  } catch {}
+  } catch { }
 }
 
 function getBlockedTermSet(config: TrendingConfig): Set<string> {
@@ -598,7 +598,7 @@ async function enrichWithMLEntities(headlines: PendingMLEnrichmentHeadline[], in
 
     const spikes = checkForSpikes(now, config, blockedTerms);
     for (const spike of spikes) {
-      void handleSpike(spike, config).catch(() => {});
+      void handleSpike(spike, config).catch(() => { });
     }
   } catch (error) {
     console.debug('[TrendingKeywords] ML entity enrichment skipped:', error);
@@ -636,7 +636,7 @@ export function ingestHeadlines(headlines: TrendingHeadlineInput[]): void {
 
   const spikes = checkForSpikes(now, config, blockedTerms);
   for (const spike of spikes) {
-    void handleSpike(spike, config).catch(() => {});
+    void handleSpike(spike, config).catch(() => { });
   }
 
   void enrichWithMLEntities(pendingMLEnrichment, now);
