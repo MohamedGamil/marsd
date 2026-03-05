@@ -69,6 +69,7 @@ export interface AppModule {
 }
 
 export interface AppContext {
+  appName: string;
   map: MapContainer | null;
   readonly isMobile: boolean;
   readonly isDesktopApp: boolean;

@@ -39,6 +39,7 @@ import { PanelLayoutManager } from '@/app/panel-layout';
 import { DataLoaderManager } from '@/app/data-loader';
 import { EventHandlerManager } from '@/app/event-handlers';
 import { resolveUserRegion, resolvePreciseUserCoordinates, type PreciseCoordinates } from '@/utils/user-location';
+import { APP_NAME } from './config/ui';
 
 const CYBER_LAYER_ENABLED = import.meta.env.VITE_ENABLE_CYBER_LAYER === 'true';
 
@@ -232,10 +233,12 @@ export class App {
     const disabledSources = new Set(loadFromStorage<string[]>(STORAGE_KEYS.disabledFeeds, []));
 
     // UI configuration
+    const appName = APP_NAME;
     const downloadButtonEnabled = DOWNLOAD_BUTTON_ENABLED;
 
     // Build shared state object
     this.state = {
+      appName,
       map: null,
       isMobile,
       isDesktopApp,
