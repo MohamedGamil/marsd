@@ -45,7 +45,7 @@ export function validateApiKey(req) {
     return { valid: true, required: true };
   }
 
-  // Trusted browser origin (worldmonitor.app, Vercel previews, localhost dev) — no key needed
+  // Trusted browser origin (marsd.app, Vercel previews, localhost dev) — no key needed
   if (isTrustedBrowserOrigin(origin)) {
     if (key) {
       const validKeys = (process.env.WORLDMONITOR_VALID_KEYS || '').split(',').filter(Boolean);

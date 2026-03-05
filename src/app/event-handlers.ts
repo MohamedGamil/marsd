@@ -411,10 +411,10 @@ export class EventHandlerManager implements AppModule {
             window.location.reload();
           } else {
             const hosts: Record<string, string> = {
-              full: 'https://worldmonitor.app',
-              tech: 'https://tech.worldmonitor.app',
-              finance: 'https://finance.worldmonitor.app',
-              happy: 'https://happy.worldmonitor.app',
+              full: 'https://marsd.app',
+              tech: 'https://tech.marsd.app',
+              finance: 'https://finance.marsd.app',
+              happy: 'https://happy.marsd.app',
             };
             if (hosts[variant]) window.location.href = hosts[variant];
           }

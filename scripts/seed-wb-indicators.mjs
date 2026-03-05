@@ -27,10 +27,10 @@ const NORMALIZE_MAX = { internet: 100, mobile: 150, broadband: 50, rdSpend: 5 };
 
 // WB indicators + date ranges matching the RPC handler
 const INDICATORS = [
-  { key: 'internet',  id: 'IT.NET.USER.ZS', dateRange: '2019:2024' },
-  { key: 'mobile',    id: 'IT.CEL.SETS.P2', dateRange: '2019:2024' },
+  { key: 'internet', id: 'IT.NET.USER.ZS', dateRange: '2019:2024' },
+  { key: 'mobile', id: 'IT.CEL.SETS.P2', dateRange: '2019:2024' },
   { key: 'broadband', id: 'IT.NET.BBND.P2', dateRange: '2019:2024' },
-  { key: 'rdSpend',   id: 'GB.XPD.RSDV.GD.ZS', dateRange: '2018:2024' },
+  { key: 'rdSpend', id: 'GB.XPD.RSDV.GD.ZS', dateRange: '2018:2024' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -106,7 +106,7 @@ async function fetchWithRetry(url, attempt = 1) {
   try {
     const resp = await fetch(url, {
       headers: {
-        'User-Agent': 'WorldMonitor-Seed/1.0 (https://worldmonitor.app)',
+        'User-Agent': 'WorldMonitor-Seed/1.0 (https://marsd.app)',
         'Accept': 'application/json',
       },
       signal: AbortSignal.timeout(30_000),
@@ -224,10 +224,10 @@ function computeRankings(indicatorData) {
     const rData = indicatorData.rdSpend[countryCode];
 
     const components = {
-      internet:  normalize(iData?.value, NORMALIZE_MAX.internet),
-      mobile:    normalize(mData?.value, NORMALIZE_MAX.mobile),
+      internet: normalize(iData?.value, NORMALIZE_MAX.internet),
+      mobile: normalize(mData?.value, NORMALIZE_MAX.mobile),
       broadband: normalize(bData?.value, NORMALIZE_MAX.broadband),
-      rdSpend:   normalize(rData?.value, NORMALIZE_MAX.rdSpend),
+      rdSpend: normalize(rData?.value, NORMALIZE_MAX.rdSpend),
     };
 
     let totalWeight = 0;

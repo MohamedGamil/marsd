@@ -12,9 +12,9 @@ const SOCIAL_IMAGE_UA =
   /Slack-ImgProxy|Slackbot|twitterbot|facebookexternalhit|linkedinbot|telegrambot|whatsapp|discordbot|redditbot/i;
 
 const VARIANT_HOST_MAP: Record<string, string> = {
-  'tech.worldmonitor.app': 'tech',
-  'finance.worldmonitor.app': 'finance',
-  'happy.worldmonitor.app': 'happy',
+  'tech.marsd.app': 'tech',
+  'finance.marsd.app': 'finance',
+  'happy.marsd.app': 'happy',
 };
 
 // Source of truth: src/config/variant-meta.ts — keep in sync when variant metadata changes.
@@ -22,25 +22,25 @@ const VARIANT_OG: Record<string, { title: string; description: string; image: st
   tech: {
     title: 'Tech Monitor - Real-Time AI & Tech Industry Dashboard',
     description: 'Real-time AI and tech industry dashboard tracking tech giants, AI labs, startup ecosystems, funding rounds, and tech events worldwide.',
-    image: 'https://tech.worldmonitor.app/favico/tech/og-image.png',
-    url: 'https://tech.worldmonitor.app/',
+    image: 'https://tech.marsd.app/favico/tech/og-image.png',
+    url: 'https://tech.marsd.app/',
   },
   finance: {
     title: 'Finance Monitor - Real-Time Markets & Trading Dashboard',
     description: 'Real-time finance and trading dashboard tracking global markets, stock exchanges, central banks, commodities, forex, crypto, and economic indicators worldwide.',
-    image: 'https://finance.worldmonitor.app/favico/finance/og-image.png',
-    url: 'https://finance.worldmonitor.app/',
+    image: 'https://finance.marsd.app/favico/finance/og-image.png',
+    url: 'https://finance.marsd.app/',
   },
   happy: {
     title: 'Happy Monitor - Good News & Global Progress',
     description: 'Curated positive news, progress data, and uplifting stories from around the world.',
-    image: 'https://happy.worldmonitor.app/favico/happy/og-image.png',
-    url: 'https://happy.worldmonitor.app/',
+    image: 'https://happy.marsd.app/favico/happy/og-image.png',
+    url: 'https://happy.marsd.app/',
   },
 };
 
 const ALLOWED_HOSTS = new Set([
-  'worldmonitor.app',
+  'marsd.app',
   ...Object.keys(VARIANT_HOST_MAP),
 ]);
 const VERCEL_PREVIEW_RE = /^[a-z0-9-]+-[a-z0-9]{8,}\.vercel\.app$/;

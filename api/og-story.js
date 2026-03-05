@@ -78,8 +78,8 @@ export default function handler(req, res) {
 
   <!-- Subtle grid -->
   <g opacity="0.03">
-    ${Array.from({length: 30}, (_, i) => `<line x1="${i*40}" y1="0" x2="${i*40}" y2="630" stroke="#fff" stroke-width="1"/>`).join('\n    ')}
-    ${Array.from({length: 16}, (_, i) => `<line x1="0" y1="${i*40}" x2="1200" y2="${i*40}" stroke="#fff" stroke-width="1"/>`).join('\n    ')}
+    ${Array.from({ length: 30 }, (_, i) => `<line x1="${i * 40}" y1="0" x2="${i * 40}" y2="630" stroke="#fff" stroke-width="1"/>`).join('\n    ')}
+    ${Array.from({ length: 16 }, (_, i) => `<line x1="0" y1="${i * 40}" x2="1200" y2="${i * 40}" stroke="#fff" stroke-width="1"/>`).join('\n    ')}
   </g>
 
   <!-- WORLDMONITOR brand -->
@@ -217,7 +217,7 @@ export default function handler(req, res) {
 
   <!-- URL + date -->
   <text x="60" y="610" font-family="system-ui, sans-serif" font-size="14" fill="#555"
-    >worldmonitor.app · ${dateStr} · Free &amp; open source</text>
+    >marsd.app · ${dateStr} · Free &amp; open source</text>
 </svg>`;
 
   res.setHeader('Content-Type', 'image/svg+xml');

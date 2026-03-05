@@ -127,7 +127,7 @@ async function callOpenRouter(headlines) {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://worldmonitor.app',
+        'HTTP-Referer': 'https://marsd.app',
         'X-Title': 'WorldMonitor',
         'User-Agent': CHROME_UA,
       },
