@@ -35,15 +35,15 @@
 
 | Problem                            | Solution                                                                                                   |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| News scattered across 100+ sources | **Single unified dashboard** with 170+ curated feeds across 15 categories                                  |
-| No geospatial context for events   | **Interactive map** with 45+ toggleable data layers and CII country risk heatmap                            |
+| News scattered across 100+ sources | **Single unified dashboard** with 435+ curated feeds across 15 categories                                  |
+| No geospatial context for events   | **Interactive map** with 45 toggleable data layers and CII country risk heatmap                             |
 | Information overload               | **AI-synthesized briefs** with focal point detection and local LLM support                                 |
 | Crypto/macro signal noise          | **7-signal market radar** with composite BUY/CASH verdict                                                  |
 | Expensive OSINT tools ($$$)        | **100% free & open source**                                                                                |
 | Static news feeds                  | **Real-time updates** with live video streams and AI-powered deductions                                    |
 | Cloud-dependent AI tools           | **Run AI locally** with Ollama/LM Studio — no API keys, no data leaves your machine. Opt-in **Headline Memory** builds a local semantic index of every headline for RAG-powered queries |
 | Web-only dashboards                | **Native desktop app** (Tauri) for macOS, Windows, and Linux + installable PWA with offline map support    |
-| Flat 2D maps                       | **Dual map engine** — photorealistic 3D globe (globe.gl + Three.js) and WebGL flat map (deck.gl) with 45+ toggleable data layers, runtime-switchable |
+| Flat 2D maps                       | **Dual map engine** — photorealistic 3D globe (globe.gl + Three.js) and WebGL flat map (deck.gl) with 45 toggleable data layers, runtime-switchable |
 | English-only OSINT tools           | **21 languages** with native-language RSS feeds, AI-translated summaries, and RTL support for Arabic       |
 | Siloed financial data              | **Finance variant** with 92 stock exchanges, 19 financial centers, 13 central banks, BIS data, WTO trade policy, and Gulf FDI tracking |
 | Undocumented, fragile APIs         | **Proto-first API contracts** — 22 typed services with auto-generated clients, servers, and OpenAPI docs   |
@@ -65,352 +65,142 @@ All four variants run from a single codebase — switch between them with one cl
 
 ## Key Features
 
-### Localization & Regional Support
+### Maps & Visualization
+- **Dual Map Engine** — 3D globe (globe.gl + Three.js) and WebGL flat map (deck.gl), runtime-switchable with 45 shared data layers. [Details →](./docs/MAP_ENGINE.md)
+- **45 toggleable data layers** — conflicts, bases, cables, pipelines, flights, vessels, protests, fires, earthquakes, datacenters, and more across all variants
+- **8 regional presets** — Global, Americas, Europe, MENA, Asia, Africa, Oceania, Latin America with time filtering (1h–7d)
+- **CII choropleth heatmap** — five-stop color gradient paints every country by instability score on both map engines
+- **URL state sharing** — map center, zoom, active layers, and time range encoded in shareable URLs
 
-- **Multilingual UI** — Fully localized interface supporting **21 languages: English, Bulgarian, Romanian, French, Spanish, German, Italian, Polish, Portuguese, Dutch, Swedish, Russian, Arabic, Chinese, Japanese, Turkish, Thai, Vietnamese, Czech, Greek, and Korean**. Language bundles are lazy-loaded on demand — only the active language is fetched, keeping initial bundle size minimal.
-- **RTL Support** — Native right-to-left layout support for Arabic (`ar`) and Hebrew.
-- **Localized News Feeds** — Region-specific RSS selection based on language preference (e.g., viewing the app in French loads Le Monde, Jeune Afrique, and France24). 21 locales have dedicated native-language feed sets: Bulgarian (BNR, Dnevnik, Capital), Romanian, French, Arabic, German, Spanish, Italian, Dutch, Swedish, Turkish (BBC Türkçe, Hurriyet, DW Turkish), Polish (TVN24, Polsat News, Rzeczpospolita), Russian (BBC Russian, Meduza, Novaya Gazeta Europe), Thai (Bangkok Post, Thai PBS), Vietnamese (VnExpress, Tuoi Tre News), Korean (Yonhap, Chosun Ilbo), Greek (Kathimerini, Naftemporiki, in.gr, Proto Thema), Portuguese (O Globo, Folha), Japanese (Asahi Shimbun), Chinese (MIIT, MOFCOM), and Czech (iDNES, Novinky). On first load for non-English users, a one-time locale boost automatically enables these native-language sources without overwriting manual preferences.
-- **AI Translation** — Integrated LLM translation for news headlines and summaries, enabling cross-language intelligence gathering.
-- **Regional Intelligence** — Dedicated monitoring panels for Africa, Latin America, Middle East, and Asia with local sources.
+### AI & Intelligence
+- **World Brief** — LLM-synthesized summary with 4-tier fallback: Ollama (local) → Groq → OpenRouter → browser T5. [Details →](./docs/AI_INTELLIGENCE.md)
+- **AI Deduction & Forecasting** — free-text geopolitical analysis grounded in live headlines. [Details →](./docs/AI_INTELLIGENCE.md#ai-deduction--forecasting)
+- **Headline Memory (RAG)** — opt-in browser-local semantic index using ONNX embeddings in IndexedDB. [Details →](./docs/AI_INTELLIGENCE.md#client-side-headline-memory-rag)
+- **Threat Classification** — instant keyword classifier with async ML and LLM override. [Details →](./docs/AI_INTELLIGENCE.md#threat-classification-pipeline)
+- **Country Brief Pages** — full-page intelligence dossiers with CII scores, AI analysis, timelines, and prediction markets. [Details →](./docs/AI_INTELLIGENCE.md#country-brief-pages)
 
-### Dual Map Engine — 3D Globe + Flat Map
-
-Two rendering engines are available, switchable at runtime via Settings or the `VITE_MAP_INTERACTION_MODE` environment variable (`globe` or `flat`). The preference is persisted in localStorage.
-
-**3D Globe (globe.gl + Three.js)** — a photorealistic 3D Earth with full pitch and rotation:
-
-- **Earth textures** — topographic-bathymetric day surface (`earth-topo-bathy.jpg`), specular water map for ocean reflections, and a starfield night-sky background
-- **Atmosphere shader** — a Fresnel limb-glow effect simulates atmospheric scattering at the globe's edge
-- **Auto-rotation** — the globe slowly rotates when idle, pausing on any user interaction and resuming after 60 seconds of inactivity
-- **HTML marker layer** — all 28+ data categories (conflicts, intel hotspots, AIS vessels, flights, protests, fires, etc.) render as HTML elements pinned to geographic coordinates on the globe surface
-- **Geopolitical polygon overlays** — the Korean DMZ and other boundary polygons render directly on the globe under the conflicts layer
-- **Debounced marker flush** — rapid data updates are coalesced via `debounceFlushMarkers()` to prevent Three.js scene graph crashes during high-frequency data refresh
-- **Configurable render quality** — a Settings dropdown offers five pixel-ratio presets: Auto (matches device DPR, capped at 2×), Eco (1×), Sharp (1.5×), 4K (2×), and Insane (3×). The setting updates the Three.js renderer live without page reload. Desktop (Tauri) builds cap the default at 1.25× to avoid software-rendering fallback on machines without discrete GPUs
-- **Desktop-optimized defaults** — Tauri desktop builds request the high-performance GPU (`powerPreference: 'high-performance'`), disable the logarithmic depth buffer (saves shader overhead), and turn off auto-rotation and camera damping to eliminate continuous render loop wakeups when idle — addressing reports of 1 fps performance on some machines
-- **Background pause** — when the desktop app window loses focus or the globe panel is hidden, the WebGL render loop pauses entirely, stopping the Three.js animation loop and canceling auto-rotate. Data updates received while paused are queued and flushed in a single batch when the globe returns to view, eliminating background GPU load on laptops
-- **Beta indicator** — a pulsing cyan "BETA" badge appears when the globe is active, signaling the feature is newer than the flat map
-
-**Flat Map (deck.gl + MapLibre GL JS)** — a WebGL-accelerated 2D map with smooth 60fps rendering and thousands of concurrent markers:
-
-- **Layer types** — `GeoJsonLayer`, `ScatterplotLayer`, `PathLayer`, `IconLayer`, `TextLayer`, `PolygonLayer`, `ArcLayer`, `HeatmapLayer` composited in a single render pass
-- **Smart clustering** — Supercluster groups markers at low zoom, expands on zoom in. Cluster thresholds adapt to zoom level
-- **Progressive disclosure** — detail layers (bases, nuclear, datacenters) appear only when zoomed in; zoom-adaptive opacity fades markers from 0.2 at world view to 1.0 at street level
-- **Label deconfliction** — overlapping labels (e.g., multiple BREAKING badges) are automatically suppressed by priority, highest-severity first
-- **Day/night overlay** — a terminator line divides the map into sunlit and dark hemispheres based on the current UTC time
-
-**Shared across both engines:**
-
-- **45+ data layers** — conflicts, military bases, nuclear facilities, undersea cables, pipelines, satellite fire detection, protests, natural disasters, datacenters, displacement flows, climate anomalies, cyber threat IOCs, GPS/GNSS jamming zones, CII country risk heatmap, geopolitical boundaries (Korean DMZ), stock exchanges, financial centers, central banks, commodity hubs, Gulf investments, trade routes, airport delays, and more. All layer definitions are maintained in a single shared catalog (`map-layer-definitions.ts`) consumed by both renderers — adding a new layer is a single-file operation
-- **8 regional presets** — Global, Americas, Europe, MENA, Asia, Africa, Oceania, Latin America
-- **Time filtering** — 1h, 6h, 24h, 48h, 7d event windows
-- **URL state sharing** — map center, zoom, active layers, and time range are encoded in the URL for shareable views (`?view=mena&zoom=4&layers=conflicts,bases`)
-- **Mobile touch gestures** — single-finger pan with inertial velocity animation (0.92 decay factor, computed from 4-entry circular touch history), two-finger pinch-to-zoom with center-point preservation, and bottom-sheet popups with drag-to-dismiss. An 8px movement threshold prevents accidental interaction during taps
-- **Timezone-based region detection** — on first load, the map centers on the user's approximate region derived from `Intl.DateTimeFormat().resolvedOptions().timeZone` — no network dependency, no geolocation prompt. On mobile, the browser's Geolocation API is queried (5-second timeout) and the map auto-centers on the user's precise GPS coordinates at zoom level 6. If the URL already contains shared coordinates, the shared view takes precedence and geolocation is skipped
-- **Cmd+K map navigation** — the command palette supports `Map:` prefixed commands to fly to any country or region on either engine
-
-### AI-Powered Intelligence
-
-- **World Brief** — LLM-synthesized summary of top global developments with a 4-tier provider fallback chain: Ollama (local) → Groq (cloud) → OpenRouter (cloud) → browser-side T5 (Transformers.js). Each tier is attempted with a 5-second timeout before falling through to the next, so the UI is never blocked. Results are Redis-cached (24h TTL) and content-deduplicated so identical headlines across concurrent users trigger exactly one LLM call
-- **Local LLM Support** — Ollama and LM Studio (any OpenAI-compatible endpoint) run AI summarization entirely on local hardware. No API keys required, no data leaves the machine. The desktop app auto-discovers available models from the local instance and populates a selection dropdown, filtering out embedding-only models. Default fallback model: `llama3.1:8b`
-- **AI Deduction & Forecasting** — an interactive geopolitical analysis tool where analysts enter a free-text query (e.g., "What will happen in the next 24 hours in the Middle East?") and receive an LLM-generated near-term timeline deduction. The panel auto-populates context from the 15 most recent live headlines via `buildNewsContext()`, so the AI always has current situational awareness. Other panels can pre-fill and auto-submit queries via the `wm:deduct-context` custom event for seamless cross-panel deep-linking into contextual forecasts. Results are Redis-cached (1-hour TTL) by query hash to avoid redundant LLM calls
-- **Headline Memory (RAG)** — an opt-in client-side Retrieval-Augmented Generation system. When enabled in Settings, every incoming RSS headline is embedded using an ONNX model (`all-MiniLM-L6-v2`, 384-dimensional float32 vectors) running in a dedicated Web Worker, then stored in IndexedDB (`worldmonitor_vector_store`, capped at 5,000 vectors with LRU eviction by ingestion time). Any component can semantically search the headline archive using natural-language queries — results are ranked by brute-force cosine similarity and returned in score order. The entire pipeline runs locally in the browser with zero server dependency, enabling persistent semantic intelligence across sessions
-- **Hybrid Threat Classification** — instant keyword classifier with async LLM override for higher-confidence results
-- **Focal Point Detection** — correlates entities across news, military activity, protests, outages, and markets to identify convergence
-- **Country Instability Index** — real-time stability scores for every country with incoming data using weighted multi-signal blend. 23 curated tier-1 nations have tuned baseline risk profiles; all other countries receive universal scoring with sensible defaults when any event data (protests, conflicts, outages, displacement, climate anomalies) is detected. A **CII choropleth heatmap** paints every country on both flat and 3D globe views in a five-stop gradient (green → yellow → orange → red → dark-red) based on live instability scores (0–100), enabling analysts to scan global risk distribution at a glance. Clicking any country row in the CII panel navigates directly to that country's full intelligence brief
-- **Trending Keyword Spike Detection** — 2-hour rolling window vs 7-day baseline flags surging terms across RSS feeds, with CVE/APT entity extraction and auto-summarization
-- **Strategic Posture Assessment** — composite risk score combining all intelligence modules with trend detection
-- **Country Brief Pages** — click any country for a full-page intelligence dossier with CII score ring, AI-generated analysis, top news with citation anchoring, prediction markets, 7-day event timeline, active signal chips, infrastructure exposure, and stock market index — exportable as JSON, CSV, or image
-
-### Real-Time Data Layers
+### Data Layers
 
 <details>
-<summary><strong>Geopolitical</strong></summary>
+<summary><strong>Geopolitical</strong> — conflicts, hotspots, protests, disasters, sanctions, cyber IOCs, GPS jamming, Iran events</summary>
 
-- Active conflict zones with escalation tracking (UCDP + ACLED)
-- Intelligence hotspots with news correlation
-- Social unrest events (dual-source: ACLED protests + GDELT geo-events, Haversine-deduplicated)
-- Natural disasters from 3 sources (USGS earthquakes M4.5+, GDACS alerts, NASA EONET events)
-- Sanctions regimes
-- Cyber threat IOCs (C2 servers, malware hosts, phishing, malicious URLs) geo-located on the globe
-- GPS/GNSS jamming zones from ADS-B transponder analysis (H3 hex grid, interference % classification)
-- Geopolitical boundary overlays — Korean DMZ (43-point closed-ring polygon based on the Korean Armistice Agreement), with typed boundary categories (demilitarized, ceasefire, disputed, armistice) and info popups
-- Weather alerts and severe conditions
-
+[Full details →](./docs/DATA_SOURCES.md#data-layers)
 </details>
 
 <details>
-<summary><strong>Military & Strategic</strong></summary>
+<summary><strong>Military & Strategic</strong> — 210+ bases, live flights (ADS-B), naval vessels (AIS), nuclear facilities, spaceports</summary>
 
-- 210+ military bases from 9 operators
-- Live military flight tracking (ADS-B)
-- Naval vessel monitoring (AIS)
-- Nuclear facilities & gamma irradiators
-- APT cyber threat actor attribution
-- Spaceports & launch facilities
-
+[Full details →](./docs/DATA_SOURCES.md#data-layers)
 </details>
 
 <details>
-<summary><strong>Infrastructure</strong></summary>
+<summary><strong>Infrastructure</strong> — undersea cables, pipelines, 111 AI datacenters, 83 strategic ports, 107 airports, trade routes</summary>
 
-- Undersea cables with landing points, cable health advisories (NGA navigational warnings), and cable repair ship tracking
-- Oil & gas pipelines
-- AI datacenters (111 major clusters)
-- 83 strategic ports across 6 types (container, oil, LNG, naval, mixed, bulk) with throughput rankings
-- Internet outages (Cloudflare Radar)
-- Critical mineral deposits
-- NASA FIRMS satellite fire detection (VIIRS thermal hotspots)
-- 19 global trade routes (container, energy, bulk) with multi-segment arcs through strategic chokepoints
-- Airport delays and closures across 107 monitored airports (FAA + AviationStack + ICAO NOTAM)
-
+[Full details →](./docs/DATA_SOURCES.md#data-layers)
 </details>
 
 <details>
-<summary><strong>Market & Crypto Intelligence</strong></summary>
+<summary><strong>Market & Crypto</strong> — 7-signal macro radar, market watchlist, Gulf economies, crypto, prediction markets, stablecoins, ETF flows</summary>
 
-- 7-signal macro radar with composite BUY/CASH verdict
-- **Gulf Economies panel** — live data for GCC financial markets across three sections: **Indices** (Tadawul/Saudi Arabia, Dubai Financial Market, Abu Dhabi, Qatar, WisdomTree Gulf Dividend, Muscat MSM 30), **Currencies** (SAR, AED, QAR, KWD, BHD, OMR vs USD), and **Oil** (WTI Crude, Brent Crude). All quotes fetched from Yahoo Finance with staggered batching, Redis-cached for 8 minutes, with mini sparklines per quote and 60-second polling
-- Real-time crypto prices (BTC, ETH, SOL, XRP, and more) via CoinGecko
-- BTC spot ETF flow tracker (IBIT, FBTC, GBTC, and 7 more)
-- Stablecoin peg health monitor (USDT, USDC, DAI, FDUSD, USDe)
-- Fear & Greed Index with 30-day history
-- Bitcoin technical trend (SMA50, SMA200, VWAP, Mayer Multiple)
-- JPY liquidity signal, QQQ/XLP macro regime, BTC hash rate
-- Inline SVG sparklines and donut gauges for visual trends
-
+[Full details →](./docs/DATA_SOURCES.md#data-layers)
 </details>
 
 <details>
-<summary><strong>Tech Ecosystem</strong> (Tech variant)</summary>
+<summary><strong>Tech Ecosystem</strong> — company HQs, startup hubs, cloud regions, accelerators, conferences</summary>
 
-- Tech company HQs (Big Tech, unicorns, public)
-- Startup hubs with funding data
-- Cloud regions (AWS, Azure, GCP)
-- Accelerators (YC, Techstars, 500)
-- Upcoming tech conferences
-
+[Full details →](./docs/DATA_SOURCES.md#data-layers)
 </details>
 
 <details>
-<summary><strong>Finance & Markets</strong> (Finance variant)</summary>
+<summary><strong>Finance & Markets</strong> — 92 stock exchanges, 19 financial centers, 13 central banks, BIS data, WTO trade policy, Gulf FDI</summary>
 
-- 92 global stock exchanges — mega (NYSE, NASDAQ, Shanghai, Euronext, Tokyo), major (Hong Kong, London, NSE/BSE, Toronto, Korea, Saudi Tadawul), and emerging markets — with market caps and trading hours
-- 19 financial centers — ranked by Global Financial Centres Index (New York #1 through offshore centers: Cayman Islands, Luxembourg, Bermuda, Channel Islands)
-- 13 central banks — Federal Reserve, ECB, BoJ, BoE, PBoC, SNB, RBA, BoC, RBI, BoK, BCB, SAMA, plus supranational institutions (BIS, IMF)
-- BIS central bank data — policy rates across major economies, real effective exchange rates (REER), and credit-to-GDP ratios sourced from the Bank for International Settlements
-- 10 commodity hubs — exchanges (CME Group, ICE, LME, SHFE, DCE, TOCOM, DGCX, MCX) and physical hubs (Rotterdam, Houston)
-- Gulf FDI investment layer — 64 Saudi/UAE foreign direct investments plotted globally, color-coded by status (operational, under-construction, announced), sized by investment amount
-- WTO trade policy intelligence — active trade restrictions, tariff trends, bilateral trade flows, and SPS/TBT barriers sourced from the World Trade Organization
-
+[Full details →](./docs/FINANCE_DATA.md)
 </details>
 
 ### Live News & Video
+- **435+ RSS feeds** across geopolitics, defense, energy, tech, and finance with server-side aggregation (95% fewer edge invocations). [Details →](./docs/DATA_SOURCES.md#server-side-aggregation)
+- **30+ live video streams** — Bloomberg, Sky News, Al Jazeera, and more with HLS native streaming, idle-aware playback, and fullscreen mode
+- **22 live webcams** — geopolitical hotspot streams across 5 regions with Iran/Attacks dedicated tab
+- **Custom keyword monitors** — user-defined alerts with word-boundary matching and auto-coloring
 
-- **170+ RSS feeds** across geopolitics, defense, energy, tech, and finance — domain-allowlisted proxy prevents CORS issues. Each variant loads its own curated feed set: ~25 categories for geopolitical, ~20 for tech, ~18 for finance. **Server-side feed aggregation** — a single `listFeedDigest` RPC call fetches all feeds server-side (batched at 20 concurrent requests with 8-second per-feed timeouts and a 25-second overall deadline), caches the categorized digest in Redis for 15 minutes, and serves it to all clients. This eliminates per-client feed fan-out, reducing Vercel Edge invocations by approximately 95%. Individual feed results are separately cached for 10 minutes, so repeated digest builds within that window reuse previously fetched content
-- **Smart default sources with locale boost** — new installations start with a curated subset (~101 sources, Tier 1+2 per panel, minimum 8 per panel) rather than all 170+ feeds. For non-English users, a one-time locale-aware boost automatically enables native-language feeds matching the browser's language (e.g., viewing in Korean enables Yonhap and Chosun Ilbo; viewing in Greek enables Kathimerini, Naftemporiki, and Proto Thema). 21 languages have dedicated native-language feed sets — feeds declare their `lang` field and the boost function matches against the browser locale
-- **9 default live video streams** — Bloomberg, Sky News, Al Jazeera, Euronews, DW, France24, CNBC, CNN, Al Arabiya — with automatic live detection that scrapes YouTube channel pages every 5 minutes to find active streams. 70+ additional channels available from an expandable library (Fox, BBC, CNN Turk, TRT, RT, CBS, NBC, CNN Brasil, and more) across 6 region tabs including **Oceania** (ABC News Australia). On mobile, channel tabs scroll horizontally with native touch inertia and snap-to-button alignment instead of wrapping to multiple rows
-- **HLS native streaming** — 18+ channels (Sky News, Euronews, DW, France24, Al Arabiya, CBS News, TRT World, Sky News Arabia, Al Hadath, RT, ABC News AU, Tagesschau24, India Today, KAN 11, TV5Monde Info, Arise News, NHK World, Fox News, and more) stream via native HLS `<video>` elements instead of YouTube iframes, bypassing cookie popups, bot checks, and WKWebView autoplay restrictions. CNN and CNBC stream via a proxied HLS path through the sidecar. HLS failure triggers automatic 5-minute cooldown with YouTube iframe fallback. RT (Russia Today) — banned from YouTube — streams exclusively via HLS
-- **Fullscreen live video** — a toggle button in the Live News panel header expands the video grid to fill the entire viewport, hiding all other panels. The fullscreen state applies CSS overrides to both the panel element and the document body, with an icon that swaps between expand and collapse states
-- **Desktop embed bridge** — YouTube's IFrame API restricts playback in native webviews (error 153). The dashboard detects this and transparently routes through a cloud-hosted embed proxy with bidirectional message passing (play/pause/mute/unmute/loadVideo)
-- **Idle-aware playback** — video players pause and are removed from the DOM after 5 minutes of inactivity, resuming when the user returns. Tab visibility changes also suspend/resume streams. A **"Keep live streams running"** toggle in Settings disables the idle timer entirely, keeping streams active indefinitely regardless of inactivity — useful for always-on monitoring stations
-- **Global streaming quality control** — a user-selectable quality setting (auto, 360p, 480p, 720p) that applies to all live video streams across the dashboard. The preference persists in localStorage and propagates to active players via a `stream-quality-changed` CustomEvent — no reload required when switching quality
-- **22 live webcams** — real-time YouTube streams from geopolitical hotspots across 5 regions (Iran/Attacks, Middle East, Europe, Americas, Asia-Pacific). Grid view shows 4 strategic feeds simultaneously; single-feed view available. Region filtering (IRAN/MIDEAST/EUROPE/AMERICAS/ASIA), idle-aware playback that pauses after 5 minutes, and Intersection Observer-based lazy loading. The Iran/Attacks tab provides a dedicated 2×2 grid of Tehran, Tel Aviv, and Jerusalem feeds for real-time visual monitoring during escalation events. On mobile, the grid view is disabled and the panel is locked to single-stream mode to conserve battery and bandwidth — region tabs scroll horizontally with native touch inertia and snap-to-button alignment
-- **Custom keyword monitors** — user-defined keyword alerts with word-boundary matching (prevents "ai" from matching "train"), automatic color-coding from a 10-color palette, and multi-keyword support (comma-separated). Monitors search across both headline titles and descriptions and show real-time match counts
-- **Breaking news click-through** — clicking a breaking news banner scrolls the page to the RSS panel that sourced the alert and applies a 1.5-second flash highlight animation. The source mapping uses `getSourcePanelId()` to resolve each news source name to its parent category panel
-- **Entity extraction** — Auto-links countries, leaders, organizations
-- **Instant flat render** — news items appear immediately as a flat list the moment feed data arrives. ML-based clustering (topic grouping, entity extraction, sentiment analysis) runs asynchronously in the background and progressively upgrades the view when ready — eliminating the 1–3 second blank delay that would occur if clustering blocked initial render. Finance variant categories fetch with 5 concurrent requests (vs 3) for ~10–15 second faster cold starts
-- **Virtual scrolling** — news panels with 15+ items use a custom virtual list renderer that only creates DOM elements for visible items plus a 3-item overscan buffer. Viewport spacers simulate full-list height. Uses `requestAnimationFrame`-batched scroll handling and `ResizeObserver` for responsive adaptation. DOM elements are pooled and recycled rather than created/destroyed
+### Scoring & Detection
+- **Country Instability Index (CII)** — real-time stability scores using weighted multi-signal blend across 23 tier-1 nations + universal scoring for all countries. [Details →](./docs/ALGORITHMS.md#country-instability-index-cii)
+- **Hotspot Escalation** — dynamic scoring blending news activity, CII, geo-convergence, and military signals. [Details →](./docs/ALGORITHMS.md#hotspot-escalation-scoring)
+- **Strategic Risk Score** — composite geopolitical risk from convergence, CII, infrastructure, theater, and breaking news. [Details →](./docs/ALGORITHMS.md#strategic-risk-score-algorithm)
+- **Signal Aggregation** — multi-source fusion with temporal baseline anomaly detection (Welford's algorithm). [Details →](./docs/ALGORITHMS.md#signal-aggregation)
+- **Cross-Stream Correlation** — 14 signal types detecting patterns across news, markets, military, and predictions. [Details →](./docs/ALGORITHMS.md#cross-stream-correlation-engine)
 
-### Signal Aggregation & Anomaly Detection
+### Finance & Markets
+- **Macro Signal Analysis** — 7-signal market radar with composite BUY/CASH verdict. [Details →](./docs/FINANCE_DATA.md#macro-signal-analysis-market-radar)
+- **Gulf FDI** — 64 Saudi/UAE investments plotted globally. [Details →](./docs/FINANCE_DATA.md#gulf-fdi-investment-database)
+- **Stablecoin & BTC ETF** — peg health monitoring and spot ETF flow tracking. [Details →](./docs/FINANCE_DATA.md)
+- **Oil & Energy** — WTI/Brent prices, production, inventory via EIA. [Details →](./docs/FINANCE_DATA.md#oil--energy-analytics)
+- **BIS & WTO** — central bank rates, trade policy intelligence. [Details →](./docs/FINANCE_DATA.md)
 
-- **Multi-source signal fusion** — internet outages, military flights, naval vessels, protests, AIS disruptions, satellite fires, and keyword spikes are aggregated into a unified intelligence picture with per-country and per-region clustering
-- **Temporal baseline anomaly detection** — Welford's online algorithm computes streaming mean/variance per event type, region, weekday, and month over a 90-day window. Z-score thresholds (1.5/2.0/3.0) flag deviations like "Military flights 3.2x normal for Thursday (January)" — stored in Redis via Upstash
-- **Regional convergence scoring** — when multiple signal types spike in the same geographic area, the system identifies convergence zones and escalates severity
+### Desktop & Mobile
+- **Native desktop app** (Tauri) — macOS, Windows, Linux with OS keychain, local sidecar, and cloud fallback. [Details →](./docs/DESKTOP_APP.md)
+- **Progressive Web App** — installable with offline map support (CacheFirst tiles, 500-tile cap)
+- **Mobile-optimized map** — touch pan with inertia, pinch-to-zoom, bottom-sheet popups, GPS centering
+- **Responsive layout** — ultra-wide L-shaped layout on 2000px+, collapsible panels, mobile search sheet
 
-### Story Sharing & Social Export
-
-- **Shareable intelligence stories** — generate country-level intelligence briefs with CII scores, threat counts, theater posture, and related prediction markets
-- **Multi-platform export** — custom-formatted sharing for Twitter/X, LinkedIn, WhatsApp, Telegram, Reddit, and Facebook with platform-appropriate formatting
-- **Deep links** — every story generates a unique URL (`/story?c=<country>&t=<type>`) with dynamic Open Graph meta tags for rich social previews
-- **Canvas-based image generation** — stories render as PNG images for visual sharing, with QR codes linking back to the live dashboard
-- **Dynamic Open Graph images** — the `/api/og-story` endpoint generates 1200×630px SVG cards on-the-fly for each country story. Cards display the country name, CII score gauge arc with threat-level coloring, a 0–100 score bar, and signal indicator chips (threats, military, markets, convergence). Social crawlers (Twitter, Facebook, LinkedIn, Telegram, Discord, Reddit, WhatsApp) receive these cards via `og:image` meta tags, while regular browsers get a 302 redirect to the SPA. Bot detection uses a user-agent regex for 10+ known social crawler signatures
-
-### Desktop Application (Tauri)
-
-- **Native desktop app** for macOS, Windows, and Linux — packages the full dashboard with a local Node.js sidecar that runs all 60+ API handlers locally
-- **OS keychain integration** — API keys stored in the system credential manager (macOS Keychain, Windows Credential Manager), never in plaintext files
-- **Token-authenticated sidecar** — a unique session token prevents other local processes from accessing the sidecar on localhost. Generated per launch using randomized hashing
-- **Cloud fallback** — when a local API handler fails or is missing, requests transparently fall through to the cloud deployment (worldmonitor.app) with origin headers stripped
-- **Settings window** — dedicated configuration UI (Cmd+,) with three tabs: **LLMs** (Ollama endpoint, model selection, Groq, OpenRouter), **API Keys** (12+ data source credentials with per-key validation), and **Debug & Logs** (traffic log, verbose mode, log files). Each tab runs an independent verification pipeline — saving in the LLMs tab doesn't block API Keys validation
-- **Automatic model discovery** — when you set an Ollama or LM Studio endpoint URL in the LLMs tab, the settings panel immediately queries it for available models (tries Ollama native `/api/tags` first, then OpenAI-compatible `/v1/models`) and populates a dropdown. Embedding models are filtered out. If discovery fails, a manual text input appears as fallback
-- **Cross-window secret sync** — the main dashboard and settings window run in separate webviews with independent JS contexts. Saving a secret in Settings writes to the OS keychain and broadcasts a `localStorage` change event. The main window listens for this event and hot-reloads all secrets without requiring an app restart
-- **Consolidated keychain vault** — all secrets are stored as a single JSON blob in one keychain entry (`secrets-vault`) rather than individual entries per key. This reduces macOS Keychain authorization prompts from 20+ to exactly 1 on each app launch. A one-time migration reads any existing individual entries, consolidates them, and cleans up the old format
-- **Verbose debug mode** — toggle traffic logging with persistent state across restarts. View the last 200 requests with timing, status codes, and error details
-- **DevTools toggle** — Cmd+Alt+I opens the embedded web inspector for debugging
-- **Auto-update checker** — polls the cloud API for new versions every 6 hours. Displays a non-intrusive update badge with direct download link and per-version dismiss. Variant-aware — a Tech Monitor desktop app links to the correct Tech Monitor release asset
-
-### Progressive Web App
-
-- **Installable** — the dashboard can be installed to the home screen on mobile or as a standalone desktop app via Chrome's install prompt. Full-screen `standalone` display mode with custom theme color
-- **Offline map support** — MapTiler tiles are cached using a CacheFirst strategy (up to 500 tiles, 30-day TTL), enabling map browsing without a network connection
-- **Smart caching strategies** — APIs and RSS feeds use NetworkOnly (real-time data must always be fresh), while fonts (1-year TTL), images (7-day StaleWhileRevalidate), and static assets (1-year immutable) are aggressively cached
-- **Auto-updating service worker** — checks for new versions every 60 minutes. Tauri desktop builds skip service worker registration entirely (uses native APIs instead)
-- **Offline fallback** — a branded fallback page with retry button is served when the network is unavailable
-
-### Additional Capabilities
-
-- Signal intelligence with "Why It Matters" context
-- Infrastructure cascade analysis with proximity correlation
-- Maritime & aviation tracking with surge detection
-- Prediction market integration (Polymarket) with 3-tier JA3 bypass (browser-direct → Tauri native TLS → cloud proxy)
-- **Telegram intelligence feed** — 26 OSINT and breaking news channels (Aurora Intel, BNO News, OSINTdefender, DeepState, LiveUAMap, and more) polled via MTProto client on the Railway relay. Messages are deduplicated, topic-classified (breaking/conflict/alerts/osint/politics), and served through a Vercel edge proxy with 30-second client caching
-- **OREF rocket alert integration** — near-real-time Israeli Home Front Command siren data (incoming rockets, missiles, drones) polled from `oref.org.il` via residential proxy through the Railway relay (Akamai WAF blocks datacenter IPs). Tracks live alerts and rolling 24-hour history with wave detection. Alert counts feed into CII scoring for Israel (up to +50 conflict score boost)
-- **Government travel advisory aggregation** — security advisories from 4 governments (US State Dept, Australia DFAT, UK FCDO, New Zealand MFAT), 13 US Embassy country-specific feeds, and health agencies (CDC, ECDC, WHO) are aggregated, country-mapped, and deduplicated. Advisory levels feed into CII as both score boosts (+5 to +15) and minimum score floors (Do-Not-Travel forces CII ≥ 60), preventing optimistic drift for countries with active travel warnings from multiple governments
-- **GPS/GNSS interference mapping** — ADS-B transponder data from gpsjam.org identifies H3 hex cells where aircraft report GPS anomalies. Cells with >2% interference are classified as medium (amber), >10% as high (red). Interference zones feed into CII security scoring (up to +35 points per country) and are region-tagged across 12 conflict zones (Iran-Iraq, Ukraine-Russia, Levant, Baltic, etc.)
-- Service status monitoring (cloud providers, AI services)
-- Shareable map state via URL parameters (view, zoom, coordinates, time range, active layers)
-- Data freshness monitoring across 28+ data sources with explicit intelligence gap reporting
-- Per-feed circuit breakers with 5-minute cooldowns to prevent cascading failures
-- **Browser-side ML worker** (Transformers.js) for NER and sentiment analysis without server dependency — controllable via a "Browser Local Model" toggle in AI Flow settings. When disabled, the ML worker is never initialized, eliminating ONNX model downloads and WebGL memory allocation. The toggle propagates dynamically — enabling it mid-session initializes the worker immediately, disabling it terminates it
-- **Cmd+K command palette** — fuzzy search across 20+ result types (news, countries, hotspots, markets, bases, cables, datacenters, nuclear facilities, and more), plus layer toggle commands, layer presets (e.g., `layers:military`, `layers:finance`), and instant country brief navigation for all ~250 ISO countries with flag emoji icons. Commands are disambiguated by prefix — `Map: France` flies the map to France, `Brief: France` opens the intelligence dossier, and `Panel: Europe` scrolls to the Europe RSS panel. Curated countries include search aliases (e.g., typing "kremlin" or "putin" finds Russia). Scoring ranks exact matches (3pts) above prefix matches (2pts) above substring matches (1pt). Recent searches are stored in localStorage (max 8 entries). An empty-state tips rotator shows 4 random contextual hints from 6 categories (clickable to prefill the search). Fully localized across all 21 languages
-- **Historical playback** — dashboard snapshots are stored in IndexedDB. A time slider allows rewinding to any saved state, with live updates paused during playback
-- **TV Mode** — an ambient fullscreen panel cycling mode designed for the Happy variant (also available on all variants). Entering TV Mode goes fullscreen, hides all panels except one, and cycles through each panel and the map on a configurable timer (30 seconds to 2 minutes, default 1 minute). The interval is persisted in localStorage. Press Escape to exit. Driven by CSS via `[data-tv-mode]` data attribute with visual overrides in `happy-theme.css`
-- **Badge animation toggle** — an opt-in setting in the unified settings panel ("Badge Animation") enables a CSS `bump` keyframe animation on panel count badges whenever their count increases. Disabled by default to avoid distraction. The Intelligence Findings badge has its own always-on `pulse` animation for new findings
-- **Cache purge admin endpoint** — `POST /api/cache-purge` allows targeted Redis key deletion without redeploying. Accepts up to 20 explicit keys and/or 3 glob patterns, uses SCAN-based resolution (max 5 iterations, 200 deletion cap), protects rate-limit and durable data prefixes, and requires timing-safe HMAC authentication via `RELAY_SHARED_SECRET`. Supports `dryRun: true` for preview
-- **Mobile-optimized map** — on mobile devices, the map fills the full viewport height for an immersive app-like experience. Touch gestures include single-finger pan with an 8px movement threshold and inertial velocity animation (0.92 decay factor, velocity computed from 4-entry circular touch history), two-finger pinch-to-zoom with center-point preservation, and a bottom-sheet popup mode that slides up from the bottom with drag-to-dismiss (96px threshold). A click guard prevents accidental popup opens after drag gestures. On first load, the browser's GPS is queried (5-second timeout) and the map auto-centers on the user's position at regional zoom — shared map links with embedded coordinates take precedence
-- **Mobile detection** — screens below 768px receive a warning modal since the dashboard is designed for multi-panel desktop use. On mobile, the GitHub link is replaced with a settings gear icon for quick access to the unified settings panel
-- **World Clock panel** — zero-API-dependency live clocks for 30 curated global financial centers. Auto-detects the user's home city from browser timezone. Each row shows current local time, market open/closed status, and a day/night progress bar. Users add or remove cities via a settings gear. Rows are drag-to-reorder (using `mousedown`/`mousemove`/`mouseup` for WKWebView compatibility), with order persisted to localStorage. Available on full, tech, and finance variants
-- **UCDP conflict classification** — countries with active wars (1,000+ battle deaths/year) receive automatic CII floor scores, preventing optimistic drift. The UCDP GED API integration uses automatic version discovery (probing multiple year-based API versions in parallel), negative caching (5-minute backoff after upstream failures), discovered-version caching (1-hour TTL), and stale-on-error fallback to ensure conflict data is always available even when the upstream API is intermittently down
-- **HAPI humanitarian data** — UN OCHA humanitarian access metrics and displacement flows feed into country-level instability scoring with dual-perspective (origins vs. hosts) panel
-- **Idle-aware resource management** — animations pause after 2 minutes of inactivity and when the tab is hidden, preventing battery drain. Video streams are destroyed from the DOM and recreated on return. On desktop (Tauri), the 3D globe's WebGL render loop pauses when the window loses focus or the globe panel is hidden — any data updates received while paused are queued and flushed in a single batch on resume
-- **Country-specific stock indices** — country briefs display the primary stock market index with 1-week change (S&P 500 for US, Shanghai Composite for China, etc.) via the `/api/stock-index` endpoint
-- **Climate anomaly panel** — 15 conflict-prone zones monitored for temperature/precipitation deviations against 30-day ERA5 baselines, with severity classification feeding into CII
-- **Country brief export** — every brief is downloadable as structured JSON, flattened CSV, or rendered PNG image, enabling offline analysis and reporting workflows
-- **Print/PDF support** — country briefs include a print button that triggers the browser's native print dialog, producing clean PDF output
-- **Oil & energy analytics** — WTI/Brent crude prices, US production (Mbbl/d), and inventory levels via the EIA API with weekly trend detection
-- **Population exposure estimation** — WorldPop density data estimates civilian population within event-specific radii (50–100km) for conflicts, earthquakes, floods, and wildfires
-- **Trending keywords panel** — real-time display of surging terms across all RSS feeds with spike severity, source count, and AI-generated context summaries
-- **Download banner** — persistent notification for web users linking to native desktop installers for their detected platform
-- **Download API** — `/api/download?platform={windows-exe|windows-msi|macos-arm64|macos-x64|linux-appimage}[&variant={full|tech|finance}]` redirects to the matching GitHub Release asset, with fallback to the releases page
-- **Universal country coverage** — every country with incoming event data receives a live CII score automatically, not just the 23 curated tier-1 nations. Clicking any country opens a full brief with available data (news, markets, infrastructure), and non-curated countries use sensible default baselines (`DEFAULT_BASELINE_RISK = 15`) with display names resolved via `Intl.DisplayNames`
-- **Feature toggles** — 15 runtime toggles (AI/Ollama, AI/Groq, AI/OpenRouter, FRED economic, EIA energy, internet outages, ACLED conflicts, threat intel feeds, AIS relay, OpenSky, Finnhub, NASA FIRMS) stored in `localStorage`, allowing administrators to enable/disable data sources without rebuilding
-- **AIS chokepoint detection** — the relay server monitors 8 strategic maritime chokepoints (Strait of Hormuz, Suez Canal, Malacca Strait, Bab el-Mandeb, Panama Canal, Taiwan Strait, South China Sea, Turkish Straits) and classifies transiting vessels by naval candidacy using MMSI prefixes, ship type codes, and name patterns
-- **AIS density grid** — vessel positions are aggregated into 2°×2° geographic cells over 30-minute windows, producing a heatmap of maritime traffic density that feeds into convergence detection
-- **Panel resizing** — drag handles on panel edges allow height adjustment (span-1 through span-4 grid rows), persisted to localStorage. Double-click resets to default height
-- **Ultra-wide monitor layout** — on screens 2000px+ wide, the layout automatically switches from vertical stacking to an L-shaped arrangement: the map floats left at 60% width while panels tile to the right and below it, maximizing screen real estate on ultra-wide and 4K monitors. Uses CSS `display: contents` and float-based wrapping — no JavaScript layout engine required
-- **Dark/light theme** — persistent theme toggle with 20+ semantic color variable overrides. Dark theme is the default. Theme preference is stored in localStorage, applied before first paint (no flash of wrong theme), and syncs the `<meta name="theme-color">` for native browser chrome. A `theme-changed` custom event allows panels to react to switches
-- **Panel drag-and-drop reordering** — panels can be reordered via drag-and-drop within the grid. The custom order is persisted to localStorage and restored on reload. Touch events are supported for tablet use
-- **Map pin mode** — a 📌 button pins the map in a fixed position so it remains visible while scrolling through panels. Pin state is persisted to localStorage
-- **Opt-in intelligence alert popups** — the Intelligence Findings badge accumulates signals and alerts silently in the background. A toggle switch in the badge's dropdown header lets users opt in to automatic popup notifications when high-priority findings arrive. The popup preference is stored in localStorage (default: off), so the dashboard never interrupts users who haven't explicitly requested it. The badge continues counting and pulsing regardless of the popup setting — clicking the badge always opens the full findings dropdown
-
----
-
-## Regression Testing
-
-Map overlay behavior is validated in Playwright using the map harness (`/tests/map-harness.html`).
-
-- Cluster-state cache initialization guard:
-  - `updates protest marker click payload after data refresh`
-  - `initializes cluster movement cache on first protest cluster render`
-- Run by variant:
-  - `npm run test:e2e:full -- -g "updates protest marker click payload after data refresh|initializes cluster movement cache on first protest cluster render"`
-  - `npm run test:e2e:tech -- -g "updates protest marker click payload after data refresh|initializes cluster movement cache on first protest cluster render"`
+### Platform Features
+- **21 languages** — lazy-loaded bundles with native-language RSS feeds, AI translation, and RTL support
+- **Cmd+K command palette** — fuzzy search across 24 result types, layer presets, ~250 country commands
+- **Proto-first API contracts** — 92 proto files, 22 services, auto-generated TypeScript + OpenAPI docs
+- **Dark/light theme** — persistent toggle with 20+ semantic color variables
+- **Story sharing** — intelligence briefs exportable to Twitter/X, LinkedIn, WhatsApp, Telegram, Reddit with OG images
 
 ---
 
 ## How It Works
 
-### Country Brief Pages
+### AI & Analysis Pipeline
 
-Clicking any country on the map opens a full-page intelligence dossier — a single-screen synthesis of all intelligence modules for that country. The brief is organized into a two-column layout:
+**AI Summarization** — 4-tier provider chain (Ollama → Groq → OpenRouter → browser T5) with headline deduplication, variant-aware prompting, and Redis caching (24h TTL). [Details →](./docs/AI_INTELLIGENCE.md#ai-summarization-chain)
 
-**Left column**:
+**AI Deduction** — interactive geopolitical forecasting grounded in 15 most recent headlines, cached 1 hour by query hash. [Details →](./docs/AI_INTELLIGENCE.md#ai-deduction--forecasting)
 
-- **Instability Index** — animated SVG score ring (0–100) with four component breakdown bars (Unrest, Conflict, Security, Information), severity badge, and trend indicator
-- **Intelligence Brief** — AI-generated analysis (Ollama local / Groq / OpenRouter, depending on configured provider) with inline citation anchors `[1]`–`[8]` that scroll to the corresponding news source when clicked
-- **Top News** — 8 most relevant headlines for the country, threat-level color-coded, with source and time-ago metadata
+**Headline Memory** — opt-in ONNX-powered RAG system storing 5,000 headline vectors in IndexedDB for semantic search. [Details →](./docs/AI_INTELLIGENCE.md#client-side-headline-memory-rag)
 
-**Right column**:
+**Threat Classification** — three-stage pipeline: instant keyword → browser ML → batched LLM, each improving confidence. [Details →](./docs/AI_INTELLIGENCE.md#threat-classification-pipeline)
 
-- **Active Signals** — real-time chip indicators for protests, military aircraft, naval vessels, internet outages, earthquakes, displacement flows, climate stress, conflict events, and the country's stock market index (1-week change)
-- **7-Day Timeline** — D3.js-rendered event chart with 4 severity-coded lanes (protest, conflict, natural, military), interactive tooltips, and responsive resizing
-- **Prediction Markets** — top 3 Polymarket contracts by volume with probability bars and external links
-- **Infrastructure Exposure** — pipelines, undersea cables, datacenters, military bases, nuclear facilities, and ports within a 600km radius of the country centroid, ranked by distance
+**Browser-Side ML** — Transformers.js runs NER, sentiment, and embeddings entirely in the browser via Web Workers. [Details →](./docs/AI_INTELLIGENCE.md#browser-side-ml-pipeline)
 
-**Headline relevance filtering**: each country has an alias map (e.g., `US → ["united states", "american", "washington", "pentagon", "biden", "trump"]`). Headlines are filtered using a negative-match algorithm — if another country's alias appears earlier in the headline title than the target country's alias, the headline is excluded. This prevents cross-contamination (e.g., a headline about Venezuela mentioning "Washington sanctions" appearing in the US brief).
+### Scoring Algorithms
 
-**Export options**: briefs are exportable as JSON (structured data with all scores, signals, and headlines), CSV (flattened tabular format), or PNG image. A print button triggers the browser's native print dialog for PDF export.
+**Country Instability Index** — 0–100 score from baseline risk (40%), unrest (20%), security (20%), and information velocity (20%), with conflict-zone floors and travel advisory boosts. [Details →](./docs/ALGORITHMS.md#country-instability-index-cii)
 
-### Local-First Country Detection
+**Hotspot Escalation** — blends news (35%), CII (25%), geo-convergence (25%), and military (15%) with 48-hour trend regression. [Details →](./docs/ALGORITHMS.md#hotspot-escalation-scoring)
 
-Map clicks resolve to countries using a local geometry service rather than relying on network reverse-geocoding (Nominatim). The system loads a GeoJSON file containing polygon boundaries for ~200 countries and builds an indexed spatial lookup:
+**Strategic Theater Posture** — 9 operational theaters assessed for NORMAL → ELEVATED → CRITICAL based on aircraft, strike capability, naval presence, and regional CII. [Details →](./docs/ALGORITHMS.md#strategic-theater-posture-assessment)
 
-1. **Bounding box pre-filter** — each country's polygon(s) are wrapped in a bounding box (`[minLon, minLat, maxLon, maxLat]`). Points outside the bbox are rejected without polygon intersection testing.
-2. **Ray-casting algorithm** — for points inside the bbox, a ray is cast from the point along the positive x-axis. The number of polygon edge intersections determines inside/outside status (odd = inside). Edge cases are handled: points on segment boundaries return `true`, and polygon holes are subtracted (a point inside an outer ring but also inside a hole is excluded).
-3. **MultiPolygon support** — countries with non-contiguous territories (e.g., the US with Alaska and Hawaii, Indonesia with thousands of islands) use MultiPolygon geometries where each polygon is tested independently.
+**Geographic Convergence** — 1°×1° spatial binning detects 3+ event types co-occurring within 24 hours. [Details →](./docs/ALGORITHMS.md#geographic-convergence-detection)
 
-This approach provides sub-millisecond country detection entirely in the browser, with no network latency. The geometry data is preloaded at app startup and cached for the session. For countries not in the GeoJSON (rare), the system falls back to hardcoded rectangular bounding boxes, and finally to network reverse-geocoding as a last resort.
+**Trending Keywords** — 2-hour rolling window vs 7-day baseline flags surging terms with CVE/APT extraction. [Details →](./docs/ALGORITHMS.md#trending-keyword-spike-detection)
 
-### AI Summarization Chain
+### Data Collection
 
-The World Brief is generated by a 4-tier provider chain that prioritizes local compute, falls back through cloud APIs, and degrades to browser-side inference as a last resort:
+**435+ RSS feeds** with 4-tier source credibility, server-side aggregation, and per-feed circuit breakers. [Details →](./docs/DATA_SOURCES.md)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   Summarization Request                        │
-│  (headlines deduplicated by Jaccard similarity > 0.6)          │
-└───────────────────────┬─────────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────┐    timeout/error
-│  Tier 1: Ollama / LM Studio    │──────────────┐
-│  Local endpoint, no cloud       │               │
-│  Auto-discovered model          │               │
-└─────────────────────────────────┘               │
-                                                  ▼
-                                   ┌─────────────────────────────┐    timeout/error
-                                   │  Tier 2: Groq               │──────────────┐
-                                   │  Llama 3.1 8B, temp 0.3     │               │
-                                   │  Fast cloud inference        │               │
-                                   └─────────────────────────────┘               │
-                                                                                 ▼
-                                                                  ┌─────────────────────────────┐    timeout/error
-                                                                  │  Tier 3: OpenRouter          │──────────────┐
-                                                                  │  Multi-model fallback        │               │
-                                                                  └─────────────────────────────┘               │
-                                                                                                                ▼
-                                                                                                 ┌──────────────────────────┐
-                                                                                                 │  Tier 4: Browser T5      │
-                                                                                                 │  Transformers.js (ONNX)  │
-                                                                                                 │  No network required     │
-                                                                                                 └──────────────────────────┘
-```
+**Military tracking** — ADS-B flights, AIS vessels, USNI fleet reports, Wingbits aircraft enrichment. [Details →](./docs/DATA_SOURCES.md#intelligence-feeds)
 
-All three API tiers (Ollama, Groq, OpenRouter) share a common handler factory (`_summarize-handler.js`) that provides identical behavior:
+**Telegram OSINT** — 26 channels via MTProto with dedup and topic classification. [Details →](./docs/DATA_SOURCES.md#telegram-osint-intelligence-feed)
 
-- **Headline deduplication** — before sending to any LLM, headlines are compared pairwise using word-overlap similarity. Near-duplicates (>60% overlap) are merged, reducing the prompt by 20–40% and preventing the LLM from wasting tokens on repeated stories
-- **Variant-aware prompting** — the system prompt adapts to the active dashboard variant. Geopolitical summaries emphasize conflict escalation and diplomatic shifts; tech summaries focus on funding rounds and AI breakthroughs; finance summaries highlight market movements and central bank signals
-- **Language-aware output** — when the UI language is non-English, the prompt instructs the LLM to generate the summary in that language
-- **Redis deduplication** — summaries are cached with a composite key (`summary:v3:{mode}:{variant}:{lang}:{hash}`) so the same headlines viewed by 1,000 concurrent users trigger exactly one LLM call. Cache TTL is 24 hours
-- **Graceful fallback** — if a provider returns `{fallback: true}` (missing API key or endpoint unreachable), the chain silently advances to the next tier. Progress callbacks update the UI to show which provider is being attempted
+**OREF rocket alerts** — Israel Home Front Command sirens via residential proxy. [Details →](./docs/DATA_SOURCES.md#oref-rocket-alert-integration)
 
-The Ollama tier communicates via the OpenAI-compatible `/v1/chat/completions` endpoint, making it compatible with any local inference server that implements this standard (Ollama, LM Studio, llama.cpp server, vLLM, etc.).
+**Prediction markets** — Polymarket contracts with 4-tier fetch and country matching. [Details →](./docs/DATA_SOURCES.md#prediction-markets)
 
-### AI Deduction & Forecasting
+### Architecture Overview
 
-The Deduction Panel is an interactive AI geopolitical analysis tool that produces near-term timeline forecasts grounded in live intelligence data.
+**Vanilla TypeScript** — no framework, direct DOM manipulation, custom Panel/VirtualList classes. The entire app shell weighs less than React's runtime. [Details →](./docs/ARCHITECTURE.md)
 
-**Request pipeline**:
+**Proto-first APIs** — 22 typed service domains with auto-generated clients, servers, and OpenAPI docs. [Details →](./docs/ARCHITECTURE.md#proto-first-api-contracts)
 
-1. The analyst enters a free-text query (e.g., "What will happen in the next 24 hours in the Middle East?") and an optional geographic context field
-2. Before submission, `buildNewsContext()` pulls the 15 most recent `NewsItem` titles from the live feed and prepends them as structured context (`"Recent News:\n- Headline (Source)"`) — ensuring the LLM always has current situational awareness
-3. The query is sent to the `deductSituation` RPC endpoint, which calls a Groq LLM (or any OpenAI-compatible endpoint via `LLM_API_URL`/`LLM_MODEL` env vars) with a system prompt instructing it to act as a "senior geopolitical intelligence analyst and forecaster"
-4. Temperature is 0.3 (low, for analytic consistency), max 1,500 tokens. Chain-of-thought `<think>` tags are stripped as defense-in-depth
-5. Results are cached in Redis for 1 hour by `deduct:situation:v1:<hash(query|geoContext)>` — identical queries serve instantly from cache
+**Edge functions** — 60+ Vercel Edge Functions split into per-domain thin entry points (~85% cold-start reduction). [Details →](./docs/ARCHITECTURE.md#edge-functions--deployment)
 
-**Cross-panel integration**: Any panel can dispatch a `wm:deduct-context` custom DOM event with `{ query, geoContext, autoSubmit }`, which pre-fills the Deduction Panel and optionally auto-submits. This enables contextual forecasting from any part of the dashboard — clicking "Analyze" on a theater posture card can automatically trigger a regional deduction. A 5-second cooldown prevents rapid re-submission.
+**3-tier caching** — in-memory → Redis → upstream with cache stampede prevention and stale-on-error fallback. [Details →](./docs/ARCHITECTURE.md#bandwidth--caching)
 
-The panel is lazy-loaded (`import()`) to exclude DOMPurify from the main bundle unless the panel is actually accessed, keeping the web bundle lean.
+**Bootstrap hydration** — 15 Redis keys pre-fetched in a single pipeline call for sub-second first render. [Details →](./docs/ARCHITECTURE.md#bootstrap-hydration)
 
 ### Client-Side Headline Memory (RAG)
 
@@ -1232,262 +1022,12 @@ A single codebase produces four specialized dashboards, each with distinct feeds
 | --------------------- | ---------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------- |
 | **Domain**            | worldmonitor.app                                     | tech.worldmonitor.app                           | finance.worldmonitor.app                         | happy.worldmonitor.app                                |
 | **Focus**             | Geopolitics, military, conflicts                     | AI/ML, startups, cybersecurity                  | Markets, trading, central banks                  | Good news, conservation, human progress               |
-| **RSS Feeds**         | 15 categories, 170 feeds (politics, MENA, Africa, think tanks) | 21 categories, 152 feeds (AI, VC blogs, startups, GitHub) | 14 categories, 55 feeds (forex, bonds, commodities, IPOs) | 5 categories, 21 positive-news sources (GNN, Positive.News, Upworthy) |
-| **Panels**            | 47 (strategic posture, CII, cascade, trade policy)   | 35 (AI labs, unicorns, accelerators)            | 33 (forex, bonds, derivatives, trade policy)     | 10 (good news, breakthroughs, conservation, renewables, giving) |
+| **RSS Feeds**         | 15 categories, 200+ feeds (politics, MENA, Africa, think tanks) | 21 categories, 152 feeds (AI, VC blogs, startups, GitHub) | 14 categories, 55 feeds (forex, bonds, commodities, IPOs) | 5 categories, 21 positive-news sources (GNN, Positive.News, Upworthy) |
+| **Panels**            | 45 (strategic posture, CII, cascade, trade policy, airline intel, predictions) | 28 (AI labs, unicorns, accelerators, tech readiness) | 27 (forex, bonds, derivatives, trade policy, gulf economies) | 10 (good news, breakthroughs, conservation, renewables, giving) |
 | **Unique Map Layers** | Military bases, nuclear facilities, hotspots         | Tech HQs, cloud regions, startup hubs           | Stock exchanges, central banks, Gulf investments | Positive events, kindness, species recovery, renewables |
 | **Desktop App**       | Marsd.app / .exe / .AppImage                 | Tech Monitor.app / .exe / .AppImage             | Finance Monitor.app / .exe / .AppImage           | (web-only)                                            |
 
-**Happy Monitor** is a deliberately uplifting counterpart to the geopolitical dashboard. All conflict, military, and threat overlays are disabled. The variant uses a warm nature-inspired color palette (`happy-theme.css`) and sources content from 10 dedicated positive-news RSS feeds (Good News Network, Positive.News, Reasons to be Cheerful, Optimist Daily, Upworthy, DailyGood, Good Good Good, GOOD Magazine, Sunny Skyz, The Better India). A two-pass positive classifier sorts articles into 6 categories — `science-health`, `nature-wildlife`, `humanity-kindness`, `innovation-tech`, `climate-wins`, `culture-community` — using source-name shortcuts (GNN sub-feeds are pre-classified) followed by priority-ordered keyword matching. Panels include Good News Feed with category filtering, Human Progress metrics, Live Counters, Today's Hero, Breakthroughs, 5 Good Things digest, Conservation Wins (species recovery stories), and Renewable Energy installations.
-
-**Happy Monitor panels in detail**:
-
-- **Good News Feed** — articles from 10 positive-news RSS sources, classified into 6 categories (`science-health`, `nature-wildlife`, `humanity-kindness`, `innovation-tech`, `climate-wins`, `culture-community`) using a two-pass classifier: source-name shortcuts (GNN sub-feeds are pre-classified by URL pattern) followed by priority-ordered keyword matching across 80+ positive terms
-- **Live Humanity Counters** — 6 real-time counters computed client-side with zero API dependency. Each counter calculates `(annual_total / seconds_per_year) × seconds_since_UTC_midnight` to show accumulating global progress throughout the day:
-
-| Counter             | Annual Total        | Rate      | Source                      |
-| ------------------- | ------------------- | --------- | --------------------------- |
-| Babies Born         | 135,600,000         | ~4.3/sec  | UN Population Division      |
-| Trees Planted       | 15,300,000,000      | ~485/sec  | Global Forest Watch / FAO   |
-| Vaccines Given      | 4,600,000,000       | ~146/sec  | WHO / UNICEF                |
-| Students Graduated  | 70,000,000          | ~2.2/sec  | UNESCO                      |
-| Books Published     | 2,200,000           | ~0.07/sec | UNESCO                      |
-| Renewable MW Added  | 510,000             | ~0.016/sec| IRENA / IEA                 |
-
-- **Conservation Wins** — a curated database of 10 species recovery stories (Bald Eagle, Humpback Whale, Giant Panda, Southern White Rhino, Gray Wolf, Peregrine Falcon, American Alligator, Arabian Oryx, California Condor, Mountain Gorilla) with population time-series data sourced from USFWS, IUCN, NOAA, and WWF. Each entry includes recovery status, population trend, and the conservation actions that drove recovery. The dataset is dynamically imported (code-split) so it only loads when the Happy variant is active
-- **Renewable Energy** — regional renewable electricity adoption data from the World Bank (`EG.ELC.RNEW.ZS` indicator, IEA-sourced), covering 8 regions with historical time-series from 1990. Static fallback data (29.6% global average, 2022) ensures the panel renders even when the API is unreachable
-- **Global Giving** — aggregates donation volumes across platforms (GoFundMe, GoGetFunding), crypto giving (wallet inflows, tracked transactions), and institutional giving (OECD Official Development Assistance, CAF World Giving Index, Candid grants). Displays an overall activity index with trend direction and daily flow estimates
-- **Human Progress**, **Today's Hero**, **Breakthroughs** (scrolling ticker), and **5 Good Things Digest** round out the positive-news experience
-
-**Single-deployment consolidation** — all four variants serve from a single Vercel deployment. The variant is determined at runtime by hostname detection (`tech.worldmonitor.app` → tech, `finance.worldmonitor.app` → finance, `happy.worldmonitor.app` → happy, default → full). This replaced the original multi-deployment approach, providing 4× higher CDN cache hit rates (shared static assets), a single CI pipeline with zero cross-deployment configuration drift, and instant switching without DNS lookups. Social bot OG responses generate variant-specific preview cards based on the requesting hostname.
-
-**Build-time selection** — the `VITE_VARIANT` environment variable controls which configuration is bundled. A Vite HTML plugin transforms meta tags, Open Graph data, PWA manifest, and JSON-LD structured data at build time. Each variant tree-shakes unused data files — the finance build excludes military base coordinates and APT group data, while the geopolitical build excludes stock exchange listings.
-
-**Runtime switching** — a variant selector in the header bar (🌍 WORLD | 💻 TECH | 📈 FINANCE | 😊 HAPPY) navigates between deployed domains on the web, or sets `localStorage['worldmonitor-variant']` in the desktop app to switch without rebuilding.
-
----
-
-## Architecture Principles
-
-| Principle                           | Implementation                                                                                                                                                                                                                                                                                                                            |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Speed over perfection**           | Keyword classifier is instant; LLM refines asynchronously. Users never wait.                                                                                                                                                                                                                                                              |
-| **Assume failure**                  | Per-feed circuit breakers with 5-minute cooldowns. AI fallback chain: Ollama (local) → Groq → OpenRouter → browser-side T5. Redis cache failures degrade to in-memory fallback with stale-on-error. Negative caching (5-minute backoff after upstream failures) prevents hammering downed APIs. Every edge function returns stale cached data when upstream APIs are down. **Cache stampede prevention** — `cachedFetchJson` uses an in-flight promise map to coalesce concurrent cache misses into a single upstream fetch: the first request creates and registers a Promise, all concurrent requests for the same key await that same Promise rather than independently hitting the upstream. Rate-sensitive APIs (Yahoo Finance) use staggered sequential requests with 150ms inter-request delays to avoid 429 throttling. UCDP conflict data uses automatic version discovery (probing multiple API versions in parallel), discovered-version caching (1-hour TTL), and stale-on-error fallback. |
-| **Show what you can't see**         | Intelligence gap tracker explicitly reports data source outages rather than silently hiding them.                                                                                                                                                                                                                                         |
-| **Browser-first compute**           | Analysis (clustering, instability scoring, surge detection) runs client-side — no backend compute dependency for core intelligence.                                                                                                                                                                                                       |
-| **Local-first geolocation**         | Country detection uses browser-side ray-casting against GeoJSON polygons rather than network reverse-geocoding. Sub-millisecond response, zero API dependency, works offline. Network geocoding is a fallback, not the primary path.                                                                                                      |
-| **Multi-signal correlation**        | No single data source is trusted alone. Focal points require convergence across news + military + markets + protests before escalating to critical.                                                                                                                                                                                       |
-| **Geopolitical grounding**          | Hard-coded conflict zones, baseline country risk, and strategic chokepoints prevent statistical noise from generating false alerts in low-data regions.                                                                                                                                                                                   |
-| **Defense in depth**                | CORS origin allowlist, domain-allowlisted RSS proxy, server-side API key isolation, token-authenticated desktop sidecar, input sanitization with output encoding, IP rate limiting on AI endpoints.                                                                                                                                       |
-| **Cache everything, trust nothing** | Three-tier caching (in-memory → Redis → upstream) with versioned cache keys and stale-on-error fallback. Every API response includes `X-Cache` header for debugging. CDN layer (`s-maxage`) absorbs repeated requests before they reach edge functions.                                                                                   |
-| **Bandwidth efficiency**            | Gzip compression on all relay responses (80% reduction). Content-hash static assets with 1-year immutable cache. Staggered polling intervals prevent synchronized API storms. Animations and polling pause on hidden tabs.                                                                                                                |
-| **Baseline-aware alerting**         | Trending keyword detection uses rolling 2-hour windows against 7-day baselines with per-term spike multipliers, cooldowns, and source diversity requirements — surfacing genuine surges while suppressing noise.                                                                                                                          |
-| **Contract-first APIs**             | Every API endpoint starts as a `.proto` definition with field validation, HTTP annotations, and examples. Code generation produces typed TypeScript clients and servers, eliminating schema drift. Breaking changes are caught automatically at CI time.                                                                                 |
-| **Run anywhere**                    | Same codebase produces four specialized variants (geopolitical, tech, finance, happy) from a single Vercel deployment and deploys to Vercel (web), Railway (relay), Tauri (desktop), and PWA (installable). Desktop sidecar mirrors all cloud API handlers locally. Service worker caches map tiles for offline use while keeping intelligence data always-fresh (NetworkOnly). |
-| **Graceful degradation**            | Every feature degrades gracefully when dependencies are unavailable. Missing API keys skip the associated data source — they don't crash the app. Failed upstream APIs serve stale cached data. Browser-side ML works without any server. The dashboard is useful with zero API keys configured (static layers, map, ML models all work offline). |
-| **Multi-source corroboration**      | Critical intelligence signals use multiple independent sources to reduce single-source bias. Protest data merges ACLED + GDELT with Haversine deduplication. Country risk blends news velocity + military activity + unrest events + baseline risk. Disaster data merges USGS + GDACS + NASA EONET on a 0.1° geographic grid.            |
-| **No framework overhead**           | Vanilla TypeScript with direct DOM manipulation, event delegation, and custom `Panel`/`VirtualList` classes. No virtual DOM diffing, no framework runtime, no adapter libraries. The entire application shell weighs less than React's runtime. Browser standards (Web Workers, IndexedDB, Intersection Observer, ResizeObserver, CustomEvent) serve as the reactivity and component model. |
-| **Type-safe data flow**             | Discriminated union markers (`_kind` field), proto-generated typed clients/servers, and exhaustive `switch` matching ensure compile-time safety across 15+ marker types, 22 service domains, and 45+ map layers. Adding a new data type produces compiler errors at every unhandled site. |
-
-### Intelligence Analysis Tradecraft
-
-The dashboard's design draws from established intelligence analysis methodology, adapted for automated open-source intelligence:
-
-**Structured Analytic Techniques (SATs)** — rather than presenting raw data, the system applies structured frameworks to reduce cognitive bias. The Country Instability Index decomposes "instability" into four weighted components (unrest, conflict, security, information velocity) — forcing analysts to consider each dimension independently rather than anchoring on the most salient headline. The Strategic Risk Score similarly decomposes geopolitical risk into convergence, CII, infrastructure, theater, and breaking news components.
-
-**Analysis of Competing Hypotheses (ACH)** — the multi-source corroboration requirement (news + military + markets + protests before escalating to critical) is an automated form of ACH. No single data stream can drive a critical alert alone — the system requires convergence across independent streams, reducing the impact of single-source reporting errors or propaganda campaigns.
-
-**Intelligence gap awareness** — professional intelligence assessments always note what they *don't* know. The data freshness tracker explicitly reports "what can't be seen" — 28+ sources with status categorization (fresh, stale, very_stale, no_data, error, disabled). When a critical data source goes down, the system displays the gap prominently rather than silently omitting it, preventing false confidence from incomplete data.
-
-**Source credibility weighting** — the 4-tier source hierarchy (wire services → major outlets → specialty → aggregators) mirrors intelligence community source evaluation (A–F reliability, 1–6 confidence). State-affiliated sources are included for completeness but tagged with propaganda risk indicators, enabling analysts to factor in editorial bias. Higher-tier sources carry more weight in focal point detection and alert generation.
-
-**Temporal context** — Welford's online baseline computation provides the temporal context that raw counts lack. "50 military flights" is meaningless without knowing that the average for this day of week and month is 15 — making the observation 3.3σ above normal. The system automatically provides this context for every signal type.
-
-**Kill chain awareness** — the Breaking News Alert Pipeline's 5-origin design mirrors the intelligence kill chain concept. RSS alerts provide initial detection; keyword spikes confirm emerging narratives; hotspot escalation and military surge provide corroborating signals; OREF sirens provide ground truth. Each origin adds confidence to the assessment.
-
-### Algorithmic Design Decisions
-
-Several non-obvious algorithmic choices are worth explaining:
-
-**Logarithmic vs. linear protest scoring** — Democracies experience routine protests that don't indicate instability (France's yellow vest movement, US campus protests). Authoritarian states rarely see public protest, so each event is significant. The CII uses `log(protestCount)` for democracies and linear scaling for authoritarian states, preventing democratic noise from drowning genuine authoritarian unrest signals.
-
-**Welford's online algorithm for baselines** — Traditional mean/variance computation requires storing all historical data points. Welford's method maintains a running mean and M2 (sum of squared deviations) that can be updated with each new observation in O(1) time and O(1) space. This makes it feasible to track baselines for hundreds of event-type × region × weekday × month combinations in Redis without storing raw observations.
-
-**H3 hexagonal grid for GPS jamming** — Hexagonal grids (H3 resolution 4, ~22km edge length) are used instead of rectangular lat/lon cells because hexagons have uniform adjacency (6 neighbors vs. 4/8 for squares), equal area at any latitude, and no meridian convergence distortion. This matters for interference zone detection where spatial uniformity affects clustering accuracy.
-
-**Cosine-latitude-corrected distance** — Cable health matching and several proximity calculations use equirectangular approximation with `cos(lat)` longitude correction instead of full Haversine. At the distances involved (50–600km), the error is <0.5% while being ~10x faster — important when computing distances against 500+ infrastructure assets per event.
-
-**Negative caching** — When an upstream API returns an error, the system caches the failure state for a defined period (5 minutes for UCDP, 30 seconds for Polymarket queue rejections) rather than retrying immediately. This prevents thundering-herd effects where hundreds of concurrent users all hammer a downed API, and it provides clear signal to the intelligence gap tracker that a source is unavailable.
-
-**O(1) inflection suffix matching** — The keyword-matching pipeline checks every word in every ingested headline against a set of English inflection suffixes (`-ing`, `-ed`, `-tion`, `-ment`, etc.) for morphological normalization. The suffix list was converted from an `Array` (O(n) `.some()` scan per word) to a `Set` (O(1) `.has()` lookup), eliminating a linear scan executed on every word of every headline — a meaningful hot-path optimization given the system processes thousands of headlines per refresh cycle.
-
-**Stack-safe array operations** — The `Math.min(...array)` and `Math.max(...array)` spread patterns are limited by V8's argument stack (~65,535 entries). With large news clusters (common during breaking events), the spread silently overflows and returns `Infinity` / `-Infinity`, corrupting `firstSeen` and `lastUpdated` timestamps. These are replaced with `Array.prototype.reduce` loops that operate in O(1) stack space regardless of array size.
-
-### Vanilla TypeScript Architecture
-
-World Monitor is written in vanilla TypeScript — no frontend framework (React, Vue, Svelte, Angular) is used. This is a deliberate architectural decision, not an oversight.
-
-**Why no framework:**
-
-- **Bundle size** — the dashboard loads dozens of data layers, map renderers, ML models, and live video streams. Every kilobyte of framework overhead competes with actual intelligence data. The entire application shell (panel system, routing, state management) compiles to less JavaScript than React's runtime alone
-- **DOM control** — the panel system manipulates `innerHTML` directly with debounced content replacement (`setContent()`) and event delegation on stable container elements. Framework virtual DOM diffing would fight this pattern, adding overhead without benefit — the dashboard doesn't have the fine-grained reactive state updates that frameworks optimize for
-- **WebView compatibility** — the Tauri desktop app runs in WKWebView (macOS) and WebKitGTK (Linux), which have idiosyncratic behavior around drag-and-drop, clipboard, autoplay, and memory management. Direct DOM manipulation makes it possible to work around these platform quirks without fighting framework abstractions
-- **Long-term simplicity** — no framework version upgrades, no breaking API migrations, no adapter libraries. The codebase depends on browser standards (DOM, Web Workers, IndexedDB, Intersection Observer, ResizeObserver) that are stable across engine updates
-
-**What fills the framework gap:**
-
-| Concern | Solution |
-| --- | --- |
-| Component model | `Panel` base class with lifecycle methods (`render`, `destroy`), debounced content updates, and event delegation |
-| State management | `localStorage` for user preferences, `CustomEvent` dispatch for inter-panel communication (`wm:breaking-news`, `wm:deduct-context`, `theme-changed`, `ai-flow-changed`), and a centralized signal aggregator for intelligence state |
-| Routing | URL query parameters (`?view=`, `?c=`, `?layers=`) parsed at startup; `history.pushState` for shareable deep links |
-| Reactivity | `SmartPollLoop` and `RefreshScheduler` classes with named refresh runners, visibility-aware scheduling, and in-flight deduplication |
-| Virtual scrolling | Custom `VirtualList` with DOM element pooling, top/bottom spacer divs, and `requestAnimationFrame`-batched scroll handling |
-
-### Discriminated Union Marker System
-
-All map markers — across both the globe.gl and deck.gl engines — carry a `_kind` discriminant field that identifies their type at runtime. Rather than using class inheritance (which requires `instanceof` checks and prevents marker data from being plain serializable objects), each marker is a plain TypeScript object with a literal `_kind` string:
-
-```typescript
-type MapMarker =
-  | { _kind: 'conflict'; lat: number; lon: number; severity: string; ... }
-  | { _kind: 'flight'; lat: number; lon: number; callsign: string; ... }
-  | { _kind: 'vessel'; lat: number; lon: number; mmsi: number; ... }
-  | { _kind: 'protest'; lat: number; lon: number; crowd_size: number; ... }
-  // ... 15+ additional marker kinds
-```
-
-This enables exhaustive `switch` matching in the rendering pipeline — the TypeScript compiler verifies that every marker kind is handled, and adding a new kind produces compile errors at every unhandled site. Marker data can be serialized to/from JSON (for IndexedDB persistence and Web Worker transfer) without custom serialization logic. The same marker objects flow through clustering, tooltip generation, and layer filtering without type casting.
-
-### AIS Relay Backpressure Architecture
-
-The AIS vessel tracking relay maintains a persistent WebSocket connection to AISStream.io that can deliver hundreds of position reports per second during peak maritime traffic. Without flow control, a slow consumer (e.g., a client on a poor network) would cause unbounded memory growth in the relay's message queue.
-
-The relay implements a **three-watermark backpressure system**:
-
-| Watermark | Threshold | Behavior |
-| --- | --- | --- |
-| **Low** | 1,000 messages | Normal operation — all messages queued |
-| **High** | 4,000 messages | Warning state — oldest messages evicted to make room |
-| **Hard cap** | 8,000 messages | Overflow — new messages dropped until queue drains below high watermark |
-
-Additionally, the relay caps the total tracked vessel count at 20,000 positions (the most recent position per MMSI). A secondary **density cell** system aggregates positions into 2°×2° geographic grid cells (max 5,000 cells) for overview visualization when the full vessel list exceeds rendering capacity.
-
-Vessel history trails are capped at 30 position points per vessel. When a new position arrives, the oldest trail point is evicted. This creates a "comet tail" visualization showing recent movement direction without unbounded memory growth.
-
-The relay also implements HMAC authentication between the frontend and relay server, preventing unauthorized clients from consuming the expensive AIS data feed.
-
-### ONNX Runtime Capability Detection
-
-The browser-side ML pipeline (embeddings, NER, sentiment, summarization) uses ONNX Runtime Web for inference. Model execution speed varies dramatically across browsers and devices depending on available hardware acceleration.
-
-The system uses a cascading capability detection strategy at initialization:
-
-```
-WebGPU (fastest)  →  WebGL (fast)  →  WASM + SIMD (baseline)
-```
-
-1. **WebGPU** — checked via `navigator.gpu` presence. Provides GPU-accelerated inference with the lowest latency. Available in Chrome 113+ and Edge 113+
-2. **WebGL** — fallback when WebGPU is unavailable. Uses the existing GPU via WebGL compute shaders. Available in all modern browsers
-3. **WASM + SIMD** — CPU-only fallback. `SharedArrayBuffer` and WASM SIMD availability are probed. SIMD provides ~2–4x speedup over plain WASM for vector operations
-
-A `deviceMemory` API guard excludes the ML pipeline entirely on low-memory devices (mobile phones with <4GB RAM), preventing out-of-memory crashes from loading 384-dimensional float32 embedding models alongside the map renderer and live video streams.
-
-### Panel Event Delegation Pattern
-
-The `Panel` base class uses a debounced `setContent(html)` method (150ms delay) to batch rapid DOM updates. This creates a subtle but critical problem: any event listeners attached to elements inside the panel's `innerHTML` are destroyed when the debounce fires and replaces the content.
-
-The solution is **event delegation** — all click, change, and input handlers are bound to the stable outer `this.content` container element (which is never replaced, only its `innerHTML` changes), using `event.target.closest('.selector')` to match the intended element:
-
-```typescript
-// WRONG — listener destroyed on next setContent()
-this.content.querySelector('.btn')?.addEventListener('click', handler);
-
-// CORRECT — survives innerHTML replacement
-this.content.addEventListener('click', (e) => {
-  if (e.target.closest('.btn')) handler(e);
-});
-```
-
-This pattern is enforced project-wide across all panel subclasses. In E2E tests, element references also go stale after the debounced render — test code must re-query the DOM after each render cycle rather than holding onto cached element references.
-
-### Single-Deployment Variant Consolidation
-
-All four dashboard variants (World Monitor, Tech Monitor, Finance Monitor, Happy Monitor) serve from a **single Vercel deployment**. The variant is determined at runtime by hostname detection:
-
-| Hostname | Variant |
-| --- | --- |
-| `tech.worldmonitor.app` | `tech` |
-| `finance.worldmonitor.app` | `finance` |
-| `happy.worldmonitor.app` | `happy` |
-| `worldmonitor.app` (default) | `full` |
-
-On the desktop app, the variant is stored in `localStorage['worldmonitor-variant']` and can be switched without rebuilding. The variant selector in the header bar navigates between deployed domains on the web or toggles the localStorage value on desktop.
-
-This architecture replaced the original multi-deployment approach (separate Vercel projects per variant) and provides several advantages:
-
-- **Instant switching** — users toggle variants in the header bar without a full page navigation or DNS lookup
-- **Shared CDN cache** — the static SPA assets are identical across variants; only runtime configuration differs. CDN cache hit rates are 4× higher than with separate deployments
-- **Single CI pipeline** — one build, one deployment, one set of edge functions. No cross-deployment configuration drift
-- **Social bot routing** — the OG image endpoint generates variant-specific preview cards based on the requesting hostname, so sharing a Tech Monitor link produces tech-branded social previews
-
-### Cold-Start Optimization — Per-Domain Edge Function Split
-
-The original monolithic edge gateway (`api/[domain]/v1/[rpc].ts`) imported all 22 service domain handlers into a single function. When any RPC was called, the edge runtime loaded the entire handler graph — initializing Redis clients, parsing configuration, and importing utility modules for all 22 domains even though only 1 was needed.
-
-This was split into 22 per-domain thin entry points, each importing only its own handler module. The shared gateway (`server/gateway.ts`) provides common routing logic, but each domain's edge function tree-shakes to include only its dependencies.
-
-**Impact**: Cold-start time dropped by ~85% — a market quote request no longer loads the cyber threat intelligence parser, the OREF alert handler, or the climate anomaly detector. On Vercel's edge runtime, this translates to sub-100ms cold starts for most endpoints, compared to 500ms+ with the monolithic handler.
-
-### Geopolitical Boundary Overlays
-
-The map supports typed geopolitical boundary polygons with associated metadata. Each boundary carries a `boundaryType` discriminant (`demilitarized`, `ceasefire`, `disputed`, `armistice`) that controls rendering style and popup content.
-
-**Korean DMZ** — the first boundary implemented is the Korean Demilitarized Zone, defined as a 43-point closed-ring polygon derived from OpenStreetMap Way 369265305 and the Korean Armistice Agreement Article I demarcation line. On the flat map, it renders as a `GeoJsonLayer` with a translucent blue fill and labeled tooltip. On the 3D globe, it renders as `polygonsData` under the conflicts layer. The boundary has a dedicated help entry and layer toggle, and is enabled by default on the `full` variant only.
-
-The boundary system is designed to be extensible — additional geopolitical boundaries (Line of Control in Kashmir, Golan Heights, Northern Cyprus Green Line) can be added to the `GEOPOLITICAL_BOUNDARIES` constant with appropriate typing and will render automatically on both map engines.
-
-### CII Choropleth Heatmap
-
-The Country Instability Index can be projected as a full-coverage choropleth layer on both map engines, painting every country's polygon in a five-stop color gradient based on its live CII score (0–100):
-
-| Score Range | Level     | Color     |
-| ----------- | --------- | --------- |
-| 0–30        | Low       | Green     |
-| 31–50       | Normal    | Yellow    |
-| 51–65       | Elevated  | Orange    |
-| 66–80       | High      | Red       |
-| 81–100      | Critical  | Dark Red  |
-
-On the **flat map** (deck.gl), a `GeoJsonLayer` maps ISO 3166-1 alpha-2 country codes to fixed RGBA values via the `getLevel()` threshold function. Updates are triggered by a monotonic version counter (`ciiScoresVersion`) — the layer compares the counter on each render pass and only recomputes fill colors when it increments, avoiding O(n) data spreads.
-
-On the **3D globe** (globe.gl), CII country polygons merge into the same `polygonsData` array as geopolitical boundaries. A `_kind` discriminant (`'boundary' | 'cii'`) in each polygon object lets a single `.polygonCapColor()` callback dispatch rendering logic for both types. CII polygons render at `polygonAltitude: 0.002` (below the `0.006` altitude used by conflict-zone outlines), preventing visual Z-fighting.
-
-Countries GeoJSON is lazy-loaded from a shared `getCountriesGeoJson()` function, cached after first fetch, and shared between the CII layer and the country-detection ray-casting service.
-
-### Unified Layer Toggle Catalog
-
-All 45+ map layer toggle definitions — icon, localization key, fallback display label, and supported renderer types — are consolidated in a single shared registry (`src/config/map-layer-definitions.ts`). Each entry declares which map renderers support it via a `renderers: MapRenderer[]` field (e.g., `dayNight` is flat-only, `ciiChoropleth` is both flat and globe), preventing the two map components from showing inconsistent layer options.
-
-A `def()` factory function reduces per-entry boilerplate. Variant-specific layer ordering (`VARIANT_LAYER_ORDER`) defines the display sequence for each of the four dashboard variants without duplicating the definitions themselves. Adding a new map layer requires a single registry entry — both the flat map and 3D globe derive their toggle panels from this catalog automatically.
-
-### Sentry Error Noise Filtering
-
-The Sentry SDK initialization includes a `beforeSend` hook and `ignoreErrors` list that suppress known unactionable error sources — Three.js WebGL traversal crashes occurring entirely in minified code with no source-mapped frames, cross-origin Web Worker construction failures from browser extensions, iOS media element crashes, and jQuery `$` injection by extensions. The Three.js filter specifically avoids blanket suppression: it only drops events where *all* stack frames are anonymous or from the minified bundle. If even one frame has a source-mapped `.ts` filename, the event is kept for investigation.
-
----
-
-## Source Credibility & Feed Tiering
-
-Every RSS feed is assigned a source tier reflecting editorial reliability:
-
-| Tier       | Description                                | Examples                                    |
-| ---------- | ------------------------------------------ | ------------------------------------------- |
-| **Tier 1** | Wire services, official government sources | Reuters, AP, BBC, DOD                       |
-| **Tier 2** | Major established outlets                  | CNN, NYT, The Guardian, Al Jazeera          |
-| **Tier 3** | Specialized/niche outlets                  | Defense One, Breaking Defense, The War Zone |
-| **Tier 4** | Aggregators and blogs                      | Google News, individual analyst blogs       |
-
-Feeds also carry a **propaganda risk rating** and **state affiliation flag**. State-affiliated sources (RT, Xinhua, IRNA) are included for completeness but visually tagged so analysts can factor in editorial bias. Threat classification confidence is weighted by source tier — a Tier 1 breaking alert carries more weight than a Tier 4 blog post in the focal point detection algorithm.
+Single-deployment consolidation — all four variants serve from one Vercel deployment, determined by hostname. Build-time `VITE_VARIANT` tree-shakes unused data. Runtime variant selector in the header bar.
 
 ---
 
@@ -1794,35 +1334,30 @@ The AI summarization pipeline adds content-based deduplication: headlines are ha
 | **IP rate limiting**           | AI endpoints use Upstash Redis-backed rate limiting to prevent abuse of Groq/OpenRouter quotas.                                                                                                                                                    |
 | **Desktop sidecar auth**       | The local API sidecar requires a per-session `Bearer` token generated at launch. The token is stored in Rust state and injected into the sidecar environment — only the Tauri frontend can retrieve it via IPC. Health check endpoints are exempt. |
 | **OS keychain storage**        | Desktop API keys are stored in the operating system's credential manager (macOS Keychain, Windows Credential Manager), never in plaintext files or environment variables on disk.                                                                  |
-| **Bot-aware social previews**  | The `/api/story` endpoint detects social crawlers (10+ signatures: Twitter, Facebook, LinkedIn, Telegram, Discord, Reddit, WhatsApp, Google) and serves OG-tagged HTML with dynamic preview images. Regular browsers receive a 302 redirect to the SPA. |
-| **Bot protection middleware**  | Edge Middleware blocks crawlers and scrapers from all `/api/*` routes — bot user-agents and requests with short or missing `User-Agent` headers receive 403. Social preview bots are selectively allowed on `/api/story` and `/api/og-story` for Open Graph image generation. Reinforced by `robots.txt` Disallow rules on API paths. |
-| **No debug endpoints**         | The `api/debug-env.js` endpoint returns 404 in production — it exists only as a disabled placeholder.                                                                                                                                              |
-| **SSRF protection**            | The desktop sidecar's RSS proxy runs two-phase URL validation: protocol allowlist (HTTP/HTTPS only), private IP rejection (all RFC-1918 ranges, link-local, multicast, IPv6-mapped v4), DNS resolution to detect rebinding attacks, and **TOCTOU-safe pinning** — the first resolved IPv4 address is locked for the actual TCP connection, preventing DNS rebinding between check and connect. |
-| **IPC window hardening**       | All sensitive Tauri IPC commands (keychain access, token retrieval, cache operations, Polymarket bridge) gate on `require_trusted_window()`. Only windows with labels in the `TRUSTED_WINDOWS` allowlist (`main`, `settings`, `live-channels`) can invoke these commands — injected iframes or rogue webviews receive an explicit rejection. |
-| **DevTools gating**            | The developer tools menu item and its `Cmd+Alt+I` keybinding only compile into the binary when the `devtools` Cargo feature is enabled. Production builds omit the feature entirely, so DevTools cannot be opened in shipped binaries regardless of UI manipulation. |
+| **SSRF protection**            | Two-phase URL validation: protocol allowlist, private IP rejection, DNS rebinding detection, and TOCTOU-safe address pinning.                                                                                                                     |
+| **IPC window hardening**       | All sensitive Tauri IPC commands gate on `require_trusted_window()` with a `TRUSTED_WINDOWS` allowlist.                                                                                                                                            |
+| **Bot protection middleware**  | Edge Middleware blocks crawlers from `/api/*` routes. Social preview bots are selectively allowed on `/api/story` and `/api/og-story`.                                                                                                             |
 
 ---
 
-## Error Tracking & Production Hardening
+## Regression Testing
 
-Sentry captures unhandled exceptions and promise rejections in production, with environment-aware routing (production on `worldmonitor.app`, preview on `*.vercel.app`, disabled on localhost and Tauri desktop).
+The test suite includes **30 test files** with **554 individual test cases** across **147 describe blocks**, covering server handlers, caching behavior, data integrity, and map overlays.
 
-The configuration includes 30+ `ignoreErrors` patterns that suppress noise from:
+**Unit & integration tests** (`npm test`) validate:
 
-- **Third-party WebView injections** — Twitter, Facebook, and Instagram in-app browsers inject scripts that reference undefined variables (`CONFIG`, `currentInset`)
-- **Browser extensions** — Chrome/Firefox extensions that fail `importScripts` or violate CSP policies
-- **WebGL context loss** — transient GPU crashes in MapLibre/deck.gl that self-recover
-- **iOS Safari quirks** — IndexedDB connection drops on background tab kills, `NotAllowedError` from autoplay policies
-- **Network transients** — `TypeError: Failed to fetch`, `TypeError: Load failed`, `TypeError: cancelled`
-- **MapLibre internal crashes** — null-access in style layers, light, and placement that originate from the map chunk
+| Area | Test Files | Coverage |
+| --- | --- | --- |
+| **Server handlers** | `server-handlers`, `supply-chain-handlers`, `supply-chain-v2` | All 22 proto service handler imports, route registration, response schemas |
+| **Caching** | `redis-caching`, `route-cache-tier`, `flush-stale-refreshes` | Cache key construction, TTL tiers, stale refresh coalescing, stampede prevention |
+| **Data integrity** | `bootstrap`, `deploy-config`, `edge-functions` | Bootstrap key sync between `cache-keys.ts` and `bootstrap.js`, all 57 edge function self-containment (no `../server/` imports), version sync across package.json/tauri.conf.json/Cargo.toml |
+| **Intelligence** | `military-classification`, `clustering`, `insights-loader`, `summarize-reasoning` | Military confidence scoring, news clustering algorithms, AI brief generation, LLM reasoning chain parsing |
+| **Map & geo** | `countries-geojson`, `globe-2d-3d-parity`, `map-locale`, `geo-keyword-matching` | GeoJSON polygon validity, flat/globe layer parity, locale-aware map labels, 217-hub keyword matching |
+| **Protocols** | `oref-proxy`, `oref-locations`, `oref-breaking`, `live-news-hls` | OREF alert parsing, 1480 Hebrew→English location translations, HLS stream detection |
+| **Circuit breakers** | `hapi-gdelt-circuit-breakers`, `tech-readiness-circuit-breakers`, `smart-poll-loop` | Per-source failure isolation, adaptive backoff, hidden-tab throttling |
+| **Data sources** | `gulf-fdi-data`, `ttl-acled-ais-guards`, `urlState` | Gulf FDI coordinate validation, ACLED/AIS TTL guards, URL state encoding/decoding |
 
-A custom `beforeSend` hook provides second-stage filtering: it suppresses single-character error messages (minification artifacts), `Importing a module script failed` errors from browser extensions (identified by `chrome-extension:` or `moz-extension:` in the stack trace), and MapLibre internal null-access crashes when the stack trace originates from map chunk files.
-
-**Chunk reload guard** — after deployments, users with stale browser tabs may encounter `vite:preloadError` events when dynamically imported chunks have new content-hash filenames. The guard listens for this event and performs a one-shot page reload, using `sessionStorage` to prevent infinite reload loops. If the reload succeeds (app initializes fully), the guard flag is cleared. This recovers gracefully from stale-asset 404s without requiring users to manually refresh.
-
-**Storage quota management** — when a device's localStorage or IndexedDB quota is exhausted (common on mobile Safari with its 5MB limit), a global `_storageQuotaExceeded` flag disables all further write attempts across both the persistent cache (IndexedDB + localStorage fallback) and the utility `saveToStorage()` function. The flag is set on the first `DOMException` with `name === 'QuotaExceededError'` or `code === 22`, and prevents cascading errors from repeated failed writes. Read operations continue normally — cached data remains accessible, only new writes are suppressed.
-
-Transactions are sampled at 10% to balance observability with cost. Release tracking (`worldmonitor@{version}`) enables regression detection across deployments.
+**E2E map tests** use Playwright with the map harness (`/tests/map-harness.html`) for overlay behavior validation.
 
 ---
 
@@ -1952,7 +1487,7 @@ Set `WS_RELAY_URL` (server-side, HTTPS) and `VITE_WS_RELAY_URL` (client-side, WS
 | **Analytics**         | Vercel Analytics (privacy-first, lightweight web vitals and page view tracking)                                                                 |
 | **Deployment**        | Vercel Edge Functions (60+ endpoints) + Railway (WebSocket relay + Telegram + OREF + Polymarket proxy + NOTAM) + Tauri (macOS/Windows/Linux) + PWA (installable) |
 | **Finance Data**      | 92 stock exchanges, 19 financial centers, 13 central banks, 10 commodity hubs, 64 Gulf FDI investments                                         |
-| **Data**              | 170+ RSS feeds (full variant), 398 across all variants, ADS-B transponders, AIS maritime data, VIIRS satellite imagery, 30+ live video channels (8+ default YouTube + 18+ HLS native), 26 Telegram OSINT channels |
+| **Data**              | 435+ RSS feeds across all 4 variants, ADS-B transponders, AIS maritime data, VIIRS satellite imagery, 30+ live video channels (8+ default YouTube + 18+ HLS native), 26 Telegram OSINT channels |
 
 ---
 
@@ -2002,159 +1537,10 @@ Desktop release details, signing hooks, variant outputs, and clean-machine valid
 
 ## Roadmap
 
-- [x] 60+ API edge functions for programmatic access
-- [x] Tri-variant system (geopolitical + tech + finance)
-- [x] Market intelligence (macro signals, ETF flows, stablecoin peg monitoring)
-- [x] Railway relay for WebSocket and blocked-domain proxying
-- [x] CORS origin allowlist and security hardening
-- [x] Native desktop application (Tauri) with OS keychain + authenticated sidecar
-- [x] Progressive Web App with offline map support and installability
-- [x] Bandwidth optimization (CDN caching, gzip relay, staggered polling)
-- [x] Dual map engine — globe.gl 3D globe (Three.js) + deck.gl flat map (MapLibre), runtime-switchable
-- [x] Natural disaster monitoring (USGS + GDACS + NASA EONET)
-- [x] Historical playback via IndexedDB snapshots
-- [x] Live YouTube stream detection with desktop embed bridge
-- [x] Country brief pages with AI-generated intelligence dossiers
-- [x] Local-first country detection (browser-side ray-casting, no network dependency)
-- [x] Climate anomaly monitoring (15 conflict-prone zones)
-- [x] Displacement tracking (UNHCR/HAPI origins & hosts)
-- [x] Country brief export (JSON, CSV, PNG, PDF)
-- [x] Cyber threat intelligence layer (Feodo Tracker, URLhaus, OTX, AbuseIPDB, C2IntelFeeds)
-- [x] Trending keyword spike detection with baseline anomaly alerting
-- [x] Oil & energy analytics (EIA: WTI, Brent, production, inventory)
-- [x] Population exposure estimation (WorldPop density data)
-- [x] Country search in Cmd+K with direct brief navigation
-- [x] Entity index with cross-source correlation and confidence scoring
-- [x] Finance variant with 92 stock exchanges, 19 financial centers, 13 central banks, and commodity hubs
-- [x] Gulf FDI investment database (64 Saudi/UAE infrastructure investments mapped globally)
-- [x] AIS maritime chokepoint detection and vessel density grid
-- [x] Runtime feature toggles for 14 data sources
-- [x] Panel height resizing with persistent layout state
-- [x] Live webcam surveillance grid (22 geopolitical hotspot streams across 5 regions with Iran/Attacks dedicated tab)
-- [x] Ultra-wide monitor layout (L-shaped panel wrapping on 2000px+ screens)
-- [x] Linux desktop app (.AppImage)
-- [x] Dark/light theme toggle with persistent preference
-- [x] Desktop auto-update checker with variant-aware release linking
-- [x] Panel drag-and-drop reordering with persistent layout
-- [x] Map pin mode for fixed map positioning
-- [x] Virtual scrolling for news panels (DOM recycling, pooled elements)
-- [x] Local LLM support (Ollama / LM Studio) with automatic model discovery and 4-tier fallback chain
-- [x] Settings window with dedicated LLMs, API Keys, and Debug tabs
-- [x] Consolidated keychain vault (single OS prompt on startup)
-- [x] Cross-window secret synchronization (main ↔ settings)
-- [x] API key verification pipeline with soft-pass on network errors
-- [x] Proto-first API contracts (92 proto files, 22 service domains, auto-generated TypeScript + OpenAPI docs)
-- [x] USNI Fleet Intelligence (weekly deployment reports merged with live AIS tracking)
-- [x] Aircraft enrichment via Wingbits (military confidence classification)
-- [x] Undersea cable health monitoring (NGA navigational warnings + AIS cable ship tracking)
-- [x] Dynamic Open Graph images for social sharing (SVG card generation with CII scores)
-- [x] Storage quota management (graceful degradation on exhausted localStorage/IndexedDB)
-- [x] Chunk reload guard (one-shot recovery from stale-asset 404s after deployments)
-- [x] PizzINT activity monitor with DEFCON-style scoring and GDELT bilateral tension tracking
-- [x] Bot protection middleware (edge-level crawler blocking with social preview exceptions)
-- [x] In-flight request deduplication on relay (prevents upstream API stampede from concurrent clients)
-- [x] Instant flat-render news panels (ML clustering runs async, items appear immediately)
-- [x] Cable health scoring algorithm (time-decay weighted signals from NGA warnings with cos-lat distance matching)
-- [x] Thai and Vietnamese localization (1,361 keys per locale)
-- [x] Native-language RSS feeds for Turkish, Polish, Russian, Thai, and Vietnamese locales
-- [x] Desktop sidecar RSS proxy (local feed fetching without cloud fallback)
-- [x] Negative caching and version discovery for UCDP upstream API resilience
-- [x] XRP (Ripple) added to crypto market tracking
-- [x] Shared Upstash Redis caching layer across all 37 RPC handlers with parameterized cache keys
-- [x] PostHog product analytics with typed event schemas, API key stripping, and ad-blocker bypass
-- [x] Opt-in intelligence alert popups (default off, toggle in dropdown header)
-- [x] Linux WebKitGTK DMA-BUF rendering with SHM fallback and cross-distro font stack
-- [x] Consolidated `--font-mono` CSS variable for cross-platform typographic consistency
-- [x] Dedup coordinate precision increased to 0.1° (~10km) for finer-grained event matching
-- [x] Community guidelines (CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md)
-- [x] Yahoo Finance staggered request batching to prevent 429 rate limiting
-- [x] Panel base class retry indicator (`showRetrying`) for visual feedback during data refresh
-- [x] Happy Monitor variant (positive news dashboard with conservation wins, renewables, and human progress metrics)
-- [x] Supply Chain Disruption Intelligence (chokepoint monitoring, shipping rates, critical mineral HHI analysis)
-- [x] Cache stampede prevention via `cachedFetchJson` in-flight promise deduplication across all server handlers
-- [x] Dynamic sidecar port allocation with EADDRINUSE fallback and port file discovery
-- [x] Universal CII scoring for all countries with event data (expanded from 23 curated to all nations)
-- [x] Cmd+K command palette with ~250 country commands, layer presets, and fuzzy search scoring
-- [x] SSRF protection with DNS resolution, private IP rejection, and TOCTOU-safe address pinning
-- [x] IPC window hardening with trusted-window allowlist for all sensitive Tauri commands
-- [x] DevTools gating via Cargo feature flag (disabled in production builds)
-- [x] TypeScript CI check (GitHub Actions `tsc --noEmit` on every PR)
-- [x] Trade route visualization (13 global lanes as animated deck.gl arcs with chokepoint markers)
-- [x] OpenSky API optimization (4→2 merged query regions covering all military hotspots)
-- [x] Global streaming video quality control (auto/360p/480p/720p with live propagation)
-- [x] Ransomware.live feed added to cyber threat intelligence sources
-- [x] Browser Local Model toggle properly gated (ML worker only initializes when enabled)
-- [x] Linux AppImage crash fixes (WebKitGTK DMA-BUF rendering, console noise suppression)
-- [x] Yahoo Finance rate-limit UX (user-facing messages instead of silent failures across all market panels)
-- [x] Sidecar auth resilience (401-retry with token refresh, settings window `diagFetch` auth)
-- [x] Verbose toggle persistence to writable data directory (fixes read-only app bundle on macOS)
-- [x] Finnhub-to-Yahoo fallback routing when API key is missing
-- [x] Telegram OSINT intelligence feed (26 channels via MTProto with dedup, classification, and FLOOD_WAIT handling)
-- [x] OREF rocket alert integration (Israel Home Front Command siren data with wave detection and CII boost)
-- [x] GPS/GNSS interference mapping (H3 hex grid from ADS-B data, 12 conflict regions, CII security scoring)
-- [x] Government travel advisory aggregation (4 governments + 13 embassies + health agencies → CII score floors)
-- [x] Airport delay & NOTAM monitoring (107 airports, FAA + AviationStack + ICAO NOTAM closure detection)
-- [x] Strategic Risk Score algorithm (composite geopolitical risk from convergence, CII, infrastructure, theater, breaking news)
-- [x] HLS native streaming (10 channels bypass YouTube iframes — Sky News, Euronews, DW, France24, RT, and more)
-- [x] Polymarket in-flight request deduplication and queue backpressure (max 20 queued, response slicing)
-- [x] AI Deduction & Forecasting panel (LLM-powered near-term geopolitical timeline analysis with live headline context)
-- [x] Headline Memory (RAG) — opt-in client-side vector store with ONNX embeddings, IndexedDB persistence, and semantic search
-- [x] Server-side feed aggregation via `listFeedDigest` RPC — reduces Vercel Edge invocations by ~95%
-- [x] Smart default source reduction (~101 from 170+) with one-time locale-aware boost for 21 languages
-- [x] Gulf Economies panel (GCC indices, currencies, oil with mini sparklines and 60-second polling)
-- [x] Mobile-optimized map (touch pan with inertia, pinch-to-zoom, bottom-sheet popups, timezone-based location detection)
-- [x] 18+ HLS native streaming channels (Fox News, ABC News AU, NHK World, TV5Monde, Tagesschau24, and more)
-- [x] Live video fullscreen toggle (expand video grid to fill viewport)
-- [x] Breaking news click-through (scroll to source panel with flash highlight)
-- [x] TV Mode (ambient fullscreen panel cycling with configurable interval, 30s–2min)
-- [x] Badge animation toggle (opt-in bump animation on panel count changes)
-- [x] Cache purge admin endpoint (targeted Redis key deletion with HMAC auth and dry-run mode)
-- [x] OREF Redis persistence with two-phase bootstrap (Redis-first, upstream-fallback with exponential retry)
-- [x] 1,478 Hebrew→English OREF location translations with Unicode sanitization
-- [x] Oceania region tab for live channels (ABC News Australia)
-- [x] PostHog removal (replaced with lightweight Vercel Analytics)
-- [x] Conditional GET (ETag/If-Modified-Since) on Railway relay RSS feeds
-- [x] Mobile responsiveness improvements (collapsible map, panel sizing, font scaling)
-- [x] PWA service worker update fix (stops auto-reload on SW update)
-- [x] Lazy-loaded DeductionPanel (excludes DOMPurify from web bundle unless panel is accessed)
-- [x] Czech, Greek, Korean, Bulgarian, and Romanian localization (21 total languages with native-language feed sets)
-- [x] Bootstrap hydration (15 Redis keys pre-fetched in a single pipeline call, 2-tier parallel loading)
-- [x] Breaking news alert pipeline (5 alert origins with per-event dedup, source tier gating, and sensitivity control)
-- [x] Cross-stream correlation engine (14 signal types detecting patterns across news, markets, military, and prediction streams)
-- [x] Adaptive refresh scheduling (exponential backoff, 10× hidden-tab throttle, jitter, stale-flush on visibility restore)
-- [x] Client-side circuit breakers with IndexedDB persistence and graceful storage quota degradation
-- [x] Programmatic API access via `api.worldmonitor.app` (22 service domains, REST + query param support)
-- [x] Happy Monitor deep features (6 real-time humanity counters, 10 species conservation stories, renewable energy tracking, global giving aggregation)
-- [x] Negative caching with sentinel values (prevents thundering herd on downed upstream APIs)
-- [x] globe.gl 3D globe with Three.js (earth textures, atmosphere shader, auto-rotation, starfield, HTML marker layer)
-- [x] Korean DMZ geopolitical boundary overlay (43-point polygon on both 3D globe and flat map)
-- [x] World Clock panel (30 financial centers, auto-detect home city, market status, drag-to-reorder)
-- [x] Bulgarian localization (20th language, native-language RSS feed set) + Romanian (21st language, community-contributed)
-- [x] Single-deployment variant consolidation (4 variants from one Vercel deployment, hostname-based detection)
-- [x] Per-domain edge function split (22 thin entry points, ~85% cold-start reduction)
-- [x] O(1) suffix lookup via Set conversion + stack-safe min/max for large cluster arrays
-- [x] Cmd+K Map:/Panel:/Brief: prefix disambiguation with localized tips rotator
-- [x] Mobile settings gear icon (replaces GitHub link on screens ≤768px)
-- [x] OREF gzip compression + 3-tier local file bootstrap (Railway volume → Redis → upstream)
-- [x] Tech Readiness bootstrap hydration (World Bank indicators seeded via Railway)
-- [x] Vanilla TypeScript architecture (no React/Vue/Svelte — direct DOM + event delegation + custom panel system)
-- [x] Discriminated union marker system (`_kind` field, exhaustive switch matching, 15+ marker types)
-- [x] AIS relay backpressure (3-watermark queue: low=1K, high=4K, hard-cap=8K messages)
-- [x] ONNX capability detection cascade (WebGPU → WebGL → WASM+SIMD with deviceMemory guard)
-- [x] Romanian localization (21st language, community-contributed)
-- [x] CII choropleth heatmap overlay (5-stop gradient on both flat map and 3D globe)
-- [x] Country instability navigation (click CII entries to open country briefs)
-- [x] Company enrichment edge functions (GitHub org data, SEC filings, HN mentions, signal discovery)
-- [x] Globe render quality setting (Auto/Eco/Sharp/4K/Insane pixel ratio presets)
-- [x] Desktop globe performance (high-perf GPU, disable depth buffer, pause when hidden)
-- [x] Mobile full-viewport map with GPS geolocation centering
-- [x] Swipeable toolbars for Live News and Webcam region tabs on mobile (CSS scroll-snap)
-- [x] Live stream keep-alive toggle (disable idle auto-pause for always-on monitoring)
-- [x] Webcam single-view lock on mobile (disable grid mode, save battery)
-- [x] Unified layer toggle catalog (single-file layer registry for both map renderers)
-- [x] GDELT positive events moved to Railway seed (bypass 25s edge timeout, 15-min cron)
-- [x] Supply chain scoring fixes (text-evidence chokepoint ID, threat baseline preservation)
-- [x] Sentry noise filtering (Three.js WebGL crashes, cross-origin workers, iOS media — 33 issues suppressed)
+**Completed highlights** — 4 variant dashboards, 60+ edge functions, dual map engine, native desktop app (Tauri), 21 languages, proto-first API contracts, AI summarization + deduction + RAG, 30+ live video streams, Telegram OSINT, OREF rocket alerts, CII scoring, cross-stream correlation, and much more.
+
+**Upcoming:**
+
 - [ ] Mobile-optimized views
 - [ ] Push notifications for critical alerts
 - [ ] Self-hosted Docker image
