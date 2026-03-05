@@ -749,8 +749,7 @@
         "tradeRoutes": "Rotte Commerciali",
         "iranAttacks": "Attacchi dell'Iran",
         "gpsJamming": "GPS JAMMING",
-        "dayNight": "Giorno/Notte",
-        "geopoliticalBoundaries": "Confini Geopolitici"
+        "dayNight": "Giorno/Notte"
       },
       "layersTitle": "Livelli",
       "layerGuide": "Guida ai livelli",
@@ -1347,7 +1346,9 @@
       "badgeAnimDesc": "Animare i badge di aggiornamento nelle intestazioni dei pannelli",
       "sectionIntelligence": "Intelligence",
       "headlineMemoryLabel": "Memoria titoli",
-      "headlineMemoryDesc": "Ricordare i titoli visti per evidenziare quelli nuovi"
+      "headlineMemoryDesc": "Ricordare i titoli visti per evidenziare quelli nuovi",
+      "streamAlwaysOnLabel": "Mantieni attivi i flussi live",
+      "streamAlwaysOnDesc": "Impedisce a Live Cams e Live News di andare in pausa automaticamente quando sei inattivo. Consigliato per uso su secondo monitor / wallboard. Disattiva (Eco) per risparmiare CPU/banda."
     },
     "etfFlows": {
       "unavailable": "Dati ETF temporaneamente non disponibili",
@@ -1979,19 +1980,6 @@
       "uae_ecsr": "EAU/CEDS",
       "venezuela_crisis": "Crisi venezuelana",
       "yemen_houthis": "Yemen/Houthi"
-    },
-    "geopoliticalBoundary": {
-      "title": "CONFINE GEOPOLITICO",
-      "established": "ISTITUITO",
-      "dimensions": "DIMENSIONI",
-      "legalBasis": "BASE LEGALE",
-      "parties": "FIRMATARI",
-      "types": {
-        "demilitarized": "ZONA DEMILITARIZZATA",
-        "ceasefire": "LINEA DI CESSATE IL FUOCO",
-        "disputed": "CONFINE CONTESTATO",
-        "armistice": "LINEA DI ARMISTIZIO"
-      }
     }
   },
   "signals": {

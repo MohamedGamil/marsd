@@ -57,6 +57,7 @@ import {
   fetchChokepointStatus,
   fetchCriticalMinerals,
 } from '@/services';
+import { getMarketWatchlistEntries } from '@/services/market-watchlist';
 import { checkBatchForBreakingAlerts, dispatchOrefBreakingAlert } from '@/services/breaking-news-alerts';
 import { mlWorker } from '@/services/ml-worker';
 import { clusterNewsHybrid } from '@/services/clustering';
@@ -66,7 +67,7 @@ import { updateAndCheck } from '@/services/temporal-baseline';
 import { fetchAllFires, flattenFires, computeRegionStats, toMapFires } from '@/services/wildfires';
 import { analyzeFlightsForSurge, surgeAlertToSignal, detectForeignMilitaryPresence, foreignPresenceToSignal, type TheaterPostureSummary } from '@/services/military-surge';
 import { fetchCachedTheaterPosture } from '@/services/cached-theater-posture';
-import { ingestProtestsForCII, ingestMilitaryForCII, ingestNewsForCII, ingestOutagesForCII, ingestConflictsForCII, ingestUcdpForCII, ingestHapiForCII, ingestDisplacementForCII, ingestClimateForCII, ingestStrikesForCII, ingestOrefForCII, ingestAviationForCII, ingestAdvisoriesForCII, ingestGpsJammingForCII, ingestAisDisruptionsForCII, ingestSatelliteFiresForCII, ingestCyberThreatsForCII, ingestTemporalAnomaliesForCII, isInLearningMode, resetHotspotActivity, setIntelligenceSignalsLoaded, hasAnyIntelligenceData } from '@/services/country-instability';
+import { ingestProtestsForCII, ingestMilitaryForCII, ingestNewsForCII, ingestOutagesForCII, ingestConflictsForCII, ingestUcdpForCII, ingestHapiForCII, ingestDisplacementForCII, ingestClimateForCII, ingestStrikesForCII, ingestOrefForCII, ingestAviationForCII, ingestAdvisoriesForCII, ingestGpsJammingForCII, ingestAisDisruptionsForCII, ingestSatelliteFiresForCII, ingestCyberThreatsForCII, ingestTemporalAnomaliesForCII, isInLearningMode, resetHotspotActivity, setIntelligenceSignalsLoaded, hasAnyIntelligenceData, calculateCII } from '@/services/country-instability';
 import { fetchGpsInterference } from '@/services/gps-interference';
 import { dataFreshness, type DataSourceId } from '@/services/data-freshness';
 import { fetchConflictEvents, fetchUcdpClassifications, fetchHapiSummary, fetchUcdpEvents, deduplicateAgainstAcled, fetchIranEvents } from '@/services/conflict';
@@ -122,9 +123,11 @@ import { fetchHappinessScores } from '@/services/happiness-data';
 import { fetchRenewableInstallations } from '@/services/renewable-installations';
 import { filterBySentiment } from '@/services/sentiment-gate';
 import { fetchAllPositiveTopicIntelligence } from '@/services/gdelt-intel';
-import { fetchPositiveGeoEvents, geocodePositiveNewsItems } from '@/services/positive-events-geo';
+import { fetchPositiveGeoEvents, geocodePositiveNewsItems, type PositiveGeoEvent } from '@/services/positive-events-geo';
+import type { HappyContentCategory } from '@/services/positive-classifier';
 import { fetchKindnessData } from '@/services/kindness-data';
 import { getPersistentCache, setPersistentCache } from '@/services/persistent-cache';
+import { fetchCachedRiskScores } from '@/services/cached-risk-scores';
 import type { ThreatLevel as ClientThreatLevel } from '@/services/threat-classifier';
 import type { NewsItem as ProtoNewsItem, ThreatLevel as ProtoThreatLevel } from '@/generated/client/worldmonitor/news/v1/service_client';
 
@@ -174,6 +177,8 @@ export class DataLoaderManager implements AppModule {
 
   public updateSearchIndex: () => void = () => { };
 
+  private boundMarketWatchlistHandler: (() => void) | null = null;
+
   private digestBreaker = { state: 'closed' as 'closed' | 'open' | 'half-open', failures: 0, cooldownUntil: 0 };
   private readonly digestRequestTimeoutMs = 8000;
   private readonly digestBreakerCooldownMs = 5 * 60 * 1000;
@@ -188,16 +193,28 @@ export class DataLoaderManager implements AppModule {
     this.callbacks = callbacks;
   }
 
-  init(): void { }
+  init(): void {
+    this.boundMarketWatchlistHandler = () => {
+      void this.loadMarkets();
+    };
+    window.addEventListener('wm-market-watchlist-changed', this.boundMarketWatchlistHandler as EventListener);
+  }
 
   destroy(): void {
     this.applyTimeRangeFilterToNewsPanelsDebounced.cancel();
     stopOrefPolling();
+    if (this.boundMarketWatchlistHandler) {
+      window.removeEventListener('wm-market-watchlist-changed', this.boundMarketWatchlistHandler as EventListener);
+      this.boundMarketWatchlistHandler = null;
+    }
   }
 
-  private refreshCiiAndBrief(): void {
-    (this.ctx.panels['cii'] as CIIPanel)?.refresh();
+  private refreshCiiAndBrief(forceLocal = false): void {
+    (this.ctx.panels['cii'] as CIIPanel)?.refresh(forceLocal);
     this.callbacks.refreshOpenCountryBrief();
+    const scores = calculateCII();
+    this.ctx.map?.setCIIScores(scores.map(s => ({ code: s.code, score: s.score, level: s.level })));
+    this.ctx.map?.setLayerReady('ciiChoropleth', scores.length > 0);
   }
 
   private async tryFetchDigest(): Promise<ListFeedDigestResponse | null> {
@@ -347,6 +364,14 @@ export class DataLoaderManager implements AppModule {
     });
 
     if (SITE_VARIANT === 'full') {
+      try {
+        const cached = await fetchCachedRiskScores().catch(() => null);
+        if (cached && cached.cii.length > 0) {
+          (this.ctx.panels['cii'] as CIIPanel)?.renderFromCached(cached);
+          this.ctx.map?.setCIIScores(cached.cii.map(s => ({ code: s.code, score: s.score, level: s.level })));
+          this.ctx.map?.setLayerReady('ciiChoropleth', true);
+        }
+      } catch { /* non-fatal */ }
       tasks.push({ name: 'intelligence', task: runGuarded('intelligence', () => this.loadIntelligenceSignals()) });
     }
 
@@ -897,12 +922,28 @@ export class DataLoaderManager implements AppModule {
 
   async loadMarkets(): Promise<void> {
     try {
+      const customEntries = getMarketWatchlistEntries();
+      const effectiveSymbols = (() => {
+        if (customEntries.length === 0) return MARKET_SYMBOLS;
+        const base = MARKET_SYMBOLS.slice();
+        const seen = new Set(base.map((s) => s.symbol));
+        for (const entry of customEntries) {
+          const sym = entry.symbol;
+          if (!sym || seen.has(sym)) continue;
+          seen.add(sym);
+          base.push({ symbol: sym, name: entry.name || sym, display: entry.display || sym });
+          if (base.length >= 50) break;
+        }
+        return base;
+      })();
+
+
       // Hydrate markets from bootstrap (same pattern as sectors) — instant data on page load
       const hydratedMarkets = getHydratedData('marketQuotes') as ListMarketQuotesResponse | undefined;
       let stocksResult: Awaited<ReturnType<typeof fetchMultipleStocks>>;
 
-      if (hydratedMarkets?.quotes?.length) {
-        const symbolMetaMap = new Map(MARKET_SYMBOLS.map((s) => [s.symbol, s]));
+      if (customEntries.length === 0 && hydratedMarkets?.quotes?.length) {
+        const symbolMetaMap = new Map(effectiveSymbols.map((s) => [s.symbol, s]));
         const data = hydratedMarkets.quotes.map((q) => ({
           symbol: q.symbol,
           name: symbolMetaMap.get(q.symbol)?.name || q.name,
@@ -915,7 +956,7 @@ export class DataLoaderManager implements AppModule {
         (this.ctx.panels['markets'] as MarketPanel).renderMarkets(data);
         stocksResult = { data, skipped: hydratedMarkets.finnhubSkipped || undefined, rateLimited: hydratedMarkets.rateLimited || undefined };
       } else {
-        stocksResult = await fetchMultipleStocks(MARKET_SYMBOLS, {
+        stocksResult = await fetchMultipleStocks(effectiveSymbols, {
           onBatch: (partialStocks) => {
             this.ctx.latestMarkets = partialStocks;
             (this.ctx.panels['markets'] as MarketPanel).renderMarkets(partialStocks);
@@ -1440,7 +1481,7 @@ export class DataLoaderManager implements AppModule {
     if (hasAnyIntelligenceData()) {
       setIntelligenceSignalsLoaded();
     }
-    this.refreshCiiAndBrief();
+    this.refreshCiiAndBrief(true);
     console.log('[Intelligence] All signals loaded for CII calculation');
   }
 
@@ -2211,7 +2252,17 @@ export class DataLoaderManager implements AppModule {
   }
 
   private async loadPositiveEvents(): Promise<void> {
-    const gdeltEvents = await fetchPositiveGeoEvents();
+    const hydrated = getHydratedData('positiveGeoEvents') as { events?: Array<{ latitude: number; longitude: number; name: string; category: string; count: number; timestamp: number }> } | undefined;
+    let gdeltEvents: PositiveGeoEvent[];
+    if (hydrated?.events?.length) {
+      gdeltEvents = hydrated.events.map(e => ({
+        lat: e.latitude, lon: e.longitude, name: e.name,
+        category: (e.category || 'humanity-kindness') as HappyContentCategory,
+        count: e.count, timestamp: e.timestamp,
+      }));
+    } else {
+      gdeltEvents = await fetchPositiveGeoEvents();
+    }
     const rssEvents = geocodePositiveNewsItems(
       this.ctx.happyAllItems.map(item => ({
         title: item.title,

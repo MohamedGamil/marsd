@@ -21,8 +21,9 @@ export {
 
 // Finance-specific FEEDS configuration
 import type { Feed } from '@/types';
+import { rssProxyUrl } from '@/utils';
 
-const rss = (url: string) => `/api/rss-proxy?url=${encodeURIComponent(url)}`;
+const rss = rssProxyUrl;
 
 export const FEEDS: Record<string, Feed[]> = {
   // Core Markets & Trading News (all free RSS / Google News proxies)
@@ -173,7 +174,7 @@ export const DEFAULT_PANELS: Record<string, PanelConfig> = {
 // Finance-focused map layers
 export const DEFAULT_MAP_LAYERS: MapLayers = {
   gpsJamming: false,
-  geopoliticalBoundaries: false,
+
   conflicts: false,
   bases: false,
   cables: true,
@@ -219,13 +220,14 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   renewableInstallations: false,
   tradeRoutes: true,
   iranAttacks: false,
+  ciiChoropleth: false,
   dayNight: false,
 };
 
 // Mobile defaults for finance variant
 export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   gpsJamming: false,
-  geopoliticalBoundaries: false,
+
   conflicts: false,
   bases: false,
   cables: false,
@@ -271,6 +273,7 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   renewableInstallations: false,
   tradeRoutes: false,
   iranAttacks: false,
+  ciiChoropleth: false,
   dayNight: false,
 };
 

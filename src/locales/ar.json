@@ -870,7 +870,8 @@
     "community": {
       "joinDiscussion": "انضم إلى النقاش",
       "openDiscussion": "فتح النقاش",
-      "dontShowAgain": "عدم العرض مجدداً"
+      "dontShowAgain": "عدم العرض مجدداً",
+      "sectionLabel": "المجتمع"
     },
     "threatLabels": {
       "critical": "حرج",
@@ -1106,7 +1107,9 @@
       "badgeAnimDesc": "تحريك شارات التحديث في رؤوس اللوحات",
       "sectionIntelligence": "الاستخبارات",
       "headlineMemoryLabel": "ذاكرة العناوين",
-      "headlineMemoryDesc": "تذكر العناوين المشاهدة لتمييز الجديدة"
+      "headlineMemoryDesc": "تذكر العناوين المشاهدة لتمييز الجديدة",
+      "streamAlwaysOnLabel": "إبقاء البث المباشر قيد التشغيل",
+      "streamAlwaysOnDesc": "يمنع إيقاف Live Cams وLive News تلقائيًا عند الخمول. يُنصح به لاستخدام الشاشة الثانية / لوحة المراقبة. عطّله (Eco) لتوفير CPU/النطاق الترددي."
     },
     "cascade": {
       "noImpacts": "لم يتم رصد تأثيرات على الدول",
@@ -2062,19 +2065,6 @@
       "uae_ecsr": "الإمارات/ECSR",
       "venezuela_crisis": "أزمة فنزويلا",
       "yemen_houthis": "اليمن/الحوثيون"
-    },
-    "geopoliticalBoundary": {
-      "title": "الحدود الجيوسياسية",
-      "established": "تاريخ التأسيس",
-      "dimensions": "الأبعاد",
-      "legalBasis": "الأساس القانوني",
-      "parties": "الأطراف الموقعة",
-      "types": {
-        "demilitarized": "منطقة منزوعة السلاح",
-        "ceasefire": "خط وقف إطلاق النار",
-        "disputed": "حدود متنازع عليها",
-        "armistice": "خط الهدنة"
-      }
     }
   },
   "signals": {

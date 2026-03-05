@@ -497,8 +497,7 @@
         "tradeRoutes": "Handelsroutes",
         "gpsJamming": "GPS JAMMING",
         "dayNight": "Dag/Nacht",
-        "iranAttacks": "Iraanse aanvallen",
-        "geopoliticalBoundaries": "Geopolitieke Grenzen"
+        "iranAttacks": "Iraanse aanvallen"
       },
       "layersTitle": "Lagen",
       "layerGuide": "Lagengids",
@@ -1096,7 +1095,9 @@
       "badgeAnimDesc": "Update-badges in paneelkoppen animeren",
       "sectionIntelligence": "Inlichtingen",
       "headlineMemoryLabel": "Koptekstgeheugen",
-      "headlineMemoryDesc": "Gezien koppen onthouden om nieuwe te markeren"
+      "headlineMemoryDesc": "Gezien koppen onthouden om nieuwe te markeren",
+      "streamAlwaysOnLabel": "Live streams actief houden",
+      "streamAlwaysOnDesc": "Voorkomt dat Live Cams en Live News automatisch pauzeren wanneer je inactief bent. Aanbevolen voor tweede monitor / wallboard-gebruik. Schakel uit (Eco) om CPU/bandbreedte te besparen."
     },
     "techHubs": {
       "infoTooltip": "<strong>Tech Hub-activiteit</strong><br>Toont tech-hubs met de meeste nieuwsactiviteit.<br><br><em>Activiteitsniveaus:</em><br>• <span style=\"color: {{highColor}}\">Hoog</span> — Breaking news of 50+ score<br>• <span style=\"color: {{elevatedColor}}\">Verhoogd</span> — Score 20-49<br>• <span style=\"color: {{lowColor}}\">Laag</span> — Score lager dan 20<br><br>Klik op een hub om naar de locatie ervan te zoomen.",
@@ -1833,19 +1834,6 @@
     },
     "iranEvent": {
       "relatedEvents": "Gerelateerde gebeurtenissen"
-    },
-    "geopoliticalBoundary": {
-      "title": "GEOPOLITIEKE GRENS",
-      "established": "OPGERICHT",
-      "dimensions": "AFMETINGEN",
-      "legalBasis": "JURIDISCHE BASIS",
-      "parties": "ONDERTEKENAARS",
-      "types": {
-        "demilitarized": "GEDEMILITARISEERDE ZONE",
-        "ceasefire": "STAAKT-HET-VUREN-LIJN",
-        "disputed": "BETWISTE GRENS",
-        "armistice": "WAPENSTILSTANDSLIJN"
-      }
     }
   },
   "signals": {

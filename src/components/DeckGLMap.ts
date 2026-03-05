@@ -37,7 +37,8 @@ import type {
   MilitaryBaseEnriched,
 } from '@/types';
 import { fetchMilitaryBases, type MilitaryBaseCluster as ServerBaseCluster } from '@/services/military-bases';
-import type { AirportDelayAlert } from '@/services/aviation';
+import type { AirportDelayAlert, PositionSample } from '@/services/aviation';
+import { fetchAircraftPositions } from '@/services/aviation';
 import type { IranEvent } from '@/services/conflict';
 import type { GpsJamHex } from '@/services/gps-interference';
 import type { DisplacementFlow } from '@/services/displacement';
@@ -54,7 +55,7 @@ import { debounce, rafSchedule, getCurrentTheme } from '@/utils/index';
 import {
   INTEL_HOTSPOTS,
   CONFLICT_ZONES,
-  GEOPOLITICAL_BOUNDARIES,
+
   MILITARY_BASES,
   UNDERSEA_CABLES,
   NUCLEAR_FACILITIES,
@@ -81,6 +82,7 @@ import {
 } from '@/config';
 import type { GulfInvestment } from '@/types';
 import { resolveTradeRouteSegments, TRADE_ROUTES as TRADE_ROUTES_LIST, type TradeRouteSegment } from '@/config/trade-routes';
+import { getLayersForVariant, resolveLayerLabel, type MapVariant } from '@/config/map-layer-definitions';
 import { MapPopup, type PopupType } from './MapPopup';
 import {
   updateHotspotEscalation,
@@ -251,11 +253,14 @@ const MARKER_ICONS = {
   circle: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="white"/></svg>`),
   // Star - for special markers
   star: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><polygon points="16,2 20,12 30,12 22,19 25,30 16,23 7,30 10,19 2,12 12,12" fill="white"/></svg>`),
+  // Airplane silhouette - top-down with wings and tail (pointing north, rotated by trackDeg)
+  plane: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M16 2 L17.5 10 L17 12 L27 17 L27 19 L17 16 L17 24 L20 26.5 L20 28 L16 27 L12 28 L12 26.5 L15 24 L15 16 L5 19 L5 17 L15 12 L14.5 10 Z" fill="white"/></svg>`),
 };
 
 const BASES_ICON_MAPPING = { triangleUp: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 const NUCLEAR_ICON_MAPPING = { hexagon: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 const DATACENTER_ICON_MAPPING = { square: { x: 0, y: 0, width: 32, height: 32, mask: true } };
+const AIRCRAFT_ICON_MAPPING = { plane: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 
 const CONFLICT_ZONES_GEOJSON: GeoJSON.FeatureCollection = {
   type: 'FeatureCollection',
@@ -266,14 +271,6 @@ const CONFLICT_ZONES_GEOJSON: GeoJSON.FeatureCollection = {
   })),
 };
 
-const GEOPOLITICAL_BOUNDARIES_GEOJSON: GeoJSON.FeatureCollection = {
-  type: 'FeatureCollection',
-  features: GEOPOLITICAL_BOUNDARIES.map(b => ({
-    type: 'Feature' as const,
-    properties: { id: b.id, name: b.name, boundaryType: b.boundaryType },
-    geometry: { type: 'Polygon' as const, coordinates: [b.coords] },
-  })),
-};
 
 export class DeckGLMap {
   private static readonly MAX_CLUSTER_LEAVES = 200;
@@ -313,6 +310,8 @@ export class DeckGLMap {
   private firmsFireData: Array<{ lat: number; lon: number; brightness: number; frp: number; confidence: number; region: string; acq_date: string; daynight: string }> = [];
   private techEvents: TechEventMarker[] = [];
   private flightDelays: AirportDelayAlert[] = [];
+  private aircraftPositions: PositionSample[] = [];
+  private aircraftFetchTimer: ReturnType<typeof setInterval> | null = null;
   private news: NewsItem[] = [];
   private newsLocations: Array<{ lat: number; lon: number; title: string; threatLevel: string; timestamp?: Date }> = [];
   private newsLocationFirstSeen = new Map<string, number>();
@@ -332,6 +331,10 @@ export class DeckGLMap {
   private renewableInstallations: RenewableInstallation[] = [];
   private countriesGeoJsonData: FeatureCollection<Geometry> | null = null;
 
+  // CII choropleth data
+  private ciiScoresMap: Map<string, { score: number; level: string }> = new Map();
+  private ciiScoresVersion = 0;
+
   // Country highlight state
   private countryGeoJsonLoaded = false;
   private countryHoverSetup = false;
@@ -343,6 +346,7 @@ export class DeckGLMap {
   private onCountryClick?: (country: CountryClickPayload) => void;
   private onLayerChange?: (layer: keyof MapLayers, enabled: boolean, source: 'user' | 'programmatic') => void;
   private onStateChange?: (state: DeckMapState) => void;
+  private onAircraftPositionsUpdate?: (positions: PositionSample[]) => void;
 
   // Highlighted assets
   private highlightedAssets: Record<AssetType, Set<string>> = {
@@ -396,8 +400,12 @@ export class DeckGLMap {
   private lastPipelineHighlightSignature = '';
   private debouncedRebuildLayers: (() => void) & { cancel(): void };
   private debouncedFetchBases: (() => void) & { cancel(): void };
+  private debouncedFetchAircraft: (() => void) & { cancel(): void };
   private rafUpdateLayers: (() => void) & { cancel(): void };
   private moveTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private lastAircraftFetchCenter: [number, number] | null = null;
+  private lastAircraftFetchZoom = -1;
+  private aircraftFetchSeq = 0;
 
   constructor(container: HTMLElement, initialState: DeckMapState) {
     this.container = container;
@@ -410,6 +418,7 @@ export class DeckGLMap {
       try { this.deckOverlay?.setProps({ layers: this.buildLayers() }); } catch { /* map mid-teardown */ }
     }, 150);
     this.debouncedFetchBases = debounce(() => this.fetchServerBases(), 300);
+    this.debouncedFetchAircraft = debounce(() => this.fetchViewportAircraft(), 500);
     this.rafUpdateLayers = rafSchedule(() => {
       if (this.renderPaused || this.webglLost || !this.maplibreMap) return;
       try { this.deckOverlay?.setProps({ layers: this.buildLayers() }); } catch { /* map mid-teardown */ }
@@ -575,7 +584,8 @@ export class DeckGLMap {
       if (Math.abs(delta) > 1e-6) {
         this.correctingCenter = true;
         const c = this.maplibreMap.getCenter();
-        this.maplibreMap.jumpTo({ center: [c.lng, c.lat + delta] });
+        const clampedLat = Math.max(-90, Math.min(90, c.lat + delta));
+        this.maplibreMap.jumpTo({ center: [c.lng, clampedLat] });
         this.correctingCenter = false;
         // Do NOT update savedTopLat — keep the original mousedown position
         // so every frame targets the exact same geographic anchor.
@@ -626,6 +636,7 @@ export class DeckGLMap {
         this.rafUpdateLayers();
       }, 200);
       this.debouncedFetchBases();
+      this.debouncedFetchAircraft();
       this.state.zoom = this.maplibreMap?.getZoom() ?? this.state.zoom;
       this.onStateChange?.(this.state);
     });
@@ -1475,23 +1486,6 @@ export class DeckGLMap {
     return layer;
   }
 
-  private createGeopoliticalBoundariesLayer(): GeoJsonLayer {
-    return new GeoJsonLayer({
-      id: 'geopolitical-boundaries-layer',
-      data: GEOPOLITICAL_BOUNDARIES_GEOJSON,
-      filled: true,
-      stroked: true,
-      getFillColor: () => getCurrentTheme() === 'light'
-        ? [0, 100, 200, 40] as [number, number, number, number]
-        : [0, 150, 255, 50] as [number, number, number, number],
-      getLineColor: () => getCurrentTheme() === 'light'
-        ? [0, 120, 220, 150] as [number, number, number, number]
-        : [0, 150, 255, 180] as [number, number, number, number],
-      getLineWidth: 2,
-      lineWidthMinPixels: 1,
-      pickable: true,
-    });
-  }
 
   private getBasesData(): MilitaryBaseEnriched[] {
     return this.serverBasesLoaded ? this.serverBases : MILITARY_BASES as MilitaryBaseEnriched[];
@@ -1672,6 +1666,39 @@ export class DeckGLMap {
     });
   }
 
+  private createAircraftPositionsLayer(): IconLayer<PositionSample> {
+    return new IconLayer<PositionSample>({
+      id: 'aircraft-positions-layer',
+      data: this.aircraftPositions,
+      getPosition: (d) => [d.lon, d.lat],
+      getIcon: () => 'plane',
+      iconAtlas: MARKER_ICONS.plane,
+      iconMapping: AIRCRAFT_ICON_MAPPING,
+      getSize: (d) => d.onGround ? 14 : 18,
+      getColor: (d) => {
+        if (d.onGround) return [120, 120, 120, 160] as [number, number, number, number];
+        return [160, 100, 255, 220] as [number, number, number, number]; // Purple for all airborne
+      },
+      getAngle: (d) => -d.trackDeg,
+      sizeMinPixels: 8,
+      sizeMaxPixels: 28,
+      sizeScale: 1,
+      pickable: true,
+      billboard: false,
+    });
+  }
+
+  private createGhostLayer<T>(id: string, data: T[], getPosition: (d: T) => [number, number], opts: { radiusMinPixels?: number } = {}): ScatterplotLayer<T> {
+    return new ScatterplotLayer<T>({
+      id: `${id}-ghost`,
+      data,
+      getPosition,
+      getRadius: 1,
+      radiusMinPixels: opts.radiusMinPixels ?? 12,
+      getFillColor: [0, 0, 0, 0],
+      pickable: true,
+    });
+  }
 
   /** Empty sentinel layer — keeps a stable layer ID for deck.gl interleaved mode without rendering anything. */
   private createEmptyGhost(id: string): ScatterplotLayer {
@@ -1772,9 +1799,9 @@ export class DeckGLMap {
       id: 'iran-events-layer',
       data: this.iranEvents,
       getPosition: (d: IranEvent) => [d.longitude, d.latitude],
-      getRadius: (d: IranEvent) => d.severity === 'high' ? 20000 : d.severity === 'medium' ? 15000 : 10000,
+      getRadius: (d: IranEvent) => (d.severity === 'high' || d.severity === 'critical') ? 20000 : d.severity === 'medium' ? 15000 : 10000,
       getFillColor: (d: IranEvent) => {
-        if (d.category === 'military') return [255, 50, 50, 220] as [number, number, number, number];
+        if (d.severity === 'critical' || d.category === 'military') return [255, 50, 50, 220] as [number, number, number, number];
         if (d.category === 'politics' || d.category === 'diplomacy') return [255, 165, 0, 200] as [number, number, number, number];
         return [255, 255, 0, 180] as [number, number, number, number];
       },
@@ -2748,6 +2775,40 @@ export class DeckGLMap {
     });
   }
 
+  private static readonly CII_LEVEL_COLORS: Record<string, [number, number, number, number]> = {
+    low: [40, 180, 60, 130],
+    normal: [220, 200, 50, 135],
+    elevated: [240, 140, 30, 145],
+    high: [220, 50, 20, 155],
+    critical: [140, 10, 0, 170],
+  };
+
+  private static readonly CII_LEVEL_HEX: Record<string, string> = {
+    critical: '#b91c1c', high: '#dc2626', elevated: '#f59e0b', normal: '#eab308', low: '#22c55e',
+  };
+
+  private createCIIChoroplethLayer(): GeoJsonLayer | null {
+    if (!this.countriesGeoJsonData || this.ciiScoresMap.size === 0) return null;
+    const scores = this.ciiScoresMap;
+    const colors = DeckGLMap.CII_LEVEL_COLORS;
+    return new GeoJsonLayer({
+      id: 'cii-choropleth-layer',
+      data: this.countriesGeoJsonData,
+      filled: true,
+      stroked: true,
+      getFillColor: (feature: { properties?: Record<string, unknown> }) => {
+        const code = feature.properties?.['ISO3166-1-Alpha-2'] as string | undefined;
+        const entry = code ? scores.get(code) : undefined;
+        return entry ? (colors[entry.level] ?? [0, 0, 0, 0]) : [0, 0, 0, 0];
+      },
+      getLineColor: [80, 80, 80, 80] as [number, number, number, number],
+      getLineWidth: 1,
+      lineWidthMinPixels: 0.5,
+      pickable: true,
+      updateTriggers: { getFillColor: [this.ciiScoresVersion] },
+    });
+  }
+
   private createSpeciesRecoveryLayer(): ScatterplotLayer {
     return new ScatterplotLayer({
       id: 'species-recovery-layer',
@@ -2865,10 +2926,7 @@ export class DeckGLMap {
         const props = obj.properties || obj;
         return { html: `<div class="deckgl-tooltip"><strong>${text(props.name)}</strong><br/>${t('components.deckgl.tooltip.conflictZone')}</div>` };
       }
-      case 'geopolitical-boundaries-layer': {
-        const props = obj.properties || obj;
-        return { html: `<div class="deckgl-tooltip"><strong>${text(props.name)}</strong><br/>${t('popups.geopoliticalBoundary.title')}</div>` };
-      }
+
       case 'natural-events-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.title)}</strong><br/>${text(obj.category || t('components.deckgl.tooltip.naturalEvent'))}</div>` };
       case 'ais-density-layer':
@@ -2905,6 +2963,8 @@ export class DeckGLMap {
       }
       case 'flight-delays-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.name)} (${text(obj.iata)})</strong><br/>${text(obj.severity)}: ${text(obj.reason)}</div>` };
+      case 'aircraft-positions-layer':
+        return { html: `<div class="deckgl-tooltip"><strong>${text(obj.callsign || obj.icao24)}</strong><br/>${obj.altitudeFt?.toLocaleString() ?? 0} ft · ${obj.groundSpeedKts ?? 0} kts · ${Math.round(obj.trackDeg ?? 0)}°</div>` };
       case 'apt-groups-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.name)}</strong><br/>${text(obj.aka)}<br/>${t('popups.sponsor')}: ${text(obj.sponsor)}</div>` };
       case 'minerals-layer':
@@ -2945,6 +3005,14 @@ export class DeckGLMap {
         const hcScore = hcCode ? this.happinessScores.get(hcCode as string) : undefined;
         const hcScoreStr = hcScore != null ? hcScore.toFixed(1) : 'No data';
         return { html: `<div class="deckgl-tooltip"><strong>${text(hcName)}</strong><br/>Happiness: ${hcScoreStr}/10${hcScore != null ? `<br/><span style="opacity:.7">${text(this.happinessSource)} (${this.happinessYear})</span>` : ''}</div>` };
+      }
+      case 'cii-choropleth-layer': {
+        const ciiName = obj.properties?.name ?? 'Unknown';
+        const ciiCode = obj.properties?.['ISO3166-1-Alpha-2'];
+        const ciiEntry = ciiCode ? this.ciiScoresMap.get(ciiCode as string) : undefined;
+        if (!ciiEntry) return { html: `<div class="deckgl-tooltip"><strong>${text(ciiName)}</strong><br/><span style="opacity:.7">No CII data</span></div>` };
+        const levelColor = DeckGLMap.CII_LEVEL_HEX[ciiEntry.level] ?? '#888';
+        return { html: `<div class="deckgl-tooltip"><strong>${text(ciiName)}</strong><br/>CII: <span style="color:${levelColor};font-weight:600">${ciiEntry.score}/100</span><br/><span style="text-transform:capitalize;opacity:.7">${text(ciiEntry.level)}</span></div>` };
       }
       case 'species-recovery-layer': {
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.commonName)}</strong><br/>${text(obj.recoveryZone?.name ?? obj.region)}<br/><span style="opacity:.7">Status: ${text(obj.recoveryStatus)}</span></div>` };
@@ -3145,7 +3213,7 @@ export class DeckGLMap {
     // Map layer IDs to popup types
     const layerToPopupType: Record<string, PopupType> = {
       'conflict-zones-layer': 'conflict',
-      'geopolitical-boundaries-layer': 'geopoliticalBoundary',
+
       'bases-layer': 'base',
       'nuclear-layer': 'nuclear',
       'irradiators-layer': 'irradiator',
@@ -3172,6 +3240,7 @@ export class DeckGLMap {
       'spaceports-layer': 'spaceport',
       'ports-layer': 'port',
       'flight-delays-layer': 'flight',
+      'aircraft-positions-layer': 'aircraft',
       'startup-hubs-layer': 'startupHub',
       'tech-hqs-layer': 'techHQ',
       'accelerators-layer': 'accelerator',
@@ -3195,11 +3264,6 @@ export class DeckGLMap {
       const conflictId = info.object.properties.id;
       const fullConflict = CONFLICT_ZONES.find(c => c.id === conflictId);
       if (fullConflict) data = fullConflict;
-    }
-    if (layerId === 'geopolitical-boundaries-layer' && info.object.properties) {
-      const boundaryId = info.object.properties.id;
-      const fullBoundary = GEOPOLITICAL_BOUNDARIES.find(b => b.id === boundaryId);
-      if (fullBoundary) data = fullBoundary;
     }
 
     // Enrich iran events with related events from same location
@@ -3317,78 +3381,12 @@ export class DeckGLMap {
     const toggles = document.createElement('div');
     toggles.className = 'layer-toggles deckgl-layer-toggles';
 
-    const layerConfig = SITE_VARIANT === 'tech'
-      ? [
-        { key: 'startupHubs', label: t('components.deckgl.layers.startupHubs'), icon: '&#128640;' },
-        { key: 'techHQs', label: t('components.deckgl.layers.techHQs'), icon: '&#127970;' },
-        { key: 'accelerators', label: t('components.deckgl.layers.accelerators'), icon: '&#9889;' },
-        { key: 'cloudRegions', label: t('components.deckgl.layers.cloudRegions'), icon: '&#9729;' },
-        { key: 'datacenters', label: t('components.deckgl.layers.aiDataCenters'), icon: '&#128421;' },
-        { key: 'cables', label: t('components.deckgl.layers.underseaCables'), icon: '&#128268;' },
-        { key: 'outages', label: t('components.deckgl.layers.internetOutages'), icon: '&#128225;' },
-        { key: 'cyberThreats', label: t('components.deckgl.layers.cyberThreats'), icon: '&#128737;' },
-        { key: 'techEvents', label: t('components.deckgl.layers.techEvents'), icon: '&#128197;' },
-        { key: 'natural', label: t('components.deckgl.layers.naturalEvents'), icon: '&#127755;' },
-        { key: 'fires', label: t('components.deckgl.layers.fires'), icon: '&#128293;' },
-        { key: 'dayNight', label: t('components.deckgl.layers.dayNight'), icon: '&#127763;' },
-      ]
-      : SITE_VARIANT === 'finance'
-        ? [
-          { key: 'stockExchanges', label: t('components.deckgl.layers.stockExchanges'), icon: '&#127963;' },
-          { key: 'financialCenters', label: t('components.deckgl.layers.financialCenters'), icon: '&#128176;' },
-          { key: 'centralBanks', label: t('components.deckgl.layers.centralBanks'), icon: '&#127974;' },
-          { key: 'commodityHubs', label: t('components.deckgl.layers.commodityHubs'), icon: '&#128230;' },
-          { key: 'gulfInvestments', label: t('components.deckgl.layers.gulfInvestments'), icon: '&#127760;' },
-          { key: 'tradeRoutes', label: t('components.deckgl.layers.tradeRoutes'), icon: '&#128674;' },
-          { key: 'cables', label: t('components.deckgl.layers.underseaCables'), icon: '&#128268;' },
-          { key: 'pipelines', label: t('components.deckgl.layers.pipelines'), icon: '&#128738;' },
-          { key: 'outages', label: t('components.deckgl.layers.internetOutages'), icon: '&#128225;' },
-          { key: 'weather', label: t('components.deckgl.layers.weatherAlerts'), icon: '&#9928;' },
-          { key: 'economic', label: t('components.deckgl.layers.economicCenters'), icon: '&#128176;' },
-          { key: 'waterways', label: t('components.deckgl.layers.strategicWaterways'), icon: '&#9875;' },
-          { key: 'natural', label: t('components.deckgl.layers.naturalEvents'), icon: '&#127755;' },
-          { key: 'cyberThreats', label: t('components.deckgl.layers.cyberThreats'), icon: '&#128737;' },
-          { key: 'dayNight', label: t('components.deckgl.layers.dayNight'), icon: '&#127763;' },
-        ]
-        : SITE_VARIANT === 'happy'
-          ? [
-            { key: 'positiveEvents', label: 'Positive Events', icon: '&#127775;' },
-            { key: 'kindness', label: 'Acts of Kindness', icon: '&#128154;' },
-            { key: 'happiness', label: 'World Happiness', icon: '&#128522;' },
-            { key: 'speciesRecovery', label: 'Species Recovery', icon: '&#128062;' },
-            { key: 'renewableInstallations', label: 'Clean Energy', icon: '&#9889;' },
-          ]
-          : [
-            { key: 'iranAttacks', label: t('components.deckgl.layers.iranAttacks'), icon: '&#127919;' },
-            { key: 'hotspots', label: t('components.deckgl.layers.intelHotspots'), icon: '&#127919;' },
-            { key: 'conflicts', label: t('components.deckgl.layers.conflictZones'), icon: '&#9876;' },
-            { key: 'geopoliticalBoundaries', label: t('components.deckgl.layers.geopoliticalBoundaries'), icon: '&#9878;' },
-            { key: 'bases', label: t('components.deckgl.layers.militaryBases'), icon: '&#127963;' },
-            { key: 'nuclear', label: t('components.deckgl.layers.nuclearSites'), icon: '&#9762;' },
-            { key: 'irradiators', label: t('components.deckgl.layers.gammaIrradiators'), icon: '&#9888;' },
-            { key: 'spaceports', label: t('components.deckgl.layers.spaceports'), icon: '&#128640;' },
-            { key: 'cables', label: t('components.deckgl.layers.underseaCables'), icon: '&#128268;' },
-            { key: 'pipelines', label: t('components.deckgl.layers.pipelines'), icon: '&#128738;' },
-            { key: 'datacenters', label: t('components.deckgl.layers.aiDataCenters'), icon: '&#128421;' },
-            { key: 'military', label: t('components.deckgl.layers.militaryActivity'), icon: '&#9992;' },
-            { key: 'ais', label: t('components.deckgl.layers.shipTraffic'), icon: '&#128674;' },
-            { key: 'tradeRoutes', label: t('components.deckgl.layers.tradeRoutes'), icon: '&#9875;' },
-            { key: 'flights', label: t('components.deckgl.layers.flightDelays'), icon: '&#9992;' },
-            { key: 'protests', label: t('components.deckgl.layers.protests'), icon: '&#128226;' },
-            { key: 'ucdpEvents', label: t('components.deckgl.layers.ucdpEvents'), icon: '&#9876;' },
-            { key: 'displacement', label: t('components.deckgl.layers.displacementFlows'), icon: '&#128101;' },
-            { key: 'climate', label: t('components.deckgl.layers.climateAnomalies'), icon: '&#127787;' },
-            { key: 'weather', label: t('components.deckgl.layers.weatherAlerts'), icon: '&#9928;' },
-            { key: 'outages', label: t('components.deckgl.layers.internetOutages'), icon: '&#128225;' },
-            { key: 'cyberThreats', label: t('components.deckgl.layers.cyberThreats'), icon: '&#128737;' },
-            { key: 'natural', label: t('components.deckgl.layers.naturalEvents'), icon: '&#127755;' },
-            { key: 'fires', label: t('components.deckgl.layers.fires'), icon: '&#128293;' },
-            { key: 'waterways', label: t('components.deckgl.layers.strategicWaterways'), icon: '&#9875;' },
-            { key: 'economic', label: t('components.deckgl.layers.economicCenters'), icon: '&#128176;' },
-            { key: 'minerals', label: t('components.deckgl.layers.criticalMinerals'), icon: '&#128142;' },
-            { key: 'gpsJamming', label: t('components.deckgl.layers.gpsJamming'), icon: '&#128225;' },
-            { key: 'dayNight', label: t('components.deckgl.layers.dayNight'), icon: '&#127763;' },
-          ];
+    const layerDefs = getLayersForVariant((SITE_VARIANT || 'full') as MapVariant, 'flat');
+    const layerConfig = layerDefs.map(def => ({
+      key: def.key,
+      label: resolveLayerLabel(def, t),
+      icon: def.icon,
+    }));
 
     toggles.innerHTML = `
       <div class="toggle-header">
@@ -3415,8 +3413,14 @@ export class DeckGLMap {
         const layer = (input as HTMLInputElement).closest('.layer-toggle')?.getAttribute('data-layer') as keyof MapLayers;
         if (layer) {
           this.state.layers[layer] = (input as HTMLInputElement).checked;
+          if (layer === 'flights') this.manageAircraftTimer((input as HTMLInputElement).checked);
           this.render();
           this.onLayerChange?.(layer, (input as HTMLInputElement).checked, 'user');
+          // Show/hide CII legend when toggling the CII layer
+          if (layer === 'ciiChoropleth') {
+            const ciiLeg = this.container.querySelector('#ciiChoroplethLegend') as HTMLElement | null;
+            if (ciiLeg) ciiLeg.style.display = (input as HTMLInputElement).checked ? 'block' : 'none';
+          }
         }
       });
     });
@@ -3534,7 +3538,7 @@ export class DeckGLMap {
     ], 'timeAffects')}
         ${helpSection('geopolitical', [
       helpItem(label('conflictZones'), 'geoConflicts'),
-      helpItem(label('geopoliticalBoundaries'), 'geoBoundaries'),
+
       helpItem(label('intelHotspots'), 'geoHotspots'),
       helpItem(staticLabel('sanctions'), 'geoSanctions'),
       helpItem(label('protests'), 'geoProtests'),
@@ -3643,6 +3647,7 @@ export class DeckGLMap {
             { shape: shapes.square('rgb(34, 180, 100)'), label: 'Happy Country' },
             { shape: shapes.circle('rgb(74, 222, 128)'), label: 'Species Recovery Zone' },
             { shape: shapes.circle('rgb(255, 200, 50)'), label: 'Renewable Installation' },
+            { shape: shapes.circle('rgb(160, 100, 255)'), label: t('components.deckgl.legend.aircraft') },
           ]
           : [
             { shape: shapes.circle('rgb(255, 68, 68)'), label: t('components.deckgl.legend.highAlert') },
@@ -3651,12 +3656,29 @@ export class DeckGLMap {
             { shape: shapes.triangle('rgb(68, 136, 255)'), label: t('components.deckgl.legend.base') },
             { shape: shapes.hexagon(isLight ? 'rgb(180, 120, 0)' : 'rgb(255, 220, 0)'), label: t('components.deckgl.legend.nuclear') },
             { shape: shapes.square('rgb(136, 68, 255)'), label: t('components.deckgl.legend.datacenter') },
+            { shape: shapes.circle('rgb(160, 100, 255)'), label: t('components.deckgl.legend.aircraft') },
           ];
 
     legend.innerHTML = `
       <span class="legend-label-title">${t('components.deckgl.legend.title')}</span>
       ${legendItems.map(({ shape, label }) => `<span class="legend-item">${shape}<span class="legend-label">${label}</span></span>`).join('')}
     `;
+
+    // CII choropleth gradient legend (shown when layer is active)
+    const ciiLegend = document.createElement('div');
+    ciiLegend.className = 'cii-choropleth-legend';
+    ciiLegend.id = 'ciiChoroplethLegend';
+    ciiLegend.style.display = this.state.layers.ciiChoropleth ? 'block' : 'none';
+    ciiLegend.innerHTML = `
+      <span class="legend-label-title" style="font-size:9px;letter-spacing:0.5px;">CII SCALE</span>
+      <div style="display:flex;align-items:center;gap:2px;margin-top:2px;">
+        <div style="width:100%;height:8px;border-radius:3px;background:linear-gradient(to right,#28b33e,#dcc030,#e87425,#dc2626,#7f1d1d);"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:8px;opacity:0.7;margin-top:1px;">
+        <span>0</span><span>31</span><span>51</span><span>66</span><span>81</span><span>100</span>
+      </div>
+    `;
+    legend.appendChild(ciiLegend);
 
     this.container.appendChild(legend);
   }
@@ -3793,6 +3815,8 @@ export class DeckGLMap {
     this.state.layers = layers;
     this.markAllDirty(); // Layer toggle affects all groups
     this.render();
+    this.manageAircraftTimer(layers.flights);
+    this.render(); // Debounced
 
     // Update toggle checkboxes
     Object.entries(layers).forEach(([key, value]) => {
@@ -4082,6 +4106,11 @@ export class DeckGLMap {
     this.render();
   }
 
+  public setAircraftPositions(positions: PositionSample[]): void {
+    this.aircraftPositions = positions;
+    this.render();
+  }
+
   public setMilitaryFlights(flights: MilitaryFlight[], clusters: MilitaryFlightCluster[] = []): void {
     this.militaryFlights = flights;
     this.militaryFlightClusters = clusters;
@@ -4116,6 +4145,70 @@ export class DeckGLMap {
       this.render();
     }).catch((err) => {
       console.error('[bases] fetch error', err);
+    });
+  }
+
+  private manageAircraftTimer(enabled: boolean): void {
+    if (enabled) {
+      if (!this.aircraftFetchTimer) {
+        this.aircraftFetchTimer = setInterval(() => {
+          this.lastAircraftFetchCenter = null; // force refresh on poll
+          this.fetchViewportAircraft();
+        }, 120_000); // Match server cache TTL (120s anonymous OpenSky tier)
+        this.debouncedFetchAircraft();
+      }
+    } else {
+      if (this.aircraftFetchTimer) {
+        clearInterval(this.aircraftFetchTimer);
+        this.aircraftFetchTimer = null;
+      }
+      this.aircraftPositions = [];
+    }
+  }
+
+  private hasAircraftViewportChanged(): boolean {
+    if (!this.maplibreMap) return false;
+    if (!this.lastAircraftFetchCenter) return true;
+    const center = this.maplibreMap.getCenter();
+    const zoom = this.maplibreMap.getZoom();
+    if (Math.abs(zoom - this.lastAircraftFetchZoom) >= 1) return true;
+    const [prevLng, prevLat] = this.lastAircraftFetchCenter;
+    // Threshold scales with zoom — higher zoom = smaller movement triggers fetch
+    const threshold = Math.max(0.1, 2 / Math.pow(2, Math.max(0, zoom - 3)));
+    return Math.abs(center.lat - prevLat) > threshold || Math.abs(center.lng - prevLng) > threshold;
+  }
+
+  private fetchViewportAircraft(): void {
+    if (!this.maplibreMap) return;
+    if (!this.state.layers.flights) return;
+    const zoom = this.maplibreMap.getZoom();
+    if (zoom < 2) {
+      if (this.aircraftPositions.length > 0) {
+        this.aircraftPositions = [];
+        this.render();
+      }
+      return;
+    }
+    if (!this.hasAircraftViewportChanged()) return;
+    const bounds = this.maplibreMap.getBounds();
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const seq = ++this.aircraftFetchSeq;
+    fetchAircraftPositions({
+      swLat: sw.lat, swLon: sw.lng,
+      neLat: ne.lat, neLon: ne.lng,
+    }).then((positions) => {
+      if (seq !== this.aircraftFetchSeq) return; // discard stale response
+      this.aircraftPositions = positions;
+      this.onAircraftPositionsUpdate?.(positions);
+      const center = this.maplibreMap?.getCenter();
+      if (center) {
+        this.lastAircraftFetchCenter = [center.lng, center.lat];
+        this.lastAircraftFetchZoom = this.maplibreMap!.getZoom();
+      }
+      this.render();
+    }).catch((err) => {
+      console.error('[aircraft] fetch error', err);
     });
   }
 
@@ -4204,6 +4297,12 @@ export class DeckGLMap {
     this.happinessYear = data.year;
     this.happinessSource = data.source;
     this.markDirty('happiness');
+    this.render();
+  }
+
+  public setCIIScores(scores: Array<{ code: string; score: number; level: string }>): void {
+    this.ciiScoresMap = new Map(scores.map(s => [s.code, { score: s.score, level: s.level }]));
+    this.ciiScoresVersion++;
     this.render();
   }
 
@@ -4337,6 +4436,10 @@ export class DeckGLMap {
 
   public setOnStateChange(callback: (state: DeckMapState) => void): void {
     this.onStateChange = callback;
+  }
+
+  public setOnAircraftPositionsUpdate(callback: (positions: PositionSample[]) => void): void {
+    this.onAircraftPositionsUpdate = callback;
   }
 
   public getHotspotLevels(): Record<string, string> {
@@ -4736,6 +4839,7 @@ export class DeckGLMap {
   public destroy(): void {
     this.debouncedRebuildLayers.cancel();
     this.debouncedFetchBases.cancel();
+    this.debouncedFetchAircraft.cancel();
     this.rafUpdateLayers.cancel();
 
     if (this.moveTimeoutId) {
@@ -4749,6 +4853,10 @@ export class DeckGLMap {
 
     this.stopPulseAnimation();
     this.stopDayNightTimer();
+    if (this.aircraftFetchTimer) {
+      clearInterval(this.aircraftFetchTimer);
+      this.aircraftFetchTimer = null;
+    }
 
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();

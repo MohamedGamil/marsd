@@ -128,7 +128,8 @@ const layers = {
   renewableInstallations: false,
   tradeRoutes: false,
   iranAttacks: false,
-  geopoliticalBoundaries: false,
+
+  ciiChoropleth: false,
   dayNight: false,
 };
 
