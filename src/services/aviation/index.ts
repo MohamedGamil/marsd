@@ -98,6 +98,8 @@ export interface PositionSample {
   altitudeFt: number;
   groundSpeedKts: number;
   trackDeg: number;
+  /** Vertical rate in m/s — positive = climbing, negative = descending */
+  verticalRate: number;
   onGround: boolean;
   source: string;
   observedAt: Date;
@@ -239,7 +241,9 @@ function toDisplayPosition(p: ProtoPosition): PositionSample {
   return {
     icao24: p.icao24, callsign: p.callsign, lat: p.lat, lon: p.lon,
     altitudeFt: Math.round(p.altitudeM * 3.281),
-    groundSpeedKts: p.groundSpeedKts, trackDeg: p.trackDeg, onGround: p.onGround,
+    groundSpeedKts: p.groundSpeedKts, trackDeg: p.trackDeg,
+    verticalRate: p.verticalRate ?? 0,
+    onGround: p.onGround,
     source: p.source, observedAt: new Date(p.observedAt),
   };
 }

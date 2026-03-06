@@ -30,7 +30,8 @@ import { getLocalizedGeoName } from '@/services/i18n';
 import type { FeatureCollection, Geometry } from 'geojson';
 import type { MapLayers, Hotspot, MilitaryFlight, MilitaryVessel, NaturalEvent, InternetOutage, CyberThreat, SocialUnrestEvent, UcdpGeoEvent, CableAdvisory, RepairShip, AisDisruptionEvent, AisDensityZone, AisDisruptionType } from '@/types';
 import type { Earthquake } from '@/services/earthquakes';
-import type { AirportDelayAlert } from '@/services/aviation';
+import type { AirportDelayAlert, PositionSample } from '@/services/aviation';
+import { fetchAircraftPositions } from '@/services/aviation';
 import type { MapContainerState, MapView, TimeRange } from './MapContainer';
 import type { CountryClickPayload } from './DeckGLMap';
 import type { WeatherAlert } from '@/services/weather';
@@ -238,6 +239,18 @@ interface FlightDelayMarker extends BaseMarker {
   avgDelayMinutes: number;
   reason: string;
 }
+interface AircraftPositionMarker extends BaseMarker {
+  _kind: 'aircraftPos';
+  icao24: string;
+  callsign: string;
+  altitudeFt: number;
+  groundSpeedKts: number;
+  trackDeg: number;
+  verticalRate: number;
+  onGround: boolean;
+  source: string;
+  observedAt: Date;
+}
 interface NewsLocationMarker extends BaseMarker {
   _kind: 'newsLocation';
   id: string;
@@ -299,7 +312,7 @@ type GlobeMarker =
   | ConflictZoneMarker | MilBaseMarker | NuclearSiteMarker | IrradiatorSiteMarker | SpaceportSiteMarker
   | EarthquakeMarker | EconomicMarker | DatacenterMarker | WaterwayMarker | MineralMarker
   | FlightDelayMarker | CableAdvisoryMarker | RepairShipMarker | AisDisruptionMarker
-  | NewsLocationMarker | FlashMarker;
+  | NewsLocationMarker | FlashMarker | AircraftPositionMarker;
 
 interface GlobeControlsLike {
   autoRotate: boolean;
@@ -364,6 +377,9 @@ export class GlobeMap {
   private waterwayMarkers: WaterwayMarker[] = [];
   private mineralMarkers: MineralMarker[] = [];
   private flightDelayMarkers: FlightDelayMarker[] = [];
+  private aircraftPositionMarkers: AircraftPositionMarker[] = [];
+  private aircraftFetchTimer: ReturnType<typeof setInterval> | null = null;
+  private aircraftFetchSeq = 0;
   private newsLocationMarkers: NewsLocationMarker[] = [];
   private flashMarkers: FlashMarker[] = [];
   private cableAdvisoryMarkers: CableAdvisoryMarker[] = [];
@@ -626,6 +642,7 @@ export class GlobeMap {
       .htmlAltitude((d: object) => {
         const m = d as GlobeMarker;
         if (m._kind === 'flight' || m._kind === 'vessel') return 0.012;
+        if (m._kind === 'aircraftPos') return (m as AircraftPositionMarker).onGround ? 0.001 : 0.009;
         if (m._kind === 'hotspot') return 0.005;
         return 0.003;
       })
@@ -965,6 +982,14 @@ export class GlobeMap {
       const sc = d.severity === 'high' ? '#ff2020' : d.severity === 'elevated' ? '#ff8800' : '#44aaff';
       el.innerHTML = `<div style="font-size:11px;color:${sc};text-shadow:0 0 4px ${sc}88;">⛴</div>`;
       el.title = d.name;
+    } else if (d._kind === 'aircraftPos') {
+      const acColor = d.onGround ? '#777777' : '#a064ff';
+      const acSize = d.onGround ? '10px' : '13px';
+      el.innerHTML = `
+        <div style="transform:rotate(${d.trackDeg ?? 0}deg);font-size:${acSize};color:${acColor};text-shadow:0 0 5px ${acColor}99;line-height:1;transition:transform 0.3s;">
+          &#9992;
+        </div>`;
+      el.title = d.callsign ? `${d.callsign} (${d.icao24})` : d.icao24;
     } else if (d._kind === 'flash') {
       el.style.pointerEvents = 'none';
       el.innerHTML = `
@@ -1151,6 +1176,22 @@ export class GlobeMap {
       const tc = d.threatLevel === 'critical' ? '#ff2020' : d.threatLevel === 'high' ? '#ff6600' : d.threatLevel === 'elevated' ? '#ffaa00' : '#44aaff';
       html = `<span style="color:${tc};font-weight:bold;">📰 ${esc(d.title.slice(0, 60))}</span>` +
         `<br><span style="opacity:.5;">${esc(d.threatLevel)}</span>`;
+    } else if (d._kind === 'aircraftPos') {
+      const acC = d.onGround ? '#888888' : '#a064ff';
+      const altStr = d.altitudeFt > 100
+        ? `FL${Math.round(d.altitudeFt / 100)} · ${d.altitudeFt.toLocaleString()} ft`
+        : 'On ground';
+      const speedStr = d.groundSpeedKts > 5 ? ` · ${Math.round(d.groundSpeedKts)} kts` : '';
+      const hdgStr = d.groundSpeedKts > 5 ? ` · ${Math.round(d.trackDeg)}°` : '';
+      const vrStr = d.verticalRate && Math.abs(d.verticalRate) > 0.5
+        ? (d.verticalRate > 0 ? ` ↑ +${d.verticalRate.toFixed(1)} m/s` : ` ↓ ${d.verticalRate.toFixed(1)} m/s`)
+        : '';
+      const srcLabel = d.source.replace('POSITION_SOURCE_', '').toLowerCase();
+      const isSimulated = srcLabel.includes('simulated');
+      html = `<span style="color:${acC};font-weight:bold;">&#9992; ${esc(d.callsign || d.icao24)}</span>` +
+        (d.callsign && d.icao24 !== d.callsign ? `<br><span style="opacity:.6;">ICAO24: ${esc(d.icao24)}</span>` : '') +
+        `<br><span style="opacity:.8;">${altStr}${speedStr}${hdgStr}${vrStr}</span>` +
+        `<br><span style="opacity:.5;font-size:10px;">${isSimulated ? '⚠ simulated' : `src: ${esc(srcLabel)}`}</span>`;
     }
     el.innerHTML = html;
 
@@ -1324,6 +1365,7 @@ export class GlobeMap {
     if (this.layers.waterways) markers.push(...this.waterwayMarkers);
     if (this.layers.minerals) markers.push(...this.mineralMarkers);
     if (this.layers.flights) markers.push(...this.flightDelayMarkers);
+    if (this.layers.flights) markers.push(...this.aircraftPositionMarkers);
     if (this.layers.ais) markers.push(...this.aisMarkers);
     if (this.layers.iranAttacks) markers.push(...this.iranMarkers);
     if (this.layers.outages) markers.push(...this.outageMarkers);
@@ -1557,6 +1599,8 @@ export class GlobeMap {
     if (needArcs) this.flushArcs();
     if (needPaths) this.flushPaths();
     if (needPolygons) this.flushPolygons();
+    // Manage aircraft polling timer when flights layer toggled
+    if (prev.flights !== this.layers.flights) this.manageAircraftTimer(this.layers.flights);
   }
 
   public enableLayer(layer: keyof MapLayers): void {
@@ -1566,6 +1610,7 @@ export class GlobeMap {
     if (toggle) toggle.checked = true;
     this.flushLayerChannels(layer);
     this.enforceLayerLimit();
+    if (layer === 'flights') this.manageAircraftTimer(true);
   }
 
   private enforceLayerLimit(): void {
@@ -1882,6 +1927,73 @@ export class GlobeMap {
       }));
     this.flushMarkers();
   }
+  public setAircraftPositions(positions: PositionSample[]): void {
+    this.aircraftPositionMarkers = (positions ?? []).slice(0, 500).map(p => ({
+      _kind: 'aircraftPos' as const,
+      _lat: p.lat,
+      _lng: p.lon,
+      icao24: p.icao24,
+      callsign: p.callsign,
+      altitudeFt: p.altitudeFt,
+      groundSpeedKts: p.groundSpeedKts,
+      trackDeg: p.trackDeg,
+      verticalRate: p.verticalRate ?? 0,
+      onGround: p.onGround,
+      source: p.source,
+      observedAt: p.observedAt,
+    }));
+    this.flushMarkers();
+  }
+
+  private manageAircraftTimer(enabled: boolean): void {
+    if (enabled) {
+      if (!this.aircraftFetchTimer) {
+        this.fetchViewportAircraft(); // immediate fetch on enable
+        this.aircraftFetchTimer = setInterval(() => this.fetchViewportAircraft(), 120_000);
+      }
+    } else {
+      if (this.aircraftFetchTimer) {
+        clearInterval(this.aircraftFetchTimer);
+        this.aircraftFetchTimer = null;
+      }
+      if (this.aircraftPositionMarkers.length > 0) {
+        this.aircraftPositionMarkers = [];
+        this.flushMarkers();
+      }
+    }
+  }
+
+  private fetchViewportAircraft(): void {
+    if (!this.globe || !this.layers.flights || this.destroyed) return;
+    const pov = this.globe.pointOfView() as { lat: number; lng: number; altitude: number };
+    const alt = pov?.altitude ?? 1.5;
+    // Skip fetch when zoomed far out — too many positions
+    if (alt > 2.2) {
+      if (this.aircraftPositionMarkers.length > 0) {
+        this.aircraftPositionMarkers = [];
+        this.flushMarkers();
+      }
+      return;
+    }
+    // Estimate visible region from globe POV altitude
+    const degSpan = Math.min(160, alt * 100 + 20);
+    const lat = pov?.lat ?? 0;
+    const lng = pov?.lng ?? 0;
+    const swLat = Math.max(-85, lat - degSpan / 2);
+    const neLat = Math.min(85, lat + degSpan / 2);
+    const swLon = Math.max(-180, lng - degSpan);
+    const neLon = Math.min(180, lng + degSpan);
+    const seq = ++this.aircraftFetchSeq;
+    fetchAircraftPositions({ swLat, swLon, neLat, neLon })
+      .then(positions => {
+        if (seq !== this.aircraftFetchSeq || this.destroyed) return;
+        this.setAircraftPositions(positions);
+      })
+      .catch(err => {
+        if (import.meta.env.DEV) console.warn('[GlobeMap] aircraft fetch error', err);
+      });
+  }
+
   public setNewsLocations(data: Array<{ lat: number; lon: number; title: string; threatLevel: string; timestamp?: Date }>): void {
     this.newsLocationMarkers = (data ?? [])
       .filter(d => d.lat != null && d.lon != null)
@@ -2080,6 +2192,7 @@ export class GlobeMap {
     this.cyanLight = null;
     if (this.flushTimer) { clearTimeout(this.flushTimer); this.flushTimer = null; }
     if (this.flushMaxTimer) { clearTimeout(this.flushMaxTimer); this.flushMaxTimer = null; }
+    if (this.aircraftFetchTimer) { clearInterval(this.aircraftFetchTimer); this.aircraftFetchTimer = null; }
     if (this.autoRotateTimer) clearTimeout(this.autoRotateTimer);
     if (this.globeDataWorker) {
       this.globeDataWorker.terminate();

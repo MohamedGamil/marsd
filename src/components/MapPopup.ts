@@ -1123,7 +1123,22 @@ export class MapPopup {
     const callsign = escapeHtml(pos.callsign || pos.icao24);
     const onGroundBadge = pos.onGround ? 'low' : 'elevated';
     const statusLabel = pos.onGround ? t('popups.aircraft.ground') : t('popups.aircraft.airborne');
-    const altDisplay = pos.altitudeFt > 0 ? `FL${Math.round(pos.altitudeFt / 100)} (${pos.altitudeFt.toLocaleString()} ft)` : t('popups.aircraft.ground');
+    const altDisplay = pos.altitudeFt > 100
+      ? `FL${Math.round(pos.altitudeFt / 100)} (${pos.altitudeFt.toLocaleString()} ft)`
+      : pos.onGround ? t('popups.aircraft.ground') : `${pos.altitudeFt.toLocaleString()} ft`;
+
+    // Vertical rate — only on PositionSample from server (may include verticalRate)
+    const vr = pos.verticalRate;
+    const vrDisplay = vr != null && Math.abs(vr) > 0.5
+      ? (vr > 0 ? `+${vr.toFixed(1)} m/s ↑` : `${vr.toFixed(1)} m/s ↓`)
+      : null;
+
+    // Human-readable source label
+    const srcLabel = pos.source
+      .replace('POSITION_SOURCE_', '')
+      .replace('_', '-')
+      .toLowerCase();
+    const isSimulated = srcLabel.includes('simulated');
 
     return `
       <div class="popup-header aircraft">
@@ -1134,6 +1149,7 @@ export class MapPopup {
       </div>
       <div class="popup-body">
         <div class="popup-subtitle">ICAO24: ${escapeHtml(pos.icao24)}</div>
+        ${isSimulated ? `<div class="popup-notice" style="color:var(--semantic-elevated);font-size:11px;margin-bottom:6px;">⚠ Simulated data — live feed unavailable</div>` : ''}
         <div class="popup-stats">
           <div class="popup-stat">
             <span class="stat-label">${t('popups.aircraft.altitude')}</span>
@@ -1141,19 +1157,24 @@ export class MapPopup {
           </div>
           <div class="popup-stat">
             <span class="stat-label">${t('popups.aircraft.speed')}</span>
-            <span class="stat-value">${pos.groundSpeedKts} kts</span>
+            <span class="stat-value">${Math.round(pos.groundSpeedKts)} kts</span>
           </div>
           <div class="popup-stat">
             <span class="stat-label">${t('popups.aircraft.heading')}</span>
             <span class="stat-value">${Math.round(pos.trackDeg)}&deg;</span>
           </div>
+          ${vrDisplay ? `
+          <div class="popup-stat">
+            <span class="stat-label">Vertical rate</span>
+            <span class="stat-value">${escapeHtml(vrDisplay)}</span>
+          </div>` : ''}
           <div class="popup-stat">
             <span class="stat-label">${t('popups.aircraft.position')}</span>
             <span class="stat-value">${pos.lat.toFixed(4)}&deg;, ${pos.lon.toFixed(4)}&deg;</span>
           </div>
           <div class="popup-stat">
             <span class="stat-label">${t('popups.source')}</span>
-            <span class="stat-value">${escapeHtml(pos.source)}</span>
+            <span class="stat-value">${escapeHtml(srcLabel)}</span>
           </div>
           <div class="popup-stat">
             <span class="stat-label">${t('popups.updated')}</span>

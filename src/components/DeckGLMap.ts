@@ -1771,10 +1771,14 @@ export class DeckGLMap {
       getIcon: () => 'plane',
       iconAtlas: MARKER_ICONS.plane,
       iconMapping: AIRCRAFT_ICON_MAPPING,
-      getSize: (d) => d.onGround ? 14 : 18,
+      getSize: (d) => d.onGround ? 13 : 18,
       getColor: (d) => {
-        if (d.onGround) return [120, 120, 120, 160] as [number, number, number, number];
-        return [160, 100, 255, 220] as [number, number, number, number]; // Purple for all airborne
+        if (d.onGround) return [110, 110, 110, 150] as [number, number, number, number];
+        // Simulated data shown in amber so users can distinguish real vs demo
+        if (d.source?.includes('simulated') || d.source?.includes('SIMULATED')) {
+          return [255, 160, 40, 200] as [number, number, number, number];
+        }
+        return [160, 100, 255, 230] as [number, number, number, number]; // Purple = real OpenSky
       },
       getAngle: (d) => -d.trackDeg,
       sizeMinPixels: 8,
@@ -1782,6 +1786,11 @@ export class DeckGLMap {
       sizeScale: 1,
       pickable: true,
       billboard: false,
+      updateTriggers: {
+        getColor: this.aircraftPositions.length,
+        getSize: this.aircraftPositions.length,
+        getAngle: this.aircraftPositions.length,
+      },
     });
   }
 
@@ -3106,8 +3115,15 @@ export class DeckGLMap {
       }
       case 'flight-delays-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.name)} (${text(obj.iata)})</strong><br/>${text(obj.severity)}: ${text(obj.reason)}</div>` };
-      case 'aircraft-positions-layer':
-        return { html: `<div class="deckgl-tooltip"><strong>${text(obj.callsign || obj.icao24)}</strong><br/>${obj.altitudeFt?.toLocaleString() ?? 0} ft · ${obj.groundSpeedKts ?? 0} kts · ${Math.round(obj.trackDeg ?? 0)}°</div>` };
+      case 'aircraft-positions-layer': {
+        const acCallsign = text(obj.callsign || obj.icao24);
+        const acAlt = obj.onGround ? t('popups.aircraft.ground') : obj.altitudeFt > 100
+          ? `FL${Math.round(obj.altitudeFt / 100)} (${obj.altitudeFt.toLocaleString()} ft)`
+          : `${obj.altitudeFt.toLocaleString()} ft`;
+        const acSpd = obj.onGround ? '' : ` · ${Math.round(obj.groundSpeedKts)} kts`;
+        const acHdg = obj.onGround ? '' : ` · ${Math.round(obj.trackDeg)}°`;
+        return { html: `<div class="deckgl-tooltip"><strong>&#9992; ${acCallsign}</strong><br/>${acAlt}${acSpd}${acHdg}</div>` };
+      }
       case 'apt-groups-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.name)}</strong><br/>${text(obj.aka)}<br/>${t('popups.sponsor')}: ${text(obj.sponsor)}</div>` };
       case 'minerals-layer':
@@ -4265,6 +4281,7 @@ export class DeckGLMap {
 
   public setAircraftPositions(positions: PositionSample[]): void {
     this.aircraftPositions = positions;
+    this.markDirty('flights');
     this.render();
   }
 
