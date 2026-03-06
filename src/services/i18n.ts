@@ -25,7 +25,7 @@ function normalizeLanguage(lng: string): SupportedLanguage {
   if (SUPPORTED_LANGUAGE_SET.has(base)) {
     return base as SupportedLanguage;
   }
-  return 'en';
+  return I18N_CONFIG.FALLBACK_LANGUAGE as SupportedLanguage;
 }
 
 function applyDocumentDirection(lang: string): void {
@@ -78,6 +78,7 @@ export async function initI18n(): Promise<void> {
   await i18next
     .use(LanguageDetector)
     .init({
+      lng: I18N_CONFIG.DEFAULT_LANGUAGE,
       resources: {
         en: { translation: enTranslation as TranslationDictionary },
       },
@@ -89,7 +90,7 @@ export async function initI18n(): Promise<void> {
         escapeValue: false, // not needed for these simple strings
       },
       detection: {
-        order: ['localStorage', 'navigator'],
+        order: ['localStorage'],
         caches: ['localStorage'],
       },
     });
@@ -118,7 +119,7 @@ export async function changeLanguage(lng: string): Promise<void> {
 
 // Helper to get current language (normalized to short code)
 export function getCurrentLanguage(): string {
-  const lang = i18next.language || 'en';
+  const lang = i18next.language || I18N_CONFIG.DEFAULT_LANGUAGE;
   return lang.split('-')[0]!;
 }
 

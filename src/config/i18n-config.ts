@@ -1,7 +1,7 @@
 // Centralized i18n configurations
 export const I18N_CONFIG = {
     // 1st priority: The explicitly enabled standard baseline.
-    DEFAULT_LANGUAGE: 'en',
+    DEFAULT_LANGUAGE: 'ar',
 
     // 2nd priority: Fallback language utilized whenever an unmapped locale term is resolved
     FALLBACK_LANGUAGE: 'en',
