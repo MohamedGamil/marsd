@@ -74,6 +74,7 @@ export interface AppContext {
   readonly isMobile: boolean;
   readonly isDesktopApp: boolean;
   readonly downloadButtonEnabled: boolean;
+  readonly variantSwitchEnabled: boolean;
   readonly container: HTMLElement;
 
   panels: Record<string, Panel>;

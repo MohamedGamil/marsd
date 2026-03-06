@@ -119,7 +119,7 @@ export {
 export { GULF_INVESTMENTS } from './gulf-fdi';
 
 // UI configuration
-export { DOWNLOAD_BUTTON_ENABLED } from './ui';
+export { DOWNLOAD_BUTTON_ENABLED, VARIANT_SWITCH_ENABLED } from './ui';
 
 // Live News Channels
 export {

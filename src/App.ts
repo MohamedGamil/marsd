@@ -39,7 +39,7 @@ import { PanelLayoutManager } from '@/app/panel-layout';
 import { DataLoaderManager } from '@/app/data-loader';
 import { EventHandlerManager } from '@/app/event-handlers';
 import { resolveUserRegion, resolvePreciseUserCoordinates, type PreciseCoordinates } from '@/utils/user-location';
-import { APP_NAME } from './config/ui';
+import { APP_NAME, VARIANT_SWITCH_ENABLED } from './config/ui';
 
 const CYBER_LAYER_ENABLED = import.meta.env.VITE_ENABLE_CYBER_LAYER === 'true';
 
@@ -234,6 +234,7 @@ export class App {
 
     // UI configuration
     const appName = APP_NAME;
+    const variantSwitchEnabled = VARIANT_SWITCH_ENABLED;
     const downloadButtonEnabled = DOWNLOAD_BUTTON_ENABLED;
 
     // Build shared state object
@@ -243,6 +244,7 @@ export class App {
       isMobile,
       isDesktopApp,
       downloadButtonEnabled,
+      variantSwitchEnabled,
       container: el,
       panels: {},
       newsPanels: {},
