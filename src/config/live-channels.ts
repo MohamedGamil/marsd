@@ -4,15 +4,31 @@ import { LiveChannel } from '@/interfaces/LiveChannel';
  * Full global variant: World news channels (24/7 live streams)
  */
 export const FULL_LIVE_CHANNELS_GLOBAL: LiveChannel[] = [
-  { id: 'bloomberg', name: 'Bloomberg', handle: '@markets', fallbackVideoId: 'iEpJwprxDdk' },
   { id: 'sky', name: 'SkyNews', handle: '@SkyNews', fallbackVideoId: 'uvviIF4725I' },
-  { id: 'euronews', name: 'Euronews', handle: '@euronews', fallbackVideoId: 'pykpO5kQJ98' },
+  { id: 'aljazeera', name: 'AlJazeera English', handle: '@AlJazeeraEnglish', fallbackVideoId: 'gCNeDWCI0vo', useFallbackOnly: true },
   { id: 'dw', name: 'DW', handle: '@DWNews', fallbackVideoId: 'LuKwFajn37U' },
+  { id: 'alarabiya', name: 'AlArabiya', handle: '@AlArabiya', fallbackVideoId: 'n7eQejkXbnM', useFallbackOnly: true },
+  { id: 'bloomberg', name: 'Bloomberg', handle: '@markets', fallbackVideoId: 'iEpJwprxDdk' },
+  { id: 'euronews', name: 'Euronews', handle: '@euronews', fallbackVideoId: 'pykpO5kQJ98' },
   { id: 'cnbc', name: 'CNBC', handle: '@CNBC', fallbackVideoId: '9NyxcX3rhQs' },
   { id: 'cnn', name: 'CNN', handle: '@CNN', fallbackVideoId: 'w_Ma8oQLmSM' },
   { id: 'france24', name: 'France 24', handle: '@FRANCE24', fallbackVideoId: 'u9foWyMSETk' },
+];
+
+/**
+ * Full MENA variant: Middle East & North Africa news channels (24/7 live streams)
+ */
+export const FULL_LIVE_CHANNELS_MENA: LiveChannel[] = [
+  { id: 'aljazeeramubasher', name: 'AlJazeera Mubasher', handle: '@aljazeeramubasher', fallbackVideoId: '8D5QY5gw_Xk', useFallbackOnly: true },
+  { id: 'al-hadath', name: 'Al Hadath', handle: '@AlHadath', fallbackVideoId: 'xWXpl7azI8k', useFallbackOnly: true },
+  { id: 'france24_ar', name: 'France24 Arabic', handle: '@France24_ar', fallbackVideoId: '3ursYA8HMeo', useFallbackOnly: true },
   { id: 'alarabiya', name: 'AlArabiya', handle: '@AlArabiya', fallbackVideoId: 'n7eQejkXbnM', useFallbackOnly: true },
-  { id: 'aljazeera', name: 'AlJazeera', handle: '@AlJazeeraEnglish', fallbackVideoId: 'gCNeDWCI0vo', useFallbackOnly: true },
+  { id: 'aljazeera-arabic', name: 'AlJazeera Arabic', handle: '@aljazeera', fallbackVideoId: 'bNyUyrR0PHo', useFallbackOnly: true },
+  { id: 'sky-news-arabia', name: 'Sky News Arabia', handle: '@skynewsarabia', fallbackVideoId: 'U--OjmpjF5o' },
+  { id: 'trt-world', name: 'TRT World', handle: '@TRTWorld', fallbackVideoId: 'ABfFhWzWs0s' },
+  { id: 'iran-intl', name: 'Iran International', handle: '@IranIntl' },
+  { id: 'asharq-news', name: 'Asharq News', handle: '@asharqnews', fallbackVideoId: 'f6VpkfV7m4Y', useFallbackOnly: true },
+  { id: 'alaraby', name: 'Alaraby', handle: '@AlarabyTv_News', fallbackVideoId: 'e2RgSa1Wt5o', useFallbackOnly: true },
 ];
 
 /**
@@ -80,15 +96,20 @@ export const LIVE_CHANNELS_LIST: LiveChannel[] = [
   { id: 'india-today', name: 'India Today', handle: '@indiatoday', fallbackVideoId: 'sYZtOFzM78M' },
   { id: 'abp-news', name: 'ABP News', handle: '@ABPNews' },
   // Middle East (defaults first)
-  { id: 'alarabiya', name: 'AlArabiya', handle: '@AlArabiya', fallbackVideoId: 'n7eQejkXbnM', useFallbackOnly: true },
-  { id: 'aljazeera', name: 'AlJazeera', handle: '@AlJazeeraEnglish', fallbackVideoId: 'gCNeDWCI0vo', useFallbackOnly: true },
+  { id: 'aljazeeramubasher', name: 'AlJazeera Mubasher', handle: '@aljazeeramubasher', fallbackVideoId: '8D5QY5gw_Xk', useFallbackOnly: true },
   { id: 'al-hadath', name: 'Al Hadath', handle: '@AlHadath', fallbackVideoId: 'xWXpl7azI8k', useFallbackOnly: true },
+  { id: 'france24_ar', name: 'France24 Arabic', handle: '@France24_ar', fallbackVideoId: '3ursYA8HMeo', useFallbackOnly: true },
+  { id: 'alarabiya', name: 'AlArabiya', handle: '@AlArabiya', fallbackVideoId: 'n7eQejkXbnM', useFallbackOnly: true },
+  { id: 'aljazeera-arabic', name: 'AlJazeera Arabic', handle: '@aljazeera', fallbackVideoId: 'bNyUyrR0PHo', useFallbackOnly: true },
+  { id: 'aljazeera', name: 'AlJazeera English', handle: '@AlJazeeraEnglish', fallbackVideoId: 'gCNeDWCI0vo', useFallbackOnly: true },
   { id: 'sky-news-arabia', name: 'Sky News Arabia', handle: '@skynewsarabia', fallbackVideoId: 'U--OjmpjF5o' },
   { id: 'trt-world', name: 'TRT World', handle: '@TRTWorld', fallbackVideoId: 'ABfFhWzWs0s' },
   { id: 'iran-intl', name: 'Iran International', handle: '@IranIntl' },
   { id: 'cgtn-arabic', name: 'CGTN Arabic', handle: '@CGTNArabic' },
   { id: 'kan-11', name: 'Kan 11', handle: '@KAN11NEWS', fallbackVideoId: 'TCnaIE_SAtM' },
   { id: 'asharq-news', name: 'Asharq News', handle: '@asharqnews', fallbackVideoId: 'f6VpkfV7m4Y', useFallbackOnly: true },
+  { id: 'alaraby', name: 'Alaraby', handle: '@AlarabyTv_News', fallbackVideoId: 'e2RgSa1Wt5o', useFallbackOnly: true },
+  { id: 'bbcarabic', name: 'BBC Arabic', handle: '@bbcarabic', fallbackVideoId: 'O1pGmVtj2Y8', useFallbackOnly: true },
   // Africa
   { id: 'africanews', name: 'Africanews', handle: '@africanews' },
   { id: 'channels-tv', name: 'Channels TV', handle: '@ChannelsTelevision' },
@@ -108,4 +129,60 @@ export const LIVE_CHANNELS_LIST: LiveChannel[] = [
   { id: 'aljazeera-balkans', name: 'Al Jazeera Balkans', handle: '@AlJazeeraBalkans' },
   // Oceania
   { id: 'abc-news-au', name: 'ABC News Australia', handle: '@abcnewsaustralia', fallbackVideoId: 'vOTiJkg1voo' },
+];
+
+/**
+ * Region entries for optional channels
+ */
+export const ENTRIES_REGIONS: { key: string; labelKey: string; channelIds: string[] }[] = [
+  {
+    key: 'na',
+    labelKey: 'components.liveNews.regionNorthAmerica',
+    channelIds: ['bloomberg', 'cnbc', 'yahoo', 'cnn', 'fox-news', 'newsmax', 'abc-news', 'cbs-news', 'nbc-news', 'cbc-news', 'nasa'],
+  },
+  {
+    key: 'eu',
+    labelKey: 'components.liveNews.regionEurope',
+    channelIds: ['sky', 'euronews', 'dw', 'france24', 'bbc-news', 'france24-en', 'welt', 'rtve', 'trt-haber', 'ntv-turkey', 'cnn-turk', 'tv-rain', 'rt', 'tvp-info', 'telewizja-republika', 'tagesschau24', 'euronews-fr', 'france24-fr', 'france-info', 'bfmtv', 'tv5monde-info', 'nrk1', 'aljazeera-balkans'],
+  },
+  {
+    key: 'latam',
+    labelKey: 'components.liveNews.regionLatinAmerica',
+    channelIds: ['cnn-brasil', 'jovem-pan', 'record-news', 'band-jornalismo', 'tn-argentina', 'c5n', 'milenio', 'noticias-caracol', 'ntn24', 't13'],
+  },
+  {
+    key: 'asia',
+    labelKey: 'components.liveNews.regionAsia',
+    channelIds: ['tbs-news', 'ann-news', 'ntv-news', 'cti-news', 'wion', 'ndtv', 'cna-asia', 'nhk-world', 'arirang-news', 'india-today', 'abp-news'],
+  },
+  {
+    key: 'me',
+    labelKey: 'components.liveNews.regionMiddleEast',
+    channelIds: [
+      'aljazeeramubasher',
+      'al-hadath',
+      'france24_ar',
+      'alarabiya',
+      'aljazeera-arabic',
+      'aljazeera',
+      'sky-news',
+      'trt-world',
+      'iran-intl',
+      'cgtn-arabic',
+      'kan-11',
+      'asharq-news',
+      'alaraby',
+      'bbcarabic',
+    ],
+  },
+  {
+    key: 'africa',
+    labelKey: 'components.liveNews.regionAfrica',
+    channelIds: ['africanews', 'channels-tv', 'ktn-news', 'enca', 'sabc-news', 'arise-news'],
+  },
+  {
+    key: 'oc',
+    labelKey: 'components.liveNews.regionOceania',
+    channelIds: ['abc-news-au'],
+  },
 ];

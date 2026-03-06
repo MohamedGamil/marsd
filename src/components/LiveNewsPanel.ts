@@ -3,7 +3,7 @@ import { fetchLiveVideoInfo } from '@/services/live-news';
 import { isDesktopRuntime, getRemoteApiBaseUrl, getApiBaseUrl, getLocalApiPort } from '@/services/runtime';
 import { t } from '../services/i18n';
 import { loadFromStorage, saveToStorage } from '@/utils';
-import { IDLE_PAUSE_MS, STORAGE_KEYS, SITE_VARIANT, FULL_LIVE_CHANNELS_GLOBAL, TECH_LIVE_CHANNELS_GLOBAL, LIVE_CHANNELS_LIST } from '@/config';
+import { IDLE_PAUSE_MS, STORAGE_KEYS, SITE_VARIANT, FULL_LIVE_CHANNELS_GLOBAL, TECH_LIVE_CHANNELS_GLOBAL, LIVE_CHANNELS_LIST, ENTRIES_REGIONS, FULL_LIVE_CHANNELS_MENA } from '@/config';
 import { escapeHtml, sanitizeUrl } from '@/utils/sanitize';
 
 import { getStreamQuality } from '@/services/ai-flow-settings';
@@ -49,7 +49,8 @@ declare global {
 }
 
 // Full variant: World news channels (24/7 live streams)
-const FULL_LIVE_CHANNELS: LiveChannel[] = FULL_LIVE_CHANNELS_GLOBAL;
+// const FULL_LIVE_CHANNELS: LiveChannel[] = FULL_LIVE_CHANNELS_GLOBAL;
+const FULL_LIVE_CHANNELS: LiveChannel[] = FULL_LIVE_CHANNELS_MENA;
 
 // Tech variant: Tech & business channels
 const TECH_LIVE_CHANNELS: LiveChannel[] = TECH_LIVE_CHANNELS_GLOBAL;
@@ -58,15 +59,8 @@ const TECH_LIVE_CHANNELS: LiveChannel[] = TECH_LIVE_CHANNELS_GLOBAL;
 // Includes default channels so they appear in the grid for toggle on/off
 export const OPTIONAL_LIVE_CHANNELS: LiveChannel[] = LIVE_CHANNELS_LIST;
 
-const _REGION_ENTRIES: { key: string; labelKey: string; channelIds: string[] }[] = [
-  { key: 'na', labelKey: 'components.liveNews.regionNorthAmerica', channelIds: ['bloomberg', 'cnbc', 'yahoo', 'cnn', 'fox-news', 'newsmax', 'abc-news', 'cbs-news', 'nbc-news', 'cbc-news', 'nasa'] },
-  { key: 'eu', labelKey: 'components.liveNews.regionEurope', channelIds: ['sky', 'euronews', 'dw', 'france24', 'bbc-news', 'france24-en', 'welt', 'rtve', 'trt-haber', 'ntv-turkey', 'cnn-turk', 'tv-rain', 'rt', 'tvp-info', 'telewizja-republika', 'tagesschau24', 'euronews-fr', 'france24-fr', 'france-info', 'bfmtv', 'tv5monde-info', 'nrk1', 'aljazeera-balkans'] },
-  { key: 'latam', labelKey: 'components.liveNews.regionLatinAmerica', channelIds: ['cnn-brasil', 'jovem-pan', 'record-news', 'band-jornalismo', 'tn-argentina', 'c5n', 'milenio', 'noticias-caracol', 'ntn24', 't13'] },
-  { key: 'asia', labelKey: 'components.liveNews.regionAsia', channelIds: ['tbs-news', 'ann-news', 'ntv-news', 'cti-news', 'wion', 'ndtv', 'cna-asia', 'nhk-world', 'arirang-news', 'india-today', 'abp-news'] },
-  { key: 'me', labelKey: 'components.liveNews.regionMiddleEast', channelIds: ['alarabiya', 'aljazeera', 'al-hadath', 'sky-news-arabia', 'trt-world', 'iran-intl', 'cgtn-arabic', 'kan-11', 'i24-news', 'asharq-news', 'aljazeera-arabic'] },
-  { key: 'africa', labelKey: 'components.liveNews.regionAfrica', channelIds: ['africanews', 'channels-tv', 'ktn-news', 'enca', 'sabc-news', 'arise-news'] },
-  { key: 'oc', labelKey: 'components.liveNews.regionOceania', channelIds: ['abc-news-au'] },
-];
+const _REGION_ENTRIES: { key: string; labelKey: string; channelIds: string[] }[] = ENTRIES_REGIONS;
+
 export const OPTIONAL_CHANNEL_REGIONS: { key: string; labelKey: string; channelIds: string[] }[] = [
   { key: 'all', labelKey: 'components.liveNews.regionAll', channelIds: _REGION_ENTRIES.flatMap((r) => r.channelIds) },
   ..._REGION_ENTRIES,
