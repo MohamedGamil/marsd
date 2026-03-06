@@ -2373,6 +2373,15 @@ body.live-news-fullscreen-active .panels-grid>*:not(.live-news-fullscreen) {
   visibility: hidden !important;
 }
 
+/* Map popup + country brief panel must sit above the fullscreen panel (z 10000) */
+body.live-news-fullscreen-active .map-popup {
+  z-index: 10001 !important;
+}
+
+body.live-news-fullscreen-active .country-deep-dive {
+  z-index: 10001 !important;
+}
+
 .live-indicator-btn {
   background: transparent;
   border: none;
