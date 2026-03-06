@@ -2135,17 +2135,36 @@ export class DeckGLMap {
     });
   }
 
-  private createMilitaryFlightsLayer(flights: MilitaryFlight[]): ScatterplotLayer {
-    return new ScatterplotLayer({
+  private createMilitaryFlightsLayer(flights: MilitaryFlight[]): IconLayer<MilitaryFlight> {
+    const TYPE_COLORS: Record<string, [number, number, number, number]> = {
+      fighter:        [255,  50,  50, 230],
+      bomber:         [255, 120,   0, 230],
+      reconnaissance: [ 60, 160, 255, 220],
+      awacs:          [ 60, 200, 255, 220],
+      tanker:         [140, 255,  80, 220],
+      transport:      [180, 180, 255, 210],
+      helicopter:     [255, 255,  80, 210],
+      drone:          [255,  80, 255, 210],
+      patrol:         [ 80, 200, 200, 210],
+      special_ops:    [255, 160,  40, 220],
+      vip:            [220, 180, 255, 220],
+    };
+    return new IconLayer<MilitaryFlight>({
       parameters: { depthCompare: 'always' as const, depthWriteEnabled: false },
       id: 'military-flights-layer',
       data: flights,
       getPosition: (d) => [d.lon, d.lat],
-      getRadius: 8000,
-      getFillColor: COLORS.flightMilitary,
-      radiusMinPixels: 4,
-      radiusMaxPixels: 12,
+      getIcon: () => 'plane',
+      iconAtlas: MARKER_ICONS.plane,
+      iconMapping: AIRCRAFT_ICON_MAPPING,
+      getSize: (d) => d.onGround ? 14 : 20,
+      getColor: (d) => TYPE_COLORS[d.aircraftType] ?? COLORS.flightMilitary,
+      getAngle: (d) => -(d.heading ?? 0),
+      sizeMinPixels: 6,
+      sizeMaxPixels: 24,
+      billboard: false,
       pickable: true,
+      updateTriggers: { getColor: flights.length, getAngle: flights.length, getSize: flights.length },
     });
   }
 
@@ -3022,7 +3041,7 @@ export class DeckGLMap {
       case 'military-vessels-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.name)}</strong><br/>${text(getLocalizedGeoName(obj.operatorCountry))}</div>` };
       case 'military-flights-layer':
-        return { html: `<div class="deckgl-tooltip"><strong>${text(obj.callsign || obj.registration || t('components.deckgl.tooltip.militaryAircraft'))}</strong><br/>${text(obj.type)}</div>` };
+        return { html: `<div class="deckgl-tooltip"><strong>${text(obj.callsign || obj.registration || t('components.deckgl.tooltip.militaryAircraft'))}</strong><br/>${text(obj.aircraftType)}</div>` };
       case 'military-vessel-clusters-layer':
         return { html: `<div class="deckgl-tooltip"><strong>${text(obj.name || t('components.deckgl.tooltip.vesselCluster'))}</strong><br/>${obj.vesselCount || 0} ${t('components.deckgl.tooltip.vessels')}<br/>${text(obj.activityType)}</div>` };
       case 'military-flight-clusters-layer':

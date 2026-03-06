@@ -461,8 +461,14 @@ export interface QueryRegion {
 }
 
 export const MILITARY_QUERY_REGIONS: QueryRegion[] = [
+  // East Asia / Western Pacific (China, Japan, Korea, Taiwan, SEA)
   { name: 'PACIFIC', lamin: 10, lamax: 46, lomin: 107, lomax: 143 },
+  // Europe, Middle East, North Africa (full latitude coverage)
   { name: 'WESTERN', lamin: 13, lamax: 85, lomin: -10, lomax: 57 },
+  // Continental USA, Canada, Mexico, Caribbean — critical missing region
+  { name: 'NORTH_AMERICA', lamin: 15, lamax: 72, lomin: -170, lomax: -50 },
+  // South / Central Asia & Indian subcontinent (India, Pakistan, Gulf beyond 57°E)
+  { name: 'SOUTH_ASIA', lamin: 5, lamax: 40, lomin: 57, lomax: 107 },
 ];
 
 if (import.meta.env.DEV) {

@@ -510,6 +510,15 @@ export function stopFlightHistoryCleanup(): void {
 }
 
 /**
+ * Invalidate the in-memory flight cache so the next call to
+ * fetchMilitaryFlights() skips the 15-minute TTL and goes straight to
+ * the upstream API.  Call this when cached data is known to be stale/empty.
+ */
+export function clearMilitaryFlightCache(): void {
+  flightCache = null;
+}
+
+/**
  * Main function to fetch military flights
  */
 export async function fetchMilitaryFlights(): Promise<{
@@ -527,12 +536,10 @@ export async function fetchMilitaryFlights(): Promise<{
       return { flights: flightCache.data, clusters };
     }
 
-    // Fetch from OpenSky (regional queries for efficiency)
+    // Fetch from OpenSky (regional queries for efficiency).
+    // fetchFromOpenSky() throws only when ALL regions fail with HTTP errors;
+    // returning zero identified military flights is a valid (not error) state.
     let flights = await fetchFromOpenSky();
-
-    if (flights.length === 0) {
-      throw new Error('No flights returned — upstream may be down');
-    }
 
     // Enrich with Wingbits aircraft details (owner, operator, type)
     flights = await enrichFlightsWithWingbits(flights);

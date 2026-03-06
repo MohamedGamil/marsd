@@ -813,9 +813,18 @@ export class GlobeMap {
     } else if (d._kind === 'flight') {
       const heading = d.heading ?? 0;
       const typeColors: Record<string, string> = {
-        fighter: '#ff4444', bomber: '#ff8800', recon: '#44aaff',
-        tanker: '#88ff44', transport: '#aaaaff', helicopter: '#ffff44',
-        drone: '#ff44ff', maritime: '#44ffff',
+        fighter:        '#ff4444',
+        bomber:         '#ff8800',
+        reconnaissance: '#44aaff',
+        awacs:          '#3ce0ff',
+        tanker:         '#88ff44',
+        transport:      '#aaaaff',
+        helicopter:     '#ffff44',
+        drone:          '#ff44ff',
+        patrol:         '#44ffcc',
+        special_ops:    '#ffa040',
+        vip:            '#dd99ff',
+        unknown:        '#cccccc',
       };
       const color = typeColors[d.type] ?? '#cccccc';
       el.innerHTML = `

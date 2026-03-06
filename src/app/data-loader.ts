@@ -33,6 +33,7 @@ import {
   getProtestStatus,
   fetchFlightDelays,
   fetchMilitaryFlights,
+  clearMilitaryFlightCache,
   fetchMilitaryVessels,
   initMilitaryVesselStream,
   isMilitaryVesselTrackingConfigured,
@@ -1747,8 +1748,13 @@ export class DataLoaderManager implements AppModule {
   }
 
   async loadMilitary(): Promise<void> {
-    if (this.ctx.intelligenceCache.military) {
-      const { flights, flightClusters, vessels, vesselClusters } = this.ctx.intelligenceCache.military;
+    const cached = this.ctx.intelligenceCache.military;
+    // Use the intelligence cache only when it contains real data.
+    // An empty cache (0 flights AND 0 vessels) means the initial fetch either
+    // had no coverage for the visible region or the circuit was open — force a
+    // fresh network call so the layer recovers automatically.
+    if (cached && (cached.flights.length > 0 || cached.vessels.length > 0)) {
+      const { flights, flightClusters, vessels, vesselClusters } = cached;
       this.ctx.map?.setMilitaryFlights(flights, flightClusters);
       this.ctx.map?.setMilitaryVessels(vessels, vesselClusters);
       this.ctx.map?.updateMilitaryForEscalation(flights, vessels);
@@ -1770,6 +1776,10 @@ export class DataLoaderManager implements AppModule {
       if (isMilitaryVesselTrackingConfigured()) {
         initMilitaryVesselStream();
       }
+      // If we're doing a forced re-fetch (cache was empty), also clear the
+      // service-level 15-min flightCache so we go to the upstream API rather
+      // than serving the same empty result from in-module cache.
+      if (!cached) clearMilitaryFlightCache();
       const [flightData, vesselData] = await Promise.all([
         fetchMilitaryFlights(),
         fetchMilitaryVessels(),
