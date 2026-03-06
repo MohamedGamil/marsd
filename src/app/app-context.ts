@@ -73,6 +73,7 @@ export interface AppContext {
   map: MapContainer | null;
   readonly isMobile: boolean;
   readonly isDesktopApp: boolean;
+  readonly githubLinkEnabled: boolean;
   readonly downloadButtonEnabled: boolean;
   readonly variantSwitchEnabled: boolean;
   readonly container: HTMLElement;

@@ -26,6 +26,7 @@ import type { TradeRouteSegment } from '@/config/trade-routes';
 import type { GlobeStaticReadyMessage } from '@/workers/globe-data.worker';
 import { getCountryBbox, getCountriesGeoJson } from '@/services/country-geometry';
 import { escapeHtml } from '@/utils/sanitize';
+import { getLocalizedGeoName } from '@/services/i18n';
 import type { FeatureCollection, Geometry } from 'geojson';
 import type { MapLayers, Hotspot, MilitaryFlight, MilitaryVessel, NaturalEvent, InternetOutage, CyberThreat, SocialUnrestEvent, UcdpGeoEvent, CableAdvisory, RepairShip, AisDisruptionEvent, AisDensityZone, AisDisruptionType } from '@/types';
 import type { Earthquake } from '@/services/earthquakes';
@@ -696,7 +697,10 @@ export class GlobeMap {
         return 0.005;
       })
       .polygonLabel((d: GlobePolygon) => {
-        if (d._kind === 'cii') return `<b>${escapeHtml(d.name)}</b><br/>CII: ${d.score}/100 (${escapeHtml(d.level ?? '')})`;
+        if (d._kind === 'cii') {
+          const locName = getLocalizedGeoName(d.name) || d.name;
+          return `<b>${escapeHtml(locName)}</b><br/>CII: ${d.score}/100 (${escapeHtml(d.level ?? '')})`;
+        }
         if (d._kind === 'conflict') {
           let label = `<b>${escapeHtml(d.name)}</b>`;
           if (d.parties?.length) label += `<br/>Parties: ${d.parties.map(p => escapeHtml(p)).join(', ')}`;

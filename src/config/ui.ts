@@ -13,6 +13,11 @@ export const APP_NAME = 'Marsd';
 export const VARIANT_SWITCH_ENABLED = false;
 
 /**
+ * Enable / Disable github link
+ */
+export const GITHUB_LINK_ENABLED = false;
+
+/**
  * Enable / Disable download app button
  */
 export const DOWNLOAD_BUTTON_ENABLED = false;

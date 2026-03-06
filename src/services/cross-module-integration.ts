@@ -3,7 +3,7 @@ import type { CountryScore } from './country-instability';
 import type { CascadeResult, CascadeImpactLevel } from '@/types';
 import { calculateCII, isInLearningMode } from './country-instability';
 import { getCountryNameByCode } from './country-geometry';
-import { t } from '@/services/i18n';
+import { t, getLocalizedGeoName } from '@/services/i18n';
 import type { TheaterPostureSummary } from '@/services/military-surge';
 
 export type AlertPriority = 'critical' | 'high' | 'medium' | 'low';
@@ -77,9 +77,9 @@ function haversineDistance(
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -109,7 +109,7 @@ function getPriorityFromConvergence(score: number, typeCount: number): AlertPrio
 }
 
 function buildConvergenceAlert(convergence: GeoConvergenceAlert, alertId: string): UnifiedAlert {
-  const location = getCountriesNearLocation(convergence.lat, convergence.lon).join(', ') || 'Unknown';
+  const location = getCountriesNearLocation(convergence.lat, convergence.lon).map(getCountryDisplayName).join(', ') || t('alerts.multipleRegions') || 'Unknown';
   return {
     id: alertId,
     type: 'convergence',
@@ -157,7 +157,7 @@ export function createCIIAlert(
     id: `cii-${country}`, // Stable ID for deduplication by country
     type: 'cii_spike',
     priority: getPriorityFromCIIChange(change, level),
-    title: t(change > 0 ? 'alerts.instabilityRising' : 'alerts.instabilityFalling', { country: countryName }),
+    title: t(change > 0 ? 'alerts.instabilityRising' : 'alerts.instabilityFalling', { country: getLocalizedGeoName(country) || countryName }),
     summary: t(summaryKey, { from: previousScore, to: currentScore, change: changeStr, driver }),
     components: { ciiChange },
     countries: [country],
@@ -204,7 +204,7 @@ function shouldMergeAlerts(a: UnifiedAlert, b: UnifiedAlert): boolean {
     a.location &&
     b.location &&
     haversineDistance(a.location.lat, a.location.lon, b.location.lat, b.location.lon) <
-      ALERT_MERGE_DISTANCE_KM
+    ALERT_MERGE_DISTANCE_KM
   );
 
   return (sameCountry || sameLocation) && sameTime;
@@ -235,13 +235,13 @@ function getHigherPriority(a: AlertPriority, b: AlertPriority): AlertPriority {
 }
 
 function getCountryDisplayName(code: string): string {
-  return getCountryNameByCode(code) || code;
+  return getLocalizedGeoName(code) || getCountryNameByCode(code) || code;
 }
 
 function generateCompositeTitle(a: UnifiedAlert, b: UnifiedAlert): string {
   const ciiChange = a.components.ciiChange || b.components.ciiChange;
   if (ciiChange) {
-    return t(ciiChange.change > 0 ? 'alerts.instabilityRising' : 'alerts.instabilityFalling', { country: ciiChange.countryName });
+    return t(ciiChange.change > 0 ? 'alerts.instabilityRising' : 'alerts.instabilityFalling', { country: getLocalizedGeoName(ciiChange.country) || ciiChange.countryName });
   }
 
   if (a.components.convergence || b.components.convergence) {

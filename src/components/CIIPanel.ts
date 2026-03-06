@@ -1,7 +1,7 @@
 import { Panel } from './Panel';
 import { getCSSColor } from '@/utils';
 import { calculateCII, type CountryScore } from '@/services/country-instability';
-import { t } from '../services/i18n';
+import { t, getLocalizedGeoName } from '../services/i18n';
 import { h, replaceChildren, rawHtml } from '@/utils/dom-utils';
 import type { CachedRiskScores } from '@/services/cached-risk-scores';
 import { toCountryScore } from '@/services/cached-risk-scores';
@@ -72,7 +72,7 @@ export class CIIPanel extends Panel {
     return h('div', { className: 'cii-country', dataset: { code: country.code } },
       h('div', { className: 'cii-header' },
         h('span', { className: 'cii-emoji' }, emoji),
-        h('span', { className: 'cii-name' }, country.name),
+        h('span', { className: 'cii-name' }, getLocalizedGeoName(country.code) || getLocalizedGeoName(country.name)),
         h('span', { className: 'cii-score' }, String(country.score)),
         this.buildTrendArrow(country.trend, country.change24h),
         shareBtn,
