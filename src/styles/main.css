@@ -17383,3 +17383,49 @@ body.has-breaking-alert .panels-grid {
     opacity: 0;
   }
 }
+
+/* ─── Globe Loading Overlay ─────────────────────────────────────────────────── */
+
+.globe-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: radial-gradient(ellipse at 50% 45%, #001428 0%, #000810 100%);
+  opacity: 1;
+  transition: opacity 0.65s ease;
+  pointer-events: none;
+}
+
+.globe-loading-overlay.globe-loading-fade {
+  opacity: 0;
+}
+
+.globe-loading-spinner {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 212, 255, 0.12);
+  border-top-color: #00d4ff;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.25);
+  animation: globe-spinner-rotate 0.85s linear infinite;
+}
+
+@keyframes globe-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.globe-loading-text {
+  color: rgba(0, 212, 255, 0.65);
+  font-size: 12px;
+  font-family: system-ui, ui-sans-serif, sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  user-select: none;
+}

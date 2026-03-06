@@ -411,6 +411,8 @@ export class GlobeMap {
   private layerTogglesEl: HTMLElement | null = null;
   private popup!: MapPopup;
   private hoverTooltipEl: HTMLElement | null = null;
+  private loadingOverlayEl: HTMLElement | null = null;
+  private loadingOverlayFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Callbacks
   private onLayerChangeCb: ((layer: keyof MapLayers, enabled: boolean, source: 'user' | 'programmatic') => void) | null = null;
@@ -504,6 +506,13 @@ export class GlobeMap {
       .width(initW)
       .height(initH)
       .pathTransitionDuration(0);
+
+    // Dismiss loading overlay once the globe mesh + texture have rendered for the first time.
+    // rAF ensures at least one browser paint cycle shows the overlay (handles cached-texture
+    // scenarios where onGlobeReady fires synchronously before the first frame is painted).
+    (globe as any).onGlobeReady(() => {
+      requestAnimationFrame(() => { if (!this.destroyed) this.hideLoadingOverlay(); });
+    });
 
     // Orbit controls — match Sentinel's settings
     const controls = globe.controls() as GlobeControlsLike;
@@ -743,6 +752,10 @@ export class GlobeMap {
     // Add overlay UI (zoom controls + layer panel)
     this.createControls();
     this.createLayerToggles();
+
+    // Loading overlay must be appended AFTER all globe.gl and UI elements so it is
+    // the last DOM child — guaranteeing it sits on top in paint order.
+    this.createLoadingOverlay();
 
     // Load static datasets (hotspots + conflict zones loaded synchronously;
     // remaining static layers arrive asynchronously from globe-data.worker)
@@ -1123,6 +1136,33 @@ export class GlobeMap {
       // Types without a dedicated PopupType — use minimal fallback tooltip
       default:              this.showFallbackTooltip(d, e); break;
     }
+  }
+
+  /** Inject a loading overlay that hides the blank/loading globe until textures are ready. */
+  private createLoadingOverlay(): void {
+    const overlay = document.createElement('div');
+    overlay.className = 'globe-loading-overlay';
+    overlay.innerHTML = [
+      '<div class="globe-loading-spinner"></div>',
+      '<div class="globe-loading-text">Loading globe…</div>',
+    ].join('');
+    this.container.appendChild(overlay);
+    this.loadingOverlayEl = overlay;
+    // Safety fallback: dismiss after 15 s even if onGlobeReady never fires (e.g. network failure)
+    this.loadingOverlayFallbackTimer = setTimeout(() => this.hideLoadingOverlay(), 15_000);
+  }
+
+  private hideLoadingOverlay(): void {
+    if (this.loadingOverlayFallbackTimer) {
+      clearTimeout(this.loadingOverlayFallbackTimer);
+      this.loadingOverlayFallbackTimer = null;
+    }
+    const el = this.loadingOverlayEl;
+    if (!el) return;
+    this.loadingOverlayEl = null;
+    el.classList.add('globe-loading-fade');
+    // Remove from DOM after the CSS transition completes
+    setTimeout(() => el.remove(), 700);
   }
 
   /** Lightweight hover tooltip that appears when the user mouses over a globe marker. */
@@ -2210,6 +2250,12 @@ export class GlobeMap {
     this.reversedRingCache.clear();
     this.flightDataMap.clear();
     this.vesselDataMap.clear();
+    if (this.loadingOverlayFallbackTimer) {
+      clearTimeout(this.loadingOverlayFallbackTimer);
+      this.loadingOverlayFallbackTimer = null;
+    }
+    this.loadingOverlayEl?.remove();
+    this.loadingOverlayEl = null;
     this.popup.hide();
     this.hideHoverTooltip();
     this.controls = null;
