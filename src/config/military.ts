@@ -439,12 +439,19 @@ export const KNOWN_NAVAL_VESSELS: KnownNavalVessel[] = [
 /**
  * Regions of interest for military activity monitoring
  */
-// Consolidated regions to reduce API calls (max 4 queries)
-// Names kept short for map cluster labels
+// Ordered most-specific first — getNearbyHotspot() returns the first match,
+// so tighter sub-regions should precede the larger combined zones.
 export const MILITARY_HOTSPOTS = [
   // East Asia: Taiwan + SCS + Korea + Japan Sea (combined)
   { name: 'INDO-PACIFIC', lat: 28.0, lon: 125.0, radius: 18, priority: 'high' },
-  // Middle East: Persian Gulf + Aden + Mediterranean (combined)
+
+  // MENA sub-regions (listed before broad CENTCOM so specific labels win)
+  // Red Sea / Yemen / Gulf of Aden — active Houthi conflict zone
+  { name: 'RED_SEA', lat: 20.0, lon: 39.0, radius: 10, priority: 'high' },
+  // North Africa — Libya, Tunisia, Algeria, Egypt western airspace
+  { name: 'NORTH_AFRICA', lat: 30.0, lon: 15.0, radius: 15, priority: 'medium' },
+
+  // Broader Middle East: Persian Gulf + Levant + Eastern Med (fallback)
   { name: 'CENTCOM', lat: 28.0, lon: 42.0, radius: 15, priority: 'high' },
   // Europe: Black Sea + Baltic (combined)
   { name: 'EUCOM', lat: 52.0, lon: 28.0, radius: 15, priority: 'medium' },
@@ -463,12 +470,17 @@ export interface QueryRegion {
 export const MILITARY_QUERY_REGIONS: QueryRegion[] = [
   // East Asia / Western Pacific (China, Japan, Korea, Taiwan, SEA)
   { name: 'PACIFIC', lamin: 10, lamax: 46, lomin: 107, lomax: 143 },
-  // Europe, Middle East, North Africa (full latitude coverage)
+  // Europe + northern MENA corridor (wide latitude, trims at 57°E)
   { name: 'WESTERN', lamin: 13, lamax: 85, lomin: -10, lomax: 57 },
-  // Continental USA, Canada, Mexico, Caribbean — critical missing region
+  // Continental USA, Canada, Mexico, Caribbean
   { name: 'NORTH_AMERICA', lamin: 15, lamax: 72, lomin: -170, lomax: -50 },
   // South / Central Asia & Indian subcontinent (India, Pakistan, Gulf beyond 57°E)
   { name: 'SOUTH_ASIA', lamin: 5, lamax: 40, lomin: 57, lomax: 107 },
+  // MENA — dedicated pass covering Morocco→Oman and Turkey→Yemen/Horn of Africa:
+  //   • fills the 10-13°N gap WESTERN misses (Yemen, Djibouti, Eritrea)
+  //   • provides focused queries for the Red Sea, Libya, and the Gulf at higher resolution
+  //   • lomax 65°E bridges the gap between WESTERN (57°E cap) and SOUTH_ASIA (57°E start)
+  { name: 'MENA', lamin: 10, lamax: 45, lomin: -10, lomax: 65 },
 ];
 
 if (import.meta.env.DEV) {
