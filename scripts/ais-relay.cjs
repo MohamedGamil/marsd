@@ -28,9 +28,9 @@ const API_KEY = process.env.AISSTREAM_API_KEY || process.env.VITE_AISSTREAM_API_
 const PORT = process.env.PORT || 3004;
 
 if (!API_KEY) {
-  console.error('[Relay] Error: AISSTREAM_API_KEY environment variable not set');
-  console.error('[Relay] Get a free key at https://aisstream.io');
-  process.exit(1);
+  console.warn('[Relay] Warning: AISSTREAM_API_KEY not set — AIS vessel WebSocket disabled.');
+  console.warn('[Relay] Get a free key at https://aisstream.io');
+  console.warn('[Relay] RSS proxy, OpenSky aircraft, and all HTTP endpoints will still function.');
 }
 
 const MAX_WS_CLIENTS = 10; // Cap WS clients — app uses HTTP snapshots, not WS
@@ -5126,152 +5126,79 @@ const server = http.createServer(async (req, res) => {
               return fetchWithRedirects(redirectUrl, redirectCount + 1);
             }
 
-            const conditionalHeaders = {};
-            if (rssCached?.etag) conditionalHeaders['If-None-Match'] = rssCached.etag;
-            if (rssCached?.lastModified) conditionalHeaders['If-Modified-Since'] = rssCached.lastModified;
+            if (response.statusCode === 304 && rssCached) {
+              responseHandled = true;
+              rssCached.timestamp = Date.now();
+              rssResetFailure(feedUrl);
+              resolveInFlight();
+              logThrottled('log', `rss-revalidated:${feedUrl}`, '[Relay] RSS 304 revalidated:', feedUrl);
+              sendCompressed(req, res, 200, {
+                'Content-Type': rssCached.contentType || 'application/xml',
+                'Cache-Control': 'public, max-age=300',
+                'CDN-Cache-Control': 'public, max-age=600, stale-while-revalidate=300',
+                'X-Cache': 'REVALIDATED',
+              }, rssCached.data);
+              return;
+            }
 
-            const protocol = url.startsWith('https') ? https : http;
-            const request = protocol.get(url, {
-              headers: {
-                'Accept': 'application/rss+xml, application/xml, text/xml, */*',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept-Language': 'en-US,en;q=0.9',
-                ...conditionalHeaders,
-              },
-              timeout: 15000
-            }, (response) => {
-              if ([301, 302, 303, 307, 308].includes(response.statusCode) && response.headers.location) {
-                const redirectUrl = response.headers.location.startsWith('http')
-                  ? response.headers.location
-                  : new URL(response.headers.location, url).href;
-                const redirectHost = new URL(redirectUrl).hostname;
-                if (!allowedDomains.includes(redirectHost)) {
-                  return sendError(403, 'Redirect to disallowed domain');
-                }
-                logThrottled('log', `rss-redirect:${feedUrl}:${redirectUrl}`, `[Relay] Following redirect to: ${redirectUrl}`);
-                return fetchWithRedirects(redirectUrl, redirectCount + 1);
+            const encoding = response.headers['content-encoding'];
+            let stream = response;
+            if (encoding === 'gzip' || encoding === 'deflate') {
+              stream = encoding === 'gzip' ? response.pipe(zlib.createGunzip()) : response.pipe(zlib.createInflate());
+            }
+
+            const chunks = [];
+            stream.on('data', chunk => chunks.push(chunk));
+            stream.on('end', () => {
+              if (responseHandled || res.headersSent) return;
+              responseHandled = true;
+              const data = Buffer.concat(chunks);
+              // Cache all responses: 2xx with full TTL, non-2xx with short TTL (negative cache)
+              // FIFO eviction: drop oldest-inserted entry if at capacity
+              if (rssResponseCache.size >= RSS_CACHE_MAX_ENTRIES && !rssResponseCache.has(feedUrl)) {
+                const oldest = rssResponseCache.keys().next().value;
+                if (oldest) rssResponseCache.delete(oldest);
               }
-
-              if (response.statusCode === 304 && rssCached) {
-                responseHandled = true;
-                rssCached.timestamp = Date.now();
+              rssResponseCache.set(feedUrl, {
+                data, contentType: 'application/xml', statusCode: response.statusCode, timestamp: Date.now(),
+                etag: response.headers['etag'] || null,
+                lastModified: response.headers['last-modified'] || null,
+              });
+              if (response.statusCode >= 200 && response.statusCode < 300) {
                 rssResetFailure(feedUrl);
+              } else {
+                const { failures, backoffSec } = rssRecordFailure(feedUrl);
+                logThrottled('warn', `rss-upstream:${feedUrl}:${response.statusCode}`, `[Relay] RSS upstream ${response.statusCode} for ${feedUrl} (backoff ${backoffSec}s, failures=${failures})`);
+              }
+              resolveInFlight();
+              sendCompressed(req, res, response.statusCode, {
+                'Content-Type': 'application/xml',
+                'Cache-Control': response.statusCode >= 200 && response.statusCode < 300 ? 'public, max-age=300' : 'no-cache',
+                'CDN-Cache-Control': response.statusCode >= 200 && response.statusCode < 300 ? 'public, max-age=600, stale-while-revalidate=300' : 'no-store',
+                'X-Cache': 'MISS',
+              }, data);
+            });
+            stream.on('error', (err) => {
+              const { failures, backoffSec } = rssRecordFailure(feedUrl);
+              logThrottled('error', `rss-decompress:${feedUrl}:${err.code || err.message}`, `[Relay] Decompression error: ${err.message} (backoff ${backoffSec}s, failures=${failures})`);
+              sendError(502, 'Decompression failed: ' + err.message);
+            });
+          });
+
+          request.on('error', (err) => {
+            const { failures, backoffSec } = rssRecordFailure(feedUrl);
+            logThrottled('error', `rss-error:${feedUrl}:${err.code || err.message}`, `[Relay] RSS error: ${err.message} (backoff ${backoffSec}s, failures=${failures})`);
+            // Serve stale on error (only if we have previous successful data)
+            if (rssCached && rssCached.statusCode >= 200 && rssCached.statusCode < 300) {
+              if (!responseHandled && !res.headersSent) {
+                responseHandled = true;
+                sendCompressed(req, res, 200, { 'Content-Type': 'application/xml', 'Cache-Control': 'no-store', 'CDN-Cache-Control': 'no-store', 'X-Cache': 'STALE' }, rssCached.data);
                 resolveInFlight();
-                logThrottled('log', `rss-revalidated:${feedUrl}`, '[Relay] RSS 304 revalidated:', feedUrl);
-                sendCompressed(req, res, 200, {
-                  'Content-Type': rssCached.contentType || 'application/xml',
-                  'Cache-Control': 'public, max-age=300',
-                  'CDN-Cache-Control': 'public, max-age=600, stale-while-revalidate=300',
-                  'X-Cache': 'REVALIDATED',
-                }, rssCached.data);
                 return;
               }
-
-              const protocol = url.startsWith('https') ? https : http;
-              const request = protocol.get(url, {
-                headers: {
-                  'Accept': 'application/rss+xml, application/xml, text/xml, */*',
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                  'Accept-Language': 'en-US,en;q=0.9',
-                  ...conditionalHeaders,
-                },
-                timeout: 15000
-              }, (response) => {
-                if ([301, 302, 303, 307, 308].includes(response.statusCode) && response.headers.location) {
-                  const redirectUrl = response.headers.location.startsWith('http')
-                    ? response.headers.location
-                    : new URL(response.headers.location, url).href;
-                  logThrottled('log', `rss-redirect:${feedUrl}:${redirectUrl}`, `[Relay] Following redirect to: ${redirectUrl}`);
-                  return fetchWithRedirects(redirectUrl, redirectCount + 1);
-                }
-
-                if (response.statusCode === 304 && rssCached) {
-                  responseHandled = true;
-                  rssCached.timestamp = Date.now();
-                  resolveInFlight();
-                  logThrottled('log', `rss-revalidated:${feedUrl}`, '[Relay] RSS 304 revalidated:', feedUrl);
-                  sendCompressed(req, res, 200, {
-                    'Content-Type': rssCached.contentType || 'application/xml',
-                    'Cache-Control': 'public, max-age=300',
-                    'CDN-Cache-Control': 'public, max-age=600, stale-while-revalidate=300',
-                    'X-Cache': 'REVALIDATED',
-                  }, rssCached.data);
-                  return;
-                }
-
-                const encoding = response.headers['content-encoding'];
-                let stream = response;
-                if (encoding === 'gzip' || encoding === 'deflate') {
-                  stream = encoding === 'gzip' ? response.pipe(zlib.createGunzip()) : response.pipe(zlib.createInflate());
-                }
-
-                const chunks = [];
-                stream.on('data', chunk => chunks.push(chunk));
-                stream.on('end', () => {
-                  if (responseHandled || res.headersSent) return;
-                  responseHandled = true;
-                  const data = Buffer.concat(chunks);
-                  // Cache all responses: 2xx with full TTL, non-2xx with short TTL (negative cache)
-                  // FIFO eviction: drop oldest-inserted entry if at capacity
-                  if (rssResponseCache.size >= RSS_CACHE_MAX_ENTRIES && !rssResponseCache.has(feedUrl)) {
-                    const oldest = rssResponseCache.keys().next().value;
-                    if (oldest) rssResponseCache.delete(oldest);
-                  }
-                  rssResponseCache.set(feedUrl, {
-                    data, contentType: 'application/xml', statusCode: response.statusCode, timestamp: Date.now(),
-                    etag: response.headers['etag'] || null,
-                    lastModified: response.headers['last-modified'] || null,
-                  });
-                  if (response.statusCode < 200 || response.statusCode >= 300) {
-                    logThrottled('warn', `rss-upstream:${feedUrl}:${response.statusCode}`, `[Relay] RSS upstream ${response.statusCode} for ${feedUrl}`);
-                  }
-                  resolveInFlight();
-                  sendCompressed(req, res, response.statusCode, {
-                    'Content-Type': 'application/xml',
-                    'Cache-Control': response.statusCode >= 200 && response.statusCode < 300 ? 'public, max-age=300' : 'no-cache',
-                    'CDN-Cache-Control': response.statusCode >= 200 && response.statusCode < 300 ? 'public, max-age=600, stale-while-revalidate=300' : 'no-store',
-                    'X-Cache': 'MISS',
-                  }, data);
-                });
-                stream.on('error', (err) => {
-                  logThrottled('error', `rss-decompress:${feedUrl}:${err.code || err.message}`, '[Relay] Decompression error:', err.message);
-                  sendError(502, 'Decompression failed: ' + err.message);
-                });
-                if (response.statusCode >= 200 && response.statusCode < 300) {
-                  rssResetFailure(feedUrl);
-                } else {
-                  const { failures, backoffSec } = rssRecordFailure(feedUrl);
-                  logThrottled('warn', `rss-upstream:${feedUrl}:${response.statusCode}`, `[Relay] RSS upstream ${response.statusCode} for ${feedUrl} (backoff ${backoffSec}s, failures=${failures})`);
-                }
-                resolveInFlight();
-                sendCompressed(req, res, response.statusCode, {
-                  'Content-Type': 'application/xml',
-                  'Cache-Control': response.statusCode >= 200 && response.statusCode < 300 ? 'public, max-age=300' : 'no-cache',
-                  'CDN-Cache-Control': response.statusCode >= 200 && response.statusCode < 300 ? 'public, max-age=600, stale-while-revalidate=300' : 'no-store',
-                  'X-Cache': 'MISS',
-                }, data);
-              });
-              stream.on('error', (err) => {
-                const { failures, backoffSec } = rssRecordFailure(feedUrl);
-                logThrottled('error', `rss-decompress:${feedUrl}:${err.code || err.message}`, `[Relay] Decompression error: ${err.message} (backoff ${backoffSec}s, failures=${failures})`);
-                sendError(502, 'Decompression failed: ' + err.message);
-              });
-            });
-
-            request.on('error', (err) => {
-              const { failures, backoffSec } = rssRecordFailure(feedUrl);
-              logThrottled('error', `rss-error:${feedUrl}:${err.code || err.message}`, `[Relay] RSS error: ${err.message} (backoff ${backoffSec}s, failures=${failures})`);
-              // Serve stale on error (only if we have previous successful data)
-              if (rssCached && rssCached.statusCode >= 200 && rssCached.statusCode < 300) {
-                if (!responseHandled && !res.headersSent) {
-                  responseHandled = true;
-                  sendCompressed(req, res, 200, { 'Content-Type': 'application/xml', 'Cache-Control': 'no-store', 'CDN-Cache-Control': 'no-store', 'X-Cache': 'STALE' }, rssCached.data);
-                  resolveInFlight();
-                  return;
-                }
-                sendError(504, 'Request timeout');
-              });
-          };
+            }
+            sendError(504, 'Upstream request failed');
+          });
 
           request.on('timeout', () => {
             request.destroy();
