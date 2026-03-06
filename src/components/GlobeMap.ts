@@ -1173,10 +1173,11 @@ export class GlobeMap {
   // ─── Overlay UI: zoom controls & layer panel ─────────────────────────────
 
   private createControls(): void {
+    const beta$ = t('common.beta');
     const el = document.createElement('div');
     el.className = 'map-controls deckgl-controls';
     el.innerHTML = `
-      <span class="globe-beta-badge">BETA</span>
+      <span class="globe-beta-badge">${beta$}</span>
       <div class="zoom-controls">
         <button class="map-btn zoom-in"    title="Zoom in">+</button>
         <button class="map-btn zoom-out"   title="Zoom out">-</button>

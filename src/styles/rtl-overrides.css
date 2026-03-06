@@ -149,3 +149,26 @@ body.dir-rtl {
 [dir="rtl"] .pizzint-indicator {
   font-family: var(--font-ar);
 }
+
+[dir="rtl"] .map-controls.deckgl-controls {
+  right: auto;
+  left: 10px;
+}
+
+[dir="rtl"] .deckgl-time-slider {
+  left: auto;
+  right: 10px;
+  direction: ltr;
+}
+
+[dir="rtl"] .deckgl-layer-toggles {
+  left: auto;
+  right: 16px;
+  direction: rtl;
+}
+
+[dir="rtl"] .globe-beta-badge {
+  font-family: var(--font-ar);
+  letter-spacing: 0;
+  font-size: 10px;
+}

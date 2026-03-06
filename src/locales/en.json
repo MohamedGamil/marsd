@@ -2336,6 +2336,7 @@
     "currentVariant": "(current)",
     "retry": "Retry",
     "refresh": "Refresh",
-    "all": "All"
+    "all": "All",
+    "beta": "BETA"
   }
 }
