@@ -503,6 +503,13 @@ export class GlobeMap {
     const initH = this.container.clientHeight || window.innerHeight;
 
     const initialTexture = getGlobeTexture();
+
+    // Preload the texture via a plain <img> to prime the browser cache before
+    // globe.gl's TextureLoader requests it — reduces the race window that causes
+    // the white-sphere glitch on first load.
+    const _preloadImg = new Image();
+    _preloadImg.src = GLOBE_TEXTURE_URLS[initialTexture];
+
     globe
       .globeImageUrl(GLOBE_TEXTURE_URLS[initialTexture])
       .backgroundImageUrl('')
@@ -538,6 +545,14 @@ export class GlobeMap {
     if (glCanvas) {
       (glCanvas as HTMLElement).style.cssText =
         'position:absolute;top:0;left:0;width:100% !important;height:100% !important;';
+
+      // Re-apply texture after a WebGL context restore (GPU crash, tab background, etc.)
+      // Without this the sphere stays white until a manual texture change.
+      glCanvas.addEventListener('webglcontextrestored', () => {
+        if (this.globe && !this.destroyed) {
+          this.globe.globeImageUrl(GLOBE_TEXTURE_URLS[getGlobeTexture()]);
+        }
+      });
     }
 
     // Globe attribution (texture + OpenStreetMap data)
@@ -562,8 +577,13 @@ export class GlobeMap {
             emissive: new THREE.Color(0x0a1f2e),
             emissiveIntensity: 0.3,
           });
+          // Copy texture map if it already finished loading; then always re-apply
+          // the URL so globe.gl re-loads it into the new material. This guards
+          // against the race where the texture is still in-flight at swap time,
+          // which would otherwise leave the sphere white.
           if ((oldMat as any).map) stdMat.map = (oldMat as any).map;
           (globe as any).globeMaterial(stdMat);
+          globe.globeImageUrl(GLOBE_TEXTURE_URLS[getGlobeTexture()]);
         }
 
         // --- Lighting: cyan backlight ---
