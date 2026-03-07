@@ -2,7 +2,7 @@ import type { CorrelationSignal } from './correlation';
 import { mlWorker } from './ml-worker';
 import { generateSummary } from './summarization';
 import { SUPPRESSED_TRENDING_TERMS, escapeRegex, generateSignalId, tokenize } from '@/utils/analysis-constants';
-import { t } from '@/services/i18n';
+import { getLocalizedGeoName, t } from '@/services/i18n';
 
 export interface TrendingHeadlineInput {
   title: string;
@@ -540,10 +540,12 @@ async function handleSpike(spike: TrendingSpike, config: TrendingConfig): Promis
       ? Math.min(0.95, priorityBoost)
       : Math.min(0.8, 0.45 + spike.count / 20);
 
+    const spikeTerm$ = getLocalizedGeoName(spike.term) ?? spike.term;
+
     pushSignal({
       id: generateSignalId(),
       type: 'keyword_spike',
-      title: t('alerts.trending', { term: spike.term, count: spike.count, hours: windowHours }),
+      title: t('alerts.trending', { term: spikeTerm$, count: spike.count, hours: windowHours }),
       description,
       confidence,
       timestamp: new Date(),
