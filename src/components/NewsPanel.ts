@@ -210,6 +210,12 @@ export class NewsPanel extends Panel {
       if (translated) {
         titleEl.textContent = translated;
         titleEl.dataset.original = originalText;
+        // Apply RTL direction for RTL languages
+        const RTL_LANGS = new Set(['ar', 'he', 'fa', 'ur', 'yi', 'dv', 'ku']);
+        if (RTL_LANGS.has(currentLang)) {
+          titleEl.dir = 'rtl';
+          titleEl.style.textAlign = 'right';
+        }
         element.innerHTML = '✓';
         element.title = 'Original: ' + originalText;
         element.classList.add('translated');

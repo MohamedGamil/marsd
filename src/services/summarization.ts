@@ -302,7 +302,7 @@ export async function translateText(
           mode: 'translate',
           geoContext: '',
           variant: targetLang,
-          lang: '',
+          lang: targetLang,
         });
       }, emptySummaryFallback);
 

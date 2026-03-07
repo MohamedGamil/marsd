@@ -129,14 +129,15 @@ Rules:
       ? `Each headline is a separate story. What's the key tech trend?\n${headlineText}${intelSection}`
       : `Each headline is a separate story. What's the key pattern or risk?\n${headlineText}${intelSection}`;
   } else if (opts.mode === 'translate') {
-    const targetLang = opts.variant;
-    systemPrompt = `You are a professional news translator. Translate the following news headlines/summaries into ${targetLang}.
+    const targetLangCode = opts.lang || opts.variant;
+    const targetLangName = LANG_NAME_MAP[targetLangCode] ?? targetLangCode;
+    systemPrompt = `You are a professional news translator.
 Rules:
-- Maintain the original tone and journalistic style.
-- Do NOT add any conversational filler (e.g., "Here is the translation").
-- Output ONLY the translated text.
-- If the text is already in ${targetLang}, return it as is.`;
-    userPrompt = `Translate to ${targetLang}:\n${headlines[0]}`;
+- Translate the ENTIRE input into ${targetLangName}. Do NOT summarize, shorten, or paraphrase.
+- Maintain the original journalistic tone and style.
+- Output ONLY the translated text — no explanations, no preamble.
+- If the text is already in ${targetLangName}, return it unchanged.`;
+    userPrompt = `Translate fully into ${targetLangName}:\n${headlines[0]}`;
   } else {
     systemPrompt = isTechVariant
       ? `${dateContext}\n\nPick the most important tech headline and summarize it in 2 concise sentences (under 60 words). Each headline is a separate story - NEVER merge facts from different headlines. Focus on startups, AI, funding, products. Ignore politics unless directly about tech regulation.${langInstruction}`
