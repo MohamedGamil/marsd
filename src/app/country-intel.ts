@@ -293,9 +293,15 @@ export class CountryIntelManager implements AppModule {
         if (briefHeadlines.length >= 2 && mlWorker.isAvailable && mlWorker.isModelLoaded(sumModelId)) {
           try {
             const lang = getCurrentLanguage();
-            const prompt = lang === 'fr'
-              ? `Résumez la situation actuelle en ${country} à partir de ces titres : ${briefHeadlines.slice(0, 8).join('. ')}`
-              : `Summarize the current situation in ${country} based on these headlines: ${briefHeadlines.slice(0, 8).join('. ')}`;
+            const countryPromptsByLang: Record<string, string> = {
+              fr: `Résumez la situation actuelle en ${country} à partir de ces titres : ${briefHeadlines.slice(0, 8).join('. ')}`,
+              es: `Resume la situación actual en ${country} basándote en estos titulares: ${briefHeadlines.slice(0, 8).join('. ')}`,
+              de: `Fassen Sie die aktuelle Lage in ${country} anhand dieser Schlagzeilen zusammen: ${briefHeadlines.slice(0, 8).join('. ')}`,
+              it: `Riassumi la situazione attuale in ${country} in base a questi titoli: ${briefHeadlines.slice(0, 8).join('. ')}`,
+              pt: `Resuma a situação atual em ${country} com base nestas manchetes: ${briefHeadlines.slice(0, 8).join('. ')}`,
+            };
+            const prompt = countryPromptsByLang[lang]
+              ?? `Summarize the current situation in ${country} based on these headlines: ${briefHeadlines.slice(0, 8).join('. ')}`;
 
             const [summary] = await mlWorker.summarize([prompt], BETA_MODE ? 'summarization-beta' : undefined);
             if (summary && summary.length > 20) fallbackBrief = summary;
@@ -311,16 +317,16 @@ export class CountryIntelManager implements AppModule {
           if (signals.militaryFlights > 0) lines.push(t('countryBrief.fallback.aircraftTracked', { count: String(signals.militaryFlights) }));
           if (signals.militaryVessels > 0) lines.push(t('countryBrief.fallback.vesselsTracked', { count: String(signals.militaryVessels) }));
           if (signals.activeStrikes > 0) lines.push(t('countryBrief.fallback.activeStrikes', { count: String(signals.activeStrikes) }));
-          if (signals.travelAdvisoryMaxLevel === 'do-not-travel') lines.push(`⚠️ Travel advisory: Do Not Travel (${signals.travelAdvisories} source${signals.travelAdvisories > 1 ? 's' : ''})`);
-          else if (signals.travelAdvisoryMaxLevel === 'reconsider') lines.push(`⚠️ Travel advisory: Reconsider Travel (${signals.travelAdvisories} source${signals.travelAdvisories > 1 ? 's' : ''})`);
+          if (signals.travelAdvisoryMaxLevel === 'do-not-travel') lines.push(t('countryBrief.fallback.travelAdvisoryDoNotTravel', { count: String(signals.travelAdvisories) }));
+          else if (signals.travelAdvisoryMaxLevel === 'reconsider') lines.push(t('countryBrief.fallback.travelAdvisoryReconsider', { count: String(signals.travelAdvisories) }));
           if (signals.outages > 0) lines.push(t('countryBrief.fallback.internetOutages', { count: String(signals.outages) }));
-          if (signals.criticalNews > 0) lines.push(`🚨 Critical headlines in scope: ${signals.criticalNews}`);
-          if (signals.cyberThreats > 0) lines.push(`🛡️ Cyber threat indicators: ${signals.cyberThreats}`);
-          if (signals.aisDisruptions > 0) lines.push(`🚢 Maritime AIS disruptions: ${signals.aisDisruptions}`);
-          if (signals.satelliteFires > 0) lines.push(`🔥 Satellite fire detections: ${signals.satelliteFires}`);
-          if (signals.temporalAnomalies > 0) lines.push(`⏱️ Temporal anomaly alerts: ${signals.temporalAnomalies}`);
+          if (signals.criticalNews > 0) lines.push(t('countryBrief.fallback.criticalHeadlines', { count: String(signals.criticalNews) }));
+          if (signals.cyberThreats > 0) lines.push(t('countryBrief.fallback.cyberThreats', { count: String(signals.cyberThreats) }));
+          if (signals.aisDisruptions > 0) lines.push(t('countryBrief.fallback.aisDisruptions', { count: String(signals.aisDisruptions) }));
+          if (signals.satelliteFires > 0) lines.push(t('countryBrief.fallback.satelliteFires', { count: String(signals.satelliteFires) }));
+          if (signals.temporalAnomalies > 0) lines.push(t('countryBrief.fallback.temporalAnomalies', { count: String(signals.temporalAnomalies) }));
           if (signals.earthquakes > 0) lines.push(t('countryBrief.fallback.recentEarthquakes', { count: String(signals.earthquakes) }));
-          if (signals.orefHistory24h > 0) lines.push(`🚨 Sirens in past 24h: ${signals.orefHistory24h}`);
+          if (signals.orefHistory24h > 0) lines.push(t('countryBrief.fallback.sirens24h', { count: String(signals.orefHistory24h) }));
           if (context.stockIndex) lines.push(t('countryBrief.fallback.stockIndex', { value: context.stockIndex }));
           if (briefHeadlines.length > 0) {
             lines.push('', t('countryBrief.fallback.recentHeadlines'));
@@ -329,7 +335,7 @@ export class CountryIntelManager implements AppModule {
           if (lines.length > 0) {
             this.ctx.countryBriefPage?.updateBrief({ brief: lines.join('\n'), country, code, fallback: true });
           } else {
-            this.ctx.countryBriefPage?.updateBrief({ brief: '', country, code, error: 'No AI service available. Configure GROQ_API_KEY in Settings for full briefs.' });
+            this.ctx.countryBriefPage?.updateBrief({ brief: '', country, code, error: t('countryBrief.fallback.noAiService') });
           }
         }
       }

@@ -33,6 +33,29 @@ export { deduplicateHeadlines } from './dedup.mjs';
 // SummarizeArticle: Full prompt builder (ported from _summarize-handler.js)
 // ========================================================================
 
+// Maps ISO-639-1 codes to full language names + native script for LLM prompting
+const LANG_NAME_MAP: Record<string, string> = {
+  ar: 'Arabic (العربية)',
+  fr: 'French (Français)',
+  es: 'Spanish (Español)',
+  de: 'German (Deutsch)',
+  it: 'Italian (Italiano)',
+  pt: 'Portuguese (Português)',
+  ru: 'Russian (Русский)',
+  zh: 'Chinese Simplified (简体中文)',
+  ja: 'Japanese (日本語)',
+  ko: 'Korean (한국어)',
+  tr: 'Turkish (Türkçe)',
+  nl: 'Dutch (Nederlands)',
+  pl: 'Polish (Polski)',
+  el: 'Greek (Ελληνικά)',
+  sv: 'Swedish (Svenska)',
+  ro: 'Romanian (Română)',
+  bg: 'Bulgarian (Български)',
+  th: 'Thai (ภาษาไทย)',
+  vi: 'Vietnamese (Tiếng Việt)',
+};
+
 export function buildArticlePrompts(
   headlines: string[],
   uniqueHeadlines: string[],
@@ -42,7 +65,9 @@ export function buildArticlePrompts(
   const intelSection = opts.geoContext ? `\n\n${opts.geoContext}` : '';
   const isTechVariant = opts.variant === 'tech';
   const dateContext = `Current date: ${new Date().toISOString().split('T')[0]}.${isTechVariant ? '' : ' Provide geopolitical context appropriate for the current date.'}`;
-  const langInstruction = opts.lang && opts.lang !== 'en' ? `\nIMPORTANT: Output the summary in ${opts.lang.toUpperCase()} language.` : '';
+  const langInstruction = opts.lang && opts.lang !== 'en'
+    ? `\nCRITICAL: You MUST respond ENTIRELY in ${LANG_NAME_MAP[opts.lang] ?? opts.lang.toUpperCase()} language. Every word of the output must be in this language.`
+    : '';
 
   let systemPrompt: string;
   let userPrompt: string;

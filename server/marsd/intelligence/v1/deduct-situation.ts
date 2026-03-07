@@ -13,6 +13,29 @@ const DEDUCT_CACHE_TTL = 3600;
 const DEFAULT_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_MODEL = 'llama-3.1-8b-instant';
 
+// Maps ISO-639-1 language codes to full language names + native script for LLM prompting
+const LANG_NAMES: Record<string, string> = {
+  ar: 'Arabic (العربية)',
+  fr: 'French (Français)',
+  es: 'Spanish (Español)',
+  de: 'German (Deutsch)',
+  it: 'Italian (Italiano)',
+  pt: 'Portuguese (Português)',
+  ru: 'Russian (Русский)',
+  zh: 'Chinese Simplified (简体中文)',
+  ja: 'Japanese (日本語)',
+  ko: 'Korean (한국어)',
+  tr: 'Turkish (Türkçe)',
+  nl: 'Dutch (Nederlands)',
+  pl: 'Polish (Polski)',
+  el: 'Greek (Ελληνικά)',
+  sv: 'Swedish (Svenska)',
+  ro: 'Romanian (Română)',
+  bg: 'Bulgarian (Български)',
+  th: 'Thai (ภาษาไทย)',
+  vi: 'Vietnamese (Tiếng Việt)',
+};
+
 export async function deductSituation(
     _ctx: ServerContext,
     req: DeductSituationRequest,
@@ -33,7 +56,18 @@ export async function deductSituation(
 
     if (!query) return { analysis: '', model: '', provider: 'skipped' };
 
-    const cacheKey = `deduct:situation:v1:${hashString(query.toLowerCase() + '|' + geoContext.toLowerCase())}`;
+    let lang = 'en';
+    try {
+      const url = new URL(_ctx.request.url);
+      lang = url.searchParams.get('lang') || 'en';
+    } catch {
+      lang = 'en';
+    }
+    const langInstruction = lang !== 'en' && LANG_NAMES[lang]
+      ? `\n- CRITICAL: You MUST respond ENTIRELY in ${LANG_NAMES[lang]} language. Every word of the response must be in ${LANG_NAMES[lang]}.`
+      : '';
+
+    const cacheKey = `deduct:situation:v1:${lang}:${hashString(query.toLowerCase() + '|' + geoContext.toLowerCase())}`;
 
     const cached = await cachedFetchJson<{ analysis: string; model: string; provider: string }>(
         cacheKey,
@@ -46,7 +80,7 @@ Your task is to DEDUCT the situation in a near timeline (e.g. 24 hours to a few 
 - Be highly analytical, pragmatic, and objective.
 - Identify the most likely outcomes, timelines, and second-order impacts.
 - Do NOT use typical AI preambles (e.g., "Here is the deduction", "Let me see").
-- Format your response in clean markdown with concise bullet points where appropriate.`;
+- Format your response in clean markdown with concise bullet points where appropriate.${langInstruction}`;
 
                 let userPrompt = query;
                 if (geoContext) {

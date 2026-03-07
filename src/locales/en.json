@@ -655,7 +655,16 @@
         "internetOutages": "{{count}} internet outages",
         "recentEarthquakes": "{{count}} recent earthquakes",
         "stockIndex": "Stock index: {{value}}",
-        "recentHeadlines": "**Recent headlines:**"
+        "recentHeadlines": "**Recent headlines:**",
+        "travelAdvisoryDoNotTravel": "⚠️ Travel advisory: Do Not Travel ({{count}} source)",
+        "travelAdvisoryReconsider": "⚠️ Travel advisory: Reconsider Travel ({{count}} source)",
+        "criticalHeadlines": "🚨 Critical headlines in scope: {{count}}",
+        "cyberThreats": "🛡️ Cyber threat indicators: {{count}}",
+        "aisDisruptions": "🚢 Maritime AIS disruptions: {{count}}",
+        "satelliteFires": "🔥 Satellite fire detections: {{count}}",
+        "temporalAnomalies": "⏱️ Temporal anomaly alerts: {{count}}",
+        "sirens24h": "🚨 Sirens in past 24h: {{count}}",
+        "noAiService": "No AI service available. Configure GROQ_API_KEY in Settings for full briefs."
       }
     }
   },
@@ -1200,7 +1209,29 @@
       "headlineMemoryLabel": "Headline Memory",
       "headlineMemoryDesc": "Remember seen headlines to highlight new stories",
       "streamAlwaysOnLabel": "Keep live streams running",
-      "streamAlwaysOnDesc": "Prevents Live Cams and Live News from auto-pausing when you are idle. Recommended for second-monitor / wallboard usage. Disable (Eco) to save CPU/bandwidth."
+      "streamAlwaysOnDesc": "Prevents Live Cams and Live News from auto-pausing when you are idle. Recommended for second-monitor / wallboard usage. Disable (Eco) to save CPU/bandwidth.",
+      "worldBriefTitle": "🌍 WORLD BRIEF",
+      "techBriefTitle": "🚀 TECH BRIEF",
+      "sectionBreaking": "BREAKING & CONFIRMED",
+      "sectionFocalPoints": "🎯 FOCAL POINTS",
+      "sectionConvergence": "📍 GEOGRAPHIC CONVERGENCE",
+      "sectionMlDetected": "🎯 ML DETECTED",
+      "statMultiSource": "Multi-source",
+      "statFastMoving": "Fast-moving",
+      "statAlerts": "Alerts",
+      "statClusters": "Clusters",
+      "sentimentOverall": "Overall: {{tone}}",
+      "toneNegative": "Negative",
+      "tonePositive": "Positive",
+      "toneMixed": "Mixed",
+      "focalPointStats": "{{news}} news • {{signals}} signals",
+      "convergenceStats": "{{types}} signal types • {{events}} events",
+      "multiPerspectiveAnalysis": "Multi-perspective analysis...",
+      "usingCachedBrief": "Using cached brief...",
+      "loadingServerInsights": "Loading server insights...",
+      "generatingLocalizedBrief": "Generating localized brief...",
+      "sourcesCountConfirmed": "✓ {{count}} sources",
+      "sourcesCount": "{{count}} sources"
     },
     "settings": {
       "dataManagementLabel": "Data Management",

@@ -14,6 +14,29 @@ import { CHROME_UA } from '../../../_shared/constants';
 
 const INTEL_CACHE_TTL = 7200;
 
+// Maps ISO-639-1 language codes to full language names + native script for LLM prompting
+const LANG_NAMES: Record<string, string> = {
+  ar: 'Arabic (العربية)',
+  fr: 'French (Français)',
+  es: 'Spanish (Español)',
+  de: 'German (Deutsch)',
+  it: 'Italian (Italiano)',
+  pt: 'Portuguese (Português)',
+  ru: 'Russian (Русский)',
+  zh: 'Chinese Simplified (简体中文)',
+  ja: 'Japanese (日本語)',
+  ko: 'Korean (한국어)',
+  tr: 'Turkish (Türkçe)',
+  nl: 'Dutch (Nederlands)',
+  pl: 'Polish (Polski)',
+  el: 'Greek (Ελληνικά)',
+  sv: 'Swedish (Svenska)',
+  ro: 'Romanian (Română)',
+  bg: 'Bulgarian (Български)',
+  th: 'Thai (ภาษาไทย)',
+  vi: 'Vietnamese (Tiếng Việt)',
+};
+
 // ========================================================================
 // RPC handler
 // ========================================================================
@@ -64,7 +87,7 @@ Rules:
 - 4-5 paragraphs, 250-350 words
 - No speculation beyond what data supports
 - Use plain language, not jargon
-- If a context snapshot is provided, explicitly reflect each non-zero signal category in the brief${lang === 'fr' ? '\n- IMPORTANT: You MUST respond ENTIRELY in French language.' : ''}`;
+- If a context snapshot is provided, explicitly reflect each non-zero signal category in the brief${lang !== 'en' && LANG_NAMES[lang] ? `\n- CRITICAL: You MUST respond ENTIRELY in ${LANG_NAMES[lang]} language. Every word of the response must be in ${LANG_NAMES[lang]}.` : ''}`;
 
   let result: GetCountryIntelBriefResponse | null = null;
   try {

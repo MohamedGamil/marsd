@@ -15,6 +15,10 @@ export const VARIANT_FEEDS: Record<string, Record<string, ServerFeed[]>> = {
       { name: 'AP News', url: gn('site:apnews.com') },
       { name: 'Reuters World', url: gn('site:reuters.com world') },
       { name: 'CNN World', url: gn('site:cnn.com world news when:1d') },
+      // Arabic-language feeds (lang: 'ar' — only served when user selects Arabic)
+      { name: 'Sky News Arabia', url: 'https://www.skynewsarabia.com/api/rss', lang: 'ar' },
+      { name: 'Al Jazeera Arabic', url: 'https://www.aljazeera.net/xml/rss/all.xml', lang: 'ar' },
+      { name: 'DW Arabic', url: 'https://rss.dw.com/xml/rss-ar-all', lang: 'ar' },
     ],
     us: [
       { name: 'Reuters US', url: gn('site:reuters.com US') },
@@ -39,6 +43,12 @@ export const VARIANT_FEEDS: Record<string, Record<string, ServerFeed[]>> = {
       { name: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml' },
       { name: 'Guardian ME', url: 'https://www.theguardian.com/world/middleeast/rss' },
       { name: 'Oman Observer', url: 'https://www.omanobserver.om/rssFeed/1' },
+      // Arabic-language feeds (lang: 'ar' — only served when user selects Arabic)
+      { name: 'Al Jazeera Arabic', url: 'https://www.aljazeera.net/xml/rss/all.xml', lang: 'ar' },
+      { name: 'BBC Arabic', url: 'https://feeds.bbci.co.uk/arabic/rss.xml', lang: 'ar' },
+      { name: 'Asharq Al-Awsat', url: 'https://aawsat.com/node/feed', lang: 'ar' },
+      { name: 'Al Arabiya', url: 'https://www.alarabiya.net/tools/rss', lang: 'ar' },
+      { name: 'Anatolia Arabic', url: 'https://www.aa.com.tr/ar/rss/default?cat=politics', lang: 'ar' },
     ],
     tech: [
       { name: 'Hacker News', url: 'https://hnrss.org/frontpage' },

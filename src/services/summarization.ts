@@ -109,9 +109,19 @@ async function tryBrowserT5(headlines: string[], modelId?: string): Promise<Summ
 
     const lang = getCurrentLanguage();
     const combinedText = headlines.slice(0, 5).map(h => h.slice(0, 80)).join('. ');
-    const prompt = lang === 'fr'
-      ? `Résumez le titre le plus important en 2 phrases concises (moins de 60 mots) : ${combinedText}`
-      : `Summarize the most important headline in 2 concise sentences (under 60 words): ${combinedText}`;
+    // Language-specific prompts for Romance/Germanic languages that T5 supports reasonably well.
+    // Arabic, Chinese, Japanese etc. fall back to English since T5-small has limited multilingual support.
+    const promptsByLang: Record<string, string> = {
+      fr: `Résumez le titre le plus important en 2 phrases concises (moins de 60 mots) : ${combinedText}`,
+      es: `Resume el titular más importante en 2 frases concisas (menos de 60 palabras): ${combinedText}`,
+      de: `Fassen Sie die wichtigste Schlagzeile in 2 prägnanten Sätzen zusammen (unter 60 Wörtern): ${combinedText}`,
+      it: `Riassumi il titolo più importante in 2 frasi concise (meno di 60 parole): ${combinedText}`,
+      pt: `Resuma o título mais importante em 2 frases concisas (menos de 60 palavras): ${combinedText}`,
+      nl: `Vat de belangrijkste kop samen in 2 beknopte zinnen (minder dan 60 woorden): ${combinedText}`,
+      pl: `Podsumuj najważniejszy nagłówek w 2 zwięzłych zdaniach (mniej niż 60 słów): ${combinedText}`,
+    };
+    const prompt = promptsByLang[lang]
+      ?? `Summarize the most important headline in 2 concise sentences (under 60 words): ${combinedText}`;
 
     const [summary] = await mlWorker.summarize([prompt], modelId);
 

@@ -11,7 +11,7 @@ import { isMobileDevice } from '@/utils';
 import { escapeHtml, sanitizeUrl } from '@/utils/sanitize';
 import { SITE_VARIANT } from '@/config';
 import { deletePersistentCache, getPersistentCache, setPersistentCache } from '@/services/persistent-cache';
-import { t } from '@/services/i18n';
+import { t, getCurrentLanguage } from '@/services/i18n';
 import { isDesktopRuntime } from '@/services/runtime';
 import { getAiFlowSettings, isAnyAiProviderEnabled, subscribeAiFlowChange } from '@/services/ai-flow-settings';
 import { loadServerInsights, type ServerInsights, type ServerInsightStory } from '@/services/insights-loader';
@@ -28,7 +28,10 @@ export class InsightsPanel extends Panel {
   private aiFlowUnsubscribe: (() => void) | null = null;
   private updateGeneration = 0;
   private static readonly BRIEF_COOLDOWN_MS = 120000; // 2 min cooldown (API has limits)
-  private static readonly BRIEF_CACHE_KEY = 'summary:world-brief';
+  private static readonly BRIEF_CACHE_KEY_PREFIX = 'summary:world-brief';
+  private static getBriefCacheKey(): string {
+    return `${InsightsPanel.BRIEF_CACHE_KEY_PREFIX}:${getCurrentLanguage()}`;
+  }
 
   constructor() {
     super({
@@ -82,7 +85,7 @@ export class InsightsPanel extends Panel {
 
   private async loadBriefFromCache(): Promise<boolean> {
     if (this.cachedBrief) return false;
-    const entry = await getPersistentCache<{ summary: string }>(InsightsPanel.BRIEF_CACHE_KEY);
+    const entry = await getPersistentCache<{ summary: string }>(InsightsPanel.getBriefCacheKey());
     if (!entry?.data?.summary) return false;
     this.cachedBrief = entry.data.summary;
     this.lastBriefUpdate = entry.updatedAt;
@@ -284,11 +287,13 @@ export class InsightsPanel extends Panel {
     clusters: ClusteredEvent[],
     thisGeneration: number,
   ): Promise<void> {
-    const totalSteps = 2;
+    const lang = getCurrentLanguage();
+    const needsLocalizedBrief = lang !== 'en' && !!serverInsights.worldBrief;
+    const totalSteps = needsLocalizedBrief ? 3 : 2;
 
     try {
       // Step 1: Signal aggregation (client-side, depends on real-time map data)
-      this.setProgress(1, totalSteps, 'Loading server insights...');
+      this.setProgress(1, totalSteps, t('components.insights.loadingServerInsights'));
 
       let signalSummary: ReturnType<typeof signalAggregator.getSummary>;
       let focalSummary: ReturnType<typeof focalPointDetector.analyze>;
@@ -313,8 +318,33 @@ export class InsightsPanel extends Panel {
 
       if (this.updateGeneration !== thisGeneration) return;
 
-      // Step 2: Sentiment analysis on server story titles (fast browser ML)
-      this.setProgress(2, totalSteps, t('components.insights.analyzingSentiment'));
+      // Step 2 (conditional): Generate localized world brief for non-English users
+      let localizedBrief: string | null = null;
+      if (needsLocalizedBrief) {
+        this.setProgress(2, totalSteps, t('components.insights.generatingLocalizedBrief'));
+        const cacheKey = InsightsPanel.getBriefCacheKey();
+        const cachedEntry = await getPersistentCache<{ summary: string }>(cacheKey);
+        if (cachedEntry?.data?.summary) {
+          localizedBrief = cachedEntry.data.summary;
+        } else {
+          const aiFlow = isDesktopRuntime() ? { cloudLlm: true, browserModel: true } : getAiFlowSettings();
+          if (aiFlow.cloudLlm || aiFlow.browserModel) {
+            const storyTitles = serverInsights.topStories.slice(0, 5).map(s => s.primaryTitle);
+            const result = await generateSummary(storyTitles, undefined, undefined, lang, {
+              skipCloudProviders: !aiFlow.cloudLlm,
+              skipBrowserFallback: !aiFlow.browserModel,
+            });
+            if (result) {
+              localizedBrief = result.summary;
+              void setPersistentCache(cacheKey, { summary: localizedBrief });
+            }
+          }
+        }
+        if (this.updateGeneration !== thisGeneration) return;
+      }
+
+      // Step 2/3: Sentiment analysis on server story titles (fast browser ML)
+      this.setProgress(needsLocalizedBrief ? 3 : 2, totalSteps, t('components.insights.analyzingSentiment'));
       const titles = serverInsights.topStories.slice(0, 5).map(s => s.primaryTitle);
       let sentiments: Array<{ label: string; score: number }> | null = null;
       if (mlWorker.isAvailable) {
@@ -324,7 +354,7 @@ export class InsightsPanel extends Panel {
       if (this.updateGeneration !== thisGeneration) return;
 
       this.setDataBadge('live');
-      this.renderServerInsights(serverInsights, sentiments);
+      this.renderServerInsights(serverInsights, sentiments, localizedBrief);
     } catch (error) {
       console.error('[InsightsPanel] Server path error, falling back:', error);
       await this.updateFromClient(clusters, thisGeneration);
@@ -338,6 +368,9 @@ export class InsightsPanel extends Panel {
       this.renderDisabledState();
       return;
     }
+
+    // Capture the current UI language so the brief is generated in the user's language
+    const lang = getCurrentLanguage();
 
     // Build summarize options from AI flow settings (web) or defaults (desktop)
     const aiFlow = isDesktopRuntime() ? { cloudLlm: true, browserModel: true } : getAiFlowSettings();
@@ -443,8 +476,8 @@ export class InsightsPanel extends Panel {
           : '';
         const result = await generateSummary(titles, (_step, _total, msg) => {
           // Show sub-progress for summarization
-          this.setProgress(3, totalSteps, `Generating brief: ${msg}`);
-        }, geoContext, undefined, summarizeOpts);
+          this.setProgress(3, totalSteps, `${t('components.insights.generatingBrief')}: ${msg}`);
+        }, geoContext, lang, summarizeOpts);
 
         if (this.updateGeneration !== thisGeneration) return;
 
@@ -452,16 +485,16 @@ export class InsightsPanel extends Panel {
           worldBrief = result.summary;
           this.cachedBrief = worldBrief;
           this.lastBriefUpdate = now;
-          void setPersistentCache(InsightsPanel.BRIEF_CACHE_KEY, { summary: worldBrief });
+          void setPersistentCache(InsightsPanel.getBriefCacheKey(), { summary: worldBrief });
         }
       } else {
-        this.setProgress(3, totalSteps, 'Using cached brief...');
+        this.setProgress(3, totalSteps, t('components.insights.usingCachedBrief'));
       }
 
       this.setDataBadge(worldBrief ? 'live' : 'unavailable');
 
       // Step 4: Wait for parallel analysis to complete
-      this.setProgress(4, totalSteps, 'Multi-perspective analysis...');
+      this.setProgress(4, totalSteps, t('components.insights.multiPerspectiveAnalysis'));
       await parallelPromise;
 
       if (this.updateGeneration !== thisGeneration) return;
@@ -493,7 +526,7 @@ export class InsightsPanel extends Panel {
       ${sentimentOverview}
       ${statsHtml}
       <div class="insights-section">
-        <div class="insights-section-title">BREAKING & CONFIRMED</div>
+        <div class="insights-section-title">${t('components.insights.sectionBreaking')}</div>
         ${breakingHtml}
       </div>
       ${missedHtml}
@@ -503,8 +536,10 @@ export class InsightsPanel extends Panel {
   private renderServerInsights(
     insights: ServerInsights,
     sentiments: Array<{ label: string; score: number }> | null,
+    localizedBrief?: string | null,
   ): void {
-    const briefHtml = insights.worldBrief ? this.renderWorldBrief(insights.worldBrief) : '';
+    const briefText = localizedBrief ?? insights.worldBrief;
+    const briefHtml = briefText ? this.renderWorldBrief(briefText) : '';
     const focalPointsHtml = this.renderFocalPoints();
     const convergenceHtml = this.renderConvergenceZones();
     const sentimentOverview = this.renderSentimentOverview(sentiments);
@@ -519,7 +554,7 @@ export class InsightsPanel extends Panel {
       ${sentimentOverview}
       ${statsHtml}
       <div class="insights-section">
-        <div class="insights-section-title">BREAKING & CONFIRMED</div>
+        <div class="insights-section-title">${t('components.insights.sectionBreaking')}</div>
         ${storiesHtml}
       </div>
       ${missedHtml}
@@ -538,9 +573,9 @@ export class InsightsPanel extends Panel {
       const badges: string[] = [];
 
       if (story.sourceCount >= 3) {
-        badges.push(`<span class="insight-badge confirmed">✓ ${story.sourceCount} sources</span>`);
+        badges.push(`<span class="insight-badge confirmed">${t('components.insights.sourcesCountConfirmed', { count: String(story.sourceCount) })}</span>`);
       } else if (story.sourceCount >= 2) {
-        badges.push(`<span class="insight-badge multi">${story.sourceCount} sources</span>`);
+        badges.push(`<span class="insight-badge multi">${t('components.insights.sourcesCount', { count: String(story.sourceCount) })}</span>`);
       }
 
       if (story.isAlert) {
@@ -570,15 +605,15 @@ export class InsightsPanel extends Panel {
       <div class="insights-stats">
         <div class="insight-stat">
           <span class="insight-stat-value">${insights.multiSourceCount}</span>
-          <span class="insight-stat-label">Multi-source</span>
+          <span class="insight-stat-label">${t('components.insights.statMultiSource')}</span>
         </div>
         <div class="insight-stat">
           <span class="insight-stat-value">${insights.fastMovingCount}</span>
-          <span class="insight-stat-label">Fast-moving</span>
+          <span class="insight-stat-label">${t('components.insights.statFastMoving')}</span>
         </div>
         <div class="insight-stat">
           <span class="insight-stat-value">${insights.clusterCount}</span>
-          <span class="insight-stat-label">Clusters</span>
+          <span class="insight-stat-label">${t('components.insights.statClusters')}</span>
         </div>
       </div>
     `;
@@ -587,7 +622,7 @@ export class InsightsPanel extends Panel {
   private renderWorldBrief(brief: string): string {
     return `
       <div class="insights-brief">
-        <div class="insights-section-title">${SITE_VARIANT === 'tech' ? '🚀 TECH BRIEF' : '🌍 WORLD BRIEF'}</div>
+        <div class="insights-section-title">${SITE_VARIANT === 'tech' ? t('components.insights.techBriefTitle') : t('components.insights.worldBriefTitle')}</div>
         <div class="insights-brief-text">${escapeHtml(brief)}</div>
       </div>
     `;
@@ -605,9 +640,9 @@ export class InsightsPanel extends Panel {
       const badges: string[] = [];
 
       if (cluster.sourceCount >= 3) {
-        badges.push(`<span class="insight-badge confirmed">✓ ${cluster.sourceCount} sources</span>`);
+        badges.push(`<span class="insight-badge confirmed">${t('components.insights.sourcesCountConfirmed', { count: String(cluster.sourceCount) })}</span>`);
       } else if (cluster.sourceCount >= 2) {
-        badges.push(`<span class="insight-badge multi">${cluster.sourceCount} sources</span>`);
+        badges.push(`<span class="insight-badge multi">${t('components.insights.sourcesCount', { count: String(cluster.sourceCount) })}</span>`);
       }
 
       if (cluster.velocity && cluster.velocity.level !== 'normal') {
@@ -645,13 +680,13 @@ export class InsightsPanel extends Panel {
     const neuPct = Math.round((neutral / total) * 100);
     const posPct = 100 - negPct - neuPct;
 
-    let toneLabel = 'Mixed';
+    let toneKey = 'toneMixed';
     let toneClass = 'neutral';
     if (negative > positive + neutral) {
-      toneLabel = 'Negative';
+      toneKey = 'toneNegative';
       toneClass = 'negative';
     } else if (positive > negative + neutral) {
-      toneLabel = 'Positive';
+      toneKey = 'tonePositive';
       toneClass = 'positive';
     }
 
@@ -667,7 +702,7 @@ export class InsightsPanel extends Panel {
           <span class="sentiment-label neutral">${neutral}</span>
           <span class="sentiment-label positive">${positive}</span>
         </div>
-        <div class="sentiment-tone ${toneClass}">Overall: ${toneLabel}</div>
+        <div class="sentiment-tone ${toneClass}">${t('components.insights.sentimentOverall', { tone: t(`components.insights.${toneKey}`) })}</div>
       </div>
     `;
   }
@@ -681,16 +716,16 @@ export class InsightsPanel extends Panel {
       <div class="insights-stats">
         <div class="insight-stat">
           <span class="insight-stat-value">${multiSource}</span>
-          <span class="insight-stat-label">Multi-source</span>
+          <span class="insight-stat-label">${t('components.insights.statMultiSource')}</span>
         </div>
         <div class="insight-stat">
           <span class="insight-stat-value">${fastMoving}</span>
-          <span class="insight-stat-label">Fast-moving</span>
+          <span class="insight-stat-label">${t('components.insights.statFastMoving')}</span>
         </div>
         ${alerts > 0 ? `
         <div class="insight-stat alert">
           <span class="insight-stat-value">${alerts}</span>
-          <span class="insight-stat-label">Alerts</span>
+          <span class="insight-stat-label">${t('components.insights.statAlerts')}</span>
         </div>
         ` : ''}
       </div>
@@ -725,7 +760,7 @@ export class InsightsPanel extends Panel {
 
     return `
       <div class="insights-section insights-missed">
-        <div class="insights-section-title">🎯 ML DETECTED</div>
+        <div class="insights-section-title">${t('components.insights.sectionMlDetected')}</div>
         ${storiesHtml}
       </div>
     `;
@@ -751,14 +786,14 @@ export class InsightsPanel extends Panel {
         <div class="convergence-zone">
           <div class="convergence-region">${icons} ${escapeHtml(zone.region)}</div>
           <div class="convergence-description">${escapeHtml(zone.description)}</div>
-          <div class="convergence-stats">${zone.signalTypes.length} signal types • ${zone.totalSignals} events</div>
+          <div class="convergence-stats">${t('components.insights.convergenceStats', { types: String(zone.signalTypes.length), events: String(zone.totalSignals) })}</div>
         </div>
       `;
     }).join('');
 
     return `
       <div class="insights-section insights-convergence">
-        <div class="insights-section-title">📍 GEOGRAPHIC CONVERGENCE</div>
+        <div class="insights-section-title">${t('components.insights.sectionConvergence')}</div>
         ${zonesHtml}
       </div>
     `;
@@ -799,7 +834,7 @@ export class InsightsPanel extends Panel {
           </div>
           <div class="focal-point-signals">${icons}</div>
           <div class="focal-point-stats">
-            ${fp.newsMentions} news • ${fp.signalCount} signals
+            ${t('components.insights.focalPointStats', { news: String(fp.newsMentions), signals: String(fp.signalCount) })}
           </div>
           ${headlineText && headlineUrl ? `<a href="${headlineUrl}" target="_blank" rel="noopener" class="focal-point-headline">"${escapeHtml(headlineText)}..."</a>` : ''}
         </div>
@@ -808,7 +843,7 @@ export class InsightsPanel extends Panel {
 
     return `
       <div class="insights-section insights-focal">
-        <div class="insights-section-title">🎯 FOCAL POINTS</div>
+        <div class="insights-section-title">${t('components.insights.sectionFocalPoints')}</div>
         ${focalPointsHtml}
       </div>
     `;
@@ -830,7 +865,7 @@ export class InsightsPanel extends Panel {
     this.cachedBrief = null;
     this.lastBriefUpdate = 0;
     try {
-      await deletePersistentCache(InsightsPanel.BRIEF_CACHE_KEY);
+      await deletePersistentCache(InsightsPanel.getBriefCacheKey());
     } catch {
       // Best effort; fallback regeneration still works from memory reset.
     }
