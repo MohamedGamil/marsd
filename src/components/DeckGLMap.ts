@@ -1680,7 +1680,7 @@ export class DeckGLMap {
       getIcon: () => 'radiation',
       iconAtlas: MARKER_ICONS.radiation,
       iconMapping: RADIATION_ICON_MAPPING,
-      getSize: (d) => highlightedNuclear.has(d.id) ? 15 : 11,
+      getSize: (d) => highlightedNuclear.has(d.id) ? 17 : 13,
       getColor: (d) => {
         if (highlightedNuclear.has(d.id)) {
           return [255, 100, 100, 220] as [number, number, number, number];
@@ -1691,8 +1691,8 @@ export class DeckGLMap {
         return [255, 220, 0, 200] as [number, number, number, number]; // Semi-transparent yellow
       },
       sizeScale: 1,
-      sizeMinPixels: 6,
-      sizeMaxPixels: 15,
+      sizeMinPixels: 7,
+      sizeMaxPixels: 17,
       pickable: true,
     });
   }
@@ -1706,11 +1706,11 @@ export class DeckGLMap {
       getIcon: () => 'radiation',
       iconAtlas: MARKER_ICONS.radiation,
       iconMapping: RADIATION_ICON_MAPPING,
-      getSize: 9,
+      getSize: 11,
       getColor: [200, 100, 255, 200] as [number, number, number, number], // Purple
       sizeScale: 1,
-      sizeMinPixels: 5,
-      sizeMaxPixels: 12,
+      sizeMinPixels: 6,
+      sizeMaxPixels: 14,
       pickable: true,
     });
   }

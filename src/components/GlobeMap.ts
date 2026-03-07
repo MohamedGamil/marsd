@@ -973,10 +973,10 @@ export class GlobeMap {
       el.innerHTML = svgIcon('compass', c, 12);
       el.title = `${d.name}${d.country ? ' · ' + d.country : ''}`;
     } else if (d._kind === 'nuclearSite') {
-      el.innerHTML = svgIcon('nuclear', '#ffd700', 12);
+      el.innerHTML = svgIcon('nuclear', '#ffd700', 15);
       el.title = `${d.name} (${d.type})`;
     } else if (d._kind === 'irradiator') {
-      el.innerHTML = svgIcon('nuclear', '#cc88ff', 11);
+      el.innerHTML = svgIcon('nuclear', '#cc88ff', 13);
       el.title = `${d.city}, ${d.country}`;
     } else if (d._kind === 'spaceport') {
       el.innerHTML = svgIcon('rocket', '#88ddff', 12);
