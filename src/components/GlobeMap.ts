@@ -879,7 +879,7 @@ export class GlobeMap {
         frigate: '#44aaff', amphibious: '#88ff44', support: '#aaaaaa',
       };
       const c = typeColors[d.type] ?? '#44aaff';
-      el.innerHTML = svgIcon('vessel', c, 24);
+      el.innerHTML = d.type === 'carrier' ? svgIcon('carrier', c, 32) : svgIcon('vessel', c, 28);
       el.title = `${d.name} (${d.type})`;
     } else if (d._kind === 'weather') {
       const severityColors: Record<string, string> = {

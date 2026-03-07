@@ -262,7 +262,10 @@ const MARKER_ICONS = {
   plane: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 -64 640 640"><path fill="white" d="M544 224l-128-16-48-16h-24L227.158 44h39.509C278.333 44 288 41.375 288 38s-9.667-6-21.333-6H152v12h16v164h-48l-66.667-80H18.667L8 138.667V208h8v16h48v2.666l-64 8v42.667l64 8V288H16v16H8v69.333L18.667 384h34.667L120 304h48v164h-16v12h114.667c11.667 0 21.333-2.625 21.333-6s-9.667-6-21.333-6h-39.509L344 320h24l48-16 128-16c96-21.333 96-26.583 96-32 0-5.417 0-10.667-96-32z"/></svg>`),
   // Naval vessel silhouette (from warship-simple.svg)
   ship: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 2095 2095"><path fill="white" fill-rule="nonzero" d="M 2078.29 1175.37 C 2078.29 1187.92 2018.45 1351.02 2005.91 1370.32 C 1993.36 1389.62 1966.14 1389.62 1966.14 1389.62 L 147 1389.62 C 122.873 1271.88 16.713 1151.25 16.713 1150.28 C 16.713 1149.32 441.352 1151.25 436.526 1150.28 L 436.526 1113.61 L 275.453 1078.87 L 285.104 1046.05 L 442.413 1063.42 C 452.064 1046.05 474.261 1044.12 481.886 1044.12 C 489.606 1044.12 561.988 1044.12 561.988 1044.12 C 589.059 1044.12 593.884 1047.02 593.884 1083.69 C 593.884 1120.36 593.884 1152.21 593.884 1152.21 L 657.676 1152.21 L 657.676 1015.17 L 694.157 1015.17 L 694.157 929.278 L 645.034 929.278 L 645.034 892.605 L 664.335 892.605 L 624.767 811.538 L 639.243 803.817 L 675.916 880.059 L 675.916 705.378 L 693.288 705.378 L 693.288 881.989 L 737.586 881.989 L 737.586 863.653 C 737.586 848.211 750.228 835.665 765.67 835.665 L 771.364 835.665 C 786.902 835.665 799.448 848.211 799.448 863.653 L 799.448 881.989 L 826.567 881.989 C 843.745 881.989 848.571 884.884 848.571 913.837 L 848.571 1029.65 C 848.571 1047.02 856.291 1069.21 870.768 1044.12 C 885.244 1020 932.726 928.313 947.203 901.291 C 961.679 874.268 966.504 871.373 983.683 871.373 C 1001.06 871.373 1033.1 871.373 1064.95 871.373 C 1096.79 871.373 1094.67 895.5 1089.07 910.942 C 1084.25 925.418 1033.1 1094.31 1033.1 1094.31 L 1116.1 1094.31 L 1116.1 1017.1 C 1116.1 978.498 1146.98 947.615 1185.58 947.615 L 1262.79 947.615 C 1301.39 947.615 1332.28 978.498 1332.28 1017.1 L 1332.28 1094.31 C 1332.28 1094.31 1452.91 1092.38 1481.86 1094.31 C 1498.08 1095.27 1505.99 1100.1 1505.99 1122.29 C 1505.99 1144.49 1505.99 1167.65 1505.99 1167.65 L 1552.32 1167.65 L 1552.32 1101.06 C 1552.32 1082.72 1566.79 1068.25 1584.94 1068.25 L 1663.3 1068.25 C 1681.44 1068.25 1695.92 1082.72 1695.92 1101.06 L 1695.92 1113.61 L 1800.34 1076.93 L 1812.89 1111.68 L 1697.08 1156.07 L 1697.08 1175.37 L 1704.8 1175.37 L 2078.29 1175.37 Z"/></svg>`),
-  // Cardinal compass star - for military bases (from cardinal-compass.svg)
+
+  // Aircraft carrier silhouette (from aricraft-carrier.svg)
+  carrier: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 2095 2095"><path fill="white" fill-rule="nonzero" d="M 2079.04 1099.31 L 2079.04 1227.43 L 1977.3 1334.82 L 99.806 1334.82 C 73.429 1188.81 15.964 1099.31 15.964 1099.31 L 821.41 1099.31 L 821.41 958.006 C 805.395 958.006 792.207 944.817 792.207 928.803 C 792.207 912.788 805.395 899.599 821.41 899.599 L 826.12 899.599 C 826.12 899.599 826.12 760.177 826.12 760.177 L 844.019 760.177 L 844.019 899.599 L 892.063 899.599 L 892.063 870.396 L 892.063 851.555 C 892.063 835.541 905.252 822.352 921.266 822.352 L 997.572 822.352 C 1013.59 822.352 1026.78 835.541 1026.78 851.555 L 1026.78 870.396 L 1026.78 899.599 L 1107.79 899.599 C 1123.81 899.599 1136.99 912.788 1136.99 928.803 C 1136.99 944.817 1123.81 958.006 1107.79 958.006 L 1107.79 999.456 L 1276.42 999.456 C 1299.97 996.63 1307.5 1009.82 1307.5 1033.37 L 1307.5 1098.37 L 2079.04 1098.37 L 2079.04 1099.31 Z M 1600.48 1068.22 C 1628.74 1072.93 1660.77 1071.99 1685.26 1071.99 C 1740.84 1071.99 1831.28 1071.99 1831.28 1071.99 C 1840.7 1070.11 1874.61 1059.75 1874.61 1059.75 L 1877.44 1039.02 L 1869.9 1039.02 L 1890.63 999.456 L 1868.02 999.456 L 1830.34 1039.02 C 1830.34 1039.02 1700.34 1039.02 1676.78 1034.31 C 1652.29 1029.6 1644.76 1027.72 1636.28 1027.72 C 1627.8 1027.72 1617.43 1031.48 1613.67 1033.37 C 1595.77 1039.96 1587.29 1039.96 1580.7 1042.79 C 1554.32 1055.98 1572.22 1063.52 1600.48 1068.22 Z M 360.751 1068.22 C 389.013 1072.93 421.042 1071.99 445.535 1071.99 C 501.116 1071.99 591.552 1071.99 591.552 1071.99 C 600.972 1070.11 634.886 1059.75 634.886 1059.75 L 637.712 1039.02 L 630.175 1039.02 L 650.9 999.456 L 628.291 999.456 L 590.61 1039.02 C 590.61 1039.02 460.608 1039.02 437.057 1034.31 C 412.564 1029.6 405.027 1027.72 396.549 1027.72 C 388.071 1027.72 377.708 1031.48 373.94 1033.37 C 356.041 1039.96 347.563 1039.96 340.969 1042.79 C 314.591 1055.98 332.49 1063.52 360.751 1068.22 Z"/></svg>`),
+    // Cardinal compass star - for military bases (from cardinal-compass.svg)
   compass: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="white" d="M12,24l-3-9L0,12l9-3L12,0l3,9,9,3-9,3-3,9ZM7.425,7.425l.473-1.385-3.898-2.039,2.039,3.898,1.385-.473Zm9.15,0l1.385,.473,2.039-3.897-3.898,2.039,.473,1.385ZM7.424,16.575l-1.385-.473-2.039,3.898,3.897-2.039-.473-1.385Zm9.151,0l-.473,1.385,3.898,2.039-2.039-3.898-1.385,.473Z"/></svg>`),
   // Radiation symbol - ringed with three sector arms (from radiation-alt (1).svg)
   radiation: 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="white" d="m12,0C5.383,0,0,5.383,0,12s5.383,12,12,12,12-5.383,12-12S18.617,0,12,0Zm0,21c-4.963,0-9-4.037-9-9S7.037,3,12,3s9,4.037,9,9-4.037,9-9,9Zm-1.5-9c0-.828.672-1.5,1.5-1.5s1.5.672,1.5,1.5-.672,1.5-1.5,1.5-1.5-.672-1.5-1.5Zm8.5,0h-3.5c0-1.221-.628-2.294-1.576-2.92l1.926-2.927c.773.508,1.459,1.177,2,2,.781,1.188,1.151,2.525,1.15,3.848Zm-10.5,0h-3.5c-.001-1.323.368-2.66,1.15-3.848.541-.822,1.227-1.491,2-2l1.926,2.927c-.948.626-1.576,1.699-1.576,2.92Zm5.338,2.969l1.841,2.973c-1.07.665-2.326,1.06-3.678,1.06s-2.608-.395-3.678-1.06l1.84-2.973c.535.332,1.162.531,1.838.531s1.303-.199,1.838-.531Z"/></svg>`),
@@ -271,6 +274,7 @@ const MARKER_ICONS = {
 const RADIATION_ICON_MAPPING = { radiation: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 const AIRCRAFT_ICON_MAPPING = { plane: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 const SHIP_ICON_MAPPING = { ship: { x: 0, y: 0, width: 32, height: 32, mask: true } };
+const CARRIER_ICON_MAPPING = { carrier: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 const DATACENTER_ICON_MAPPING = { square: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 const COMPASS_ICON_MAPPING = { compass: { x: 0, y: 0, width: 32, height: 32, mask: true } };
 
@@ -1344,7 +1348,7 @@ export class DeckGLMap {
 
       // Military vessels layer
       if (mapLayers.military && filteredMilitaryVessels.length > 0) {
-        layers.push(this.createMilitaryVesselsLayer(filteredMilitaryVessels));
+        layers.push(...this.createMilitaryVesselsLayer(filteredMilitaryVessels));
       }
 
       // Military vessel clusters layer
@@ -2127,7 +2131,7 @@ export class DeckGLMap {
     });
   }
 
-  private createMilitaryVesselsLayer(vessels: MilitaryVessel[]): IconLayer<MilitaryVessel> {
+  private createMilitaryVesselsLayer(vessels: MilitaryVessel[]): IconLayer<MilitaryVessel>[] {
     const TYPE_COLORS: Record<string, [number, number, number, number]> = {
       carrier:     [255,  68,  68, 230],
       destroyer:   [255, 136,   0, 230],
@@ -2136,27 +2140,48 @@ export class DeckGLMap {
       amphibious:  [136, 255,  68, 220],
       support:     [180, 180, 180, 200],
     };
-    return new IconLayer<MilitaryVessel>({
+    const baseParams = {
       parameters: { depthCompare: 'always' as const, depthWriteEnabled: false },
-      id: 'military-vessels-layer',
-      data: vessels,
-      getPosition: (d) => [d.lon, d.lat],
-      getIcon: () => 'ship',
-      iconAtlas: MARKER_ICONS.ship,
-      iconMapping: SHIP_ICON_MAPPING,
-      getSize: (d) => d.vesselType === 'carrier' ? 28 : 20,
-      getColor: (d) => {
+      getPosition: (d: MilitaryVessel) => [d.lon, d.lat] as [number, number],
+      getColor: (d: MilitaryVessel) => {
         if (d.usniSource) return [255, 160, 60, 180] as [number, number, number, number];
         return TYPE_COLORS[d.vesselType] ?? COLORS.vesselMilitary;
       },
-      getAngle: (d) => -(d.heading ?? 0),
+      getAngle: (d: MilitaryVessel) => -(d.heading ?? 0),
       sizeMinPixels: 6,
-      sizeMaxPixels: 26,
+      sizeMaxPixels: 32,
       sizeScale: 1,
       billboard: false,
       pickable: true,
-      updateTriggers: { getColor: vessels.length, getAngle: vessels.length, getSize: vessels.length },
-    });
+    };
+    const carriers = vessels.filter(v => v.vesselType === 'carrier');
+    const others = vessels.filter(v => v.vesselType !== 'carrier');
+    const layers: IconLayer<MilitaryVessel>[] = [];
+    if (carriers.length > 0) {
+      layers.push(new IconLayer<MilitaryVessel>({
+        ...baseParams,
+        id: 'military-carriers-layer',
+        data: carriers,
+        getIcon: () => 'carrier',
+        iconAtlas: MARKER_ICONS.carrier,
+        iconMapping: CARRIER_ICON_MAPPING,
+        getSize: 32,
+        updateTriggers: { getColor: carriers.length, getAngle: carriers.length },
+      }));
+    }
+    if (others.length > 0) {
+      layers.push(new IconLayer<MilitaryVessel>({
+        ...baseParams,
+        id: 'military-vessels-layer',
+        data: others,
+        getIcon: () => 'ship',
+        iconAtlas: MARKER_ICONS.ship,
+        iconMapping: SHIP_ICON_MAPPING,
+        getSize: 24,
+        updateTriggers: { getColor: others.length, getAngle: others.length },
+      }));
+    }
+    return layers;
   }
 
   private createMilitaryVesselClustersLayer(clusters: MilitaryVesselCluster[]): ScatterplotLayer {
