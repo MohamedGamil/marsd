@@ -13,7 +13,7 @@ import { fetchHotspotContext, formatArticleDate, extractDomain, type GdeltArticl
 import { getNaturalEventIcon } from '@/services/eonet';
 import { getHotspotEscalation, getEscalationChange24h } from '@/services/hotspot-escalation';
 import { getCableHealthRecord } from '@/services/cable-health';
-import { getAircraftWikiTitle, getVesselWikiTitle, getStrikeGroupWikiTitle, fetchWikipediaImage } from '@/services/military-images';
+import { getAircraftWikiTitle, getVesselWikiTitle, getStrikeGroupWikiTitle, fetchWikipediaImage, getCallsignWikiTitle } from '@/services/military-images';
 
 export type PopupType = 'conflict' | 'hotspot' | 'earthquake' | 'weather' | 'base' | 'waterway' | 'apt' | 'cyberThreat' | 'nuclear' | 'economic' | 'irradiator' | 'pipeline' | 'cable' | 'cable-advisory' | 'repair-ship' | 'outage' | 'datacenter' | 'datacenterCluster' | 'ais' | 'protest' | 'protestCluster' | 'flight' | 'aircraft' | 'militaryFlight' | 'militaryVessel' | 'militaryFlightCluster' | 'militaryVesselCluster' | 'natEvent' | 'port' | 'spaceport' | 'mineral' | 'startupHub' | 'cloudRegion' | 'techHQ' | 'accelerator' | 'techEvent' | 'techHQCluster' | 'techEventCluster' | 'techActivity' | 'geoActivity' | 'stockExchange' | 'financialCenter' | 'centralBank' | 'commodityHub' | 'iranEvent' | 'gpsJamming';
 interface TechEventPopupData {
@@ -1185,6 +1185,12 @@ export class MapPopup {
       .toLowerCase();
     const isSimulated = srcLabel.includes('simulated');
 
+    // Wikipedia image — resolve from callsign when the callsign maps to a known aircraft
+    const wikiTitle = pos.callsign ? getCallsignWikiTitle(pos.callsign) : null;
+    const mediaHtml = wikiTitle
+      ? `<div class="popup-media popup-media--loading" data-wiki-query="${encodeURIComponent(wikiTitle)}" role="img" aria-label="${escapeHtml(wikiTitle)}"><div class="popup-media__skeleton"></div></div>`
+      : '';
+
     return `
       <div class="popup-header aircraft">
         <span class="popup-icon">&#9992;</span>
@@ -1192,6 +1198,7 @@ export class MapPopup {
         <span class="popup-badge ${onGroundBadge}">${statusLabel}</span>
         <button class="popup-close" aria-label="Close">×</button>
       </div>
+      ${mediaHtml}
       <div class="popup-body">
         <div class="popup-subtitle">ICAO24: ${escapeHtml(pos.icao24)}</div>
         ${isSimulated ? `<div class="popup-notice" style="color:var(--semantic-elevated);font-size:11px;margin-bottom:6px;">⚠ Simulated data — live feed unavailable</div>` : ''}

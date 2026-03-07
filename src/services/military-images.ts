@@ -195,6 +195,105 @@ export function getAircraftWikiTitle(
   return fallback || null;
 }
 
+// ─── Callsign prefix → Wikipedia article title ───────────────────────────────
+// Maps the mission-name prefix of a military/government callsign to the most
+// representative aircraft article.  Prefix matching is longest-first, so
+// e.g. "REACH" wins over a hypothetical shorter entry.
+const CALLSIGN_PREFIX_TO_WIKI: Record<string, string> = {
+  // USAF Air Mobility Command – C-17 Globemaster III
+  'RCH':    'Boeing C-17 Globemaster III',
+  'REACH':  'Boeing C-17 Globemaster III',
+  'ROCKY':  'Boeing C-17 Globemaster III',
+
+  // USAF – Tankers KC-135 / KC-46
+  'JAKE':   'Boeing KC-135 Stratotanker',
+  'POLO':   'Boeing KC-135 Stratotanker',
+  'BUCK':   'Boeing KC-135 Stratotanker',
+  'BALL':   'Boeing KC-135 Stratotanker',
+  'IRON':   'Boeing KC-135 Stratotanker',
+  'PEARL':  'Boeing KC-46 Pegasus',
+
+  // USAF – Bombers
+  'STONE':  'Boeing B-52 Stratofortress',
+  'DOOM':   'Boeing B-52 Stratofortress',
+  'DEATH':  'Boeing B-52 Stratofortress',
+  'PACK':   'Boeing B-52 Stratofortress',
+  'GHOST':  'Northrop Grumman B-2 Spirit',
+  'SPIRIT': 'Northrop Grumman B-2 Spirit',
+
+  // USAF – Reconnaissance / Signals Intelligence
+  'FORTE':  'Boeing RC-135',
+  'COBRA':  'Boeing RC-135',
+  'HOMER':  'Boeing RC-135',
+  'JAKE6':  'Boeing RC-135',   // RC-135V Rivet Joint
+
+  // USAF – AWACS / C2
+  'NOBLE':  'Boeing E-3 Sentry',
+  'OASIS':  'Boeing E-3 Sentry',
+
+  // USAF – VIP / Special Air Mission
+  'SAM':    'Boeing VC-25',
+  'SPAR':   'Boeing C-32',
+  'VENUS':  'Boeing C-32',
+
+  // USAF – Surveillance / UAS
+  'GLOBAL': 'Northrop Grumman RQ-4 Global Hawk',
+  'REAPER': 'General Atomics MQ-9 Reaper',
+  'PREDATOR': 'General Atomics MQ-1 Predator',
+
+  // USAF – Special Ops (AC-130 / MC-130)
+  'MAGMA':  'Lockheed MC-130',
+  'GRIM':   'Lockheed AC-130',
+  'SPOOKY': 'Lockheed AC-130',
+  'SHADOW': 'Lockheed MC-130',
+
+  // US Navy – Maritime Patrol
+  'NAVY':   'Boeing P-8 Poseidon',
+  'PATRON': 'Boeing P-8 Poseidon',
+
+  // US Coast Guard
+  'CGAS':   'Sikorsky MH-60 Jayhawk',
+  'CGXX':   'Sikorsky MH-60 Jayhawk',
+
+  // NOAA
+  'NOAA':   'Lockheed WP-3D Orion',
+
+  // RAF – Air Mobility / Tanker
+  'RRR':    'Airbus A400M Atlas',
+  'ASCOT':  'Airbus A400M Atlas',
+  'TARTAN': 'Airbus A330 MRTT',
+
+  // NATO E-3
+  'NATO':   'Boeing E-3 Sentry',
+
+  // Training
+  'SPORT':  'Northrop T-38 Talon',
+};
+
+/**
+ * Return a Wikipedia article title for the aircraft associated with a known
+ * callsign, or null if the callsign is not recognisable.
+ *
+ * Resolution:
+ *  1. Specific full-callsign overrides (e.g. "SAM28000" → VC-25 Air Force One)
+ *  2. Longest matching prefix from CALLSIGN_PREFIX_TO_WIKI
+ */
+export function getCallsignWikiTitle(callsign: string): string | null {
+  if (!callsign || callsign.length < 2) return null;
+  const cs = callsign.trim().toUpperCase();
+
+  // 1. Special full-callsign overrides
+  if (cs === 'SAM28000' || cs === 'SAM29000') return 'Boeing VC-25'; // Air Force One
+  if (cs.startsWith('AF1') || cs === 'AIRFORCE1') return 'Boeing VC-25';
+
+  // 2. Longest-prefix match
+  const match = Object.keys(CALLSIGN_PREFIX_TO_WIKI)
+    .filter(prefix => cs.startsWith(prefix))
+    .sort((a, b) => b.length - a.length)[0];
+
+  return match ? (CALLSIGN_PREFIX_TO_WIKI[match] ?? null) : null;
+}
+
 // ─── Wikipedia REST API fetch ─────────────────────────────────────────────────
 
 /**
