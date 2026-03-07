@@ -637,7 +637,9 @@ export class LiveNewsPanel extends Panel {
   }
 
   private getChannelDisplayName(channel: LiveChannel): string {
-    return channel.hlsUrl && !channel.handle ? `${channel.name} 🔗` : channel.name;
+    const locKey = `components.liveNews.channels.${channel.id}`;
+    const localizedName = t(locKey) !== locKey ? t(locKey) : channel.name;
+    return channel.hlsUrl && !channel.handle ? `${localizedName} 🔗` : localizedName;
   }
 
   /** Creates a single channel tab button with click and drag handlers. */

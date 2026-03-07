@@ -637,7 +637,18 @@
         "conflictEvents": "أحداث نزاع",
         "gpsJammingZones": "التشويش على GPS",
         "activeStrikes": "ضربات نشطة",
-        "aviationDisruptions": "اضطرابات المطارات"
+        "aviationDisruptions": "اضطرابات المطارات",
+        "criticalNews": "أخبار عاجلة",
+        "aisDisruptions": "اضطرابات AIS",
+        "satelliteFires": "حرائق فضائية",
+        "temporalAnomalies": "شذوذ زمني",
+        "cyberThreats": "تهديدات سيبرانية",
+        "activeSirens": "صفارات نشطة",
+        "sirens24h": "صفارات / 24 ساعة",
+        "advisoryDoNotTravel": "لا تسافر",
+        "advisoryReconsider": "أعد التفكير في السفر",
+        "advisoryExerciseCaution": "توخَّ الحذر",
+        "advisoryLabel": "تنبيه: {{label}}"
       },
       "timeAgo": {
         "m": "{{count}}د مضت",
@@ -653,27 +664,27 @@
         "port": "موانئ"
       },
       "levels": {
-        "critical": "Critical",
-        "high": "High",
-        "elevated": "Elevated",
-        "moderate": "Moderate",
-        "normal": "Normal",
-        "low": "Low"
+        "critical": "حرج",
+        "high": "مرتفع",
+        "elevated": "متصاعد",
+        "moderate": "معتدل",
+        "normal": "طبيعي",
+        "low": "منخفض"
       },
       "trends": {
-        "rising": "Rising",
-        "falling": "Falling",
-        "stable": "Stable"
+        "rising": "متصاعد",
+        "falling": "متراجع",
+        "stable": "مستقر"
       },
       "fallback": {
-        "instabilityIndex": "**Instability Index: {{score}}/100** ({{level}}, {{trend}})",
-        "protestsDetected": "{{count}} active protests detected",
-        "aircraftTracked": "{{count}} military aircraft tracked",
-        "vesselsTracked": "{{count}} military vessels tracked",
-        "internetOutages": "{{count}} internet outages",
-        "recentEarthquakes": "{{count}} recent earthquakes",
-        "stockIndex": "Stock index: {{value}}",
-        "recentHeadlines": "**Recent headlines:**",
+        "instabilityIndex": "**مؤشر عدم الاستقرار: {{score}}/100** ({{level}}، {{trend}})",
+        "protestsDetected": "{{count}} احتجاج نشط مُكتشف",
+        "aircraftTracked": "{{count}} طائرة عسكرية مُتتبَّعة",
+        "vesselsTracked": "{{count}} سفينة عسكرية مُتتبَّعة",
+        "internetOutages": "{{count}} انقطاع إنترنت",
+        "recentEarthquakes": "{{count}} زلزال حديث",
+        "stockIndex": "مؤشر الأسهم: {{value}}",
+        "recentHeadlines": "**أحدث العناوين:**",
         "activeStrikes": "{{count}} ضربة نشطة مُكتشفة"
       }
     }
@@ -1248,7 +1259,7 @@
       "optionalSources": "Optional Sources",
       "enableCoreFeeds": "Enable Core Feeds",
       "waitingForData": "Waiting for data...",
-      "refresh": "Refresh",
+      "refresh": "تحديث",
       "learningMode": "Learning Mode - {{minutes}}m until reliable",
       "noData": "no data",
       "enable": "Enable",
@@ -1270,7 +1281,7 @@
       "noEvents": "لا توجد فعاليات لعرضها",
       "showOnMap": "عرض على الخريطة",
       "moreInfo": "مزيد من المعلومات",
-      "retry": "Retry",
+      "retry": "إعادة المحاولة",
       "upcoming": "Upcoming",
       "conferences": "Conferences",
       "earnings": "Earnings",
@@ -1595,11 +1606,40 @@
       "togglePlayback": "إيقاف/تشغيل البث",
       "live": "مباشر",
       "paused": "متوقف",
-      "noResults": "لم يتم العثور على نتائج",
-      "hlsUrl": "رابط HLS",
-      "invalidHlsUrl": "رابط HLS غير صالح"
+      "channels": {
+        "aljazeeramubasher": "الجزيرة مباشر",
+        "al-hadath": "الحدث",
+        "france24_ar": "فرانس 24 عربي",
+        "alarabiya": "العربية",
+        "aljazeera-arabic": "الجزيرة عربي",
+        "sky-news-arabia": "سكاي نيوز عربية",
+        "trt-world": "TRT ورلد",
+        "iran-intl": "إيران إنترناشيونال",
+        "asharq-news": "الشرق",
+        "alaraby": "العربي الجديد",
+        "aljazeera": "الجزيرة الإنجليزية",
+        "bbcarabic": "بي بي سي عربي",
+        "cgtn-arabic": "CGTN عربي",
+        "sky": "سكاي نيوز",
+        "dw": "DW عربي",
+        "bloomberg": "بلومبرغ",
+        "euronews": "يورو نيوز",
+        "cnbc": "CNBC",
+        "cnn": "CNN",
+        "france24": "فرانس 24",
+        "bbc-news": "بي بي سي",
+        "france24-en": "فرانس 24 إنجليزي",
+        "yahoo": "ياهو فاينانس",
+        "nasa": "Sen Space Live",
+        "fox-news": "فوكس نيوز",
+        "newsmax": "نيوزماكس",
+        "abc-news": "ABC نيوز",
+        "cbs-news": "CBS نيوز",
+        "nbc-news": "NBC نيوز",
+        "cbc-news": "CBC نيوز"
+      }
     },
-    "securityAdvisories": {
+    "map": {
       "loading": "جاري جلب التحذيرات الأمنية...",
       "noMatching": "لا توجد تحذيرات مطابقة لهذا الفلتر",
       "critical": "حرج",
@@ -1713,6 +1753,9 @@
     "map": {
       "showMap": "إظهار الخريطة",
       "hideMap": "إخفاء الخريطة"
+    },
+    "globe": {
+      "loadingGlobe": "جارٍ التحميل…"
     }
   },
   "popups": {
@@ -2043,6 +2086,21 @@
       "sampled": "عرض قائمة عيّنة من {{count}} فعالية."
     },
     "militaryFlight": {
+      "operators": {
+        "usaf": "سلاح الجو الأمريكي",
+        "usn": "البحرية الأمريكية",
+        "usmc": "مشاة البحرية الأمريكية",
+        "usa": "الجيش الأمريكي",
+        "raf": "سلاح الجو الملكي",
+        "rn": "البحرية الملكية",
+        "faf": "سلاح الجو الفرنسي",
+        "gaf": "سلاح الجو الألماني",
+        "plaaf": "سلاح الجو الصيني",
+        "plan": "البحرية الصينية",
+        "vks": "الفضاء الجوي الروسي",
+        "iaf": "سلاح الجو الإسرائيلي",
+        "nato": "NATO"
+      },
       "types": {
         "fighter": "مقاتلة",
         "bomber": "قاذفة",
@@ -2065,6 +2123,28 @@
       "attribution": "المصدر: OpenSky Network"
     },
     "militaryVessel": {
+      "types": {
+        "carrier": "حاملة طائرات",
+        "destroyer": "مدمرة",
+        "frigate": "فرقاطة",
+        "submarine": "غواصة",
+        "amphibious": "برمائية",
+        "patrol": "دورية",
+        "auxiliary": "مساندة",
+        "research": "بحث علمي",
+        "icebreaker": "كاسحة جليد",
+        "special": "خاصة"
+      },
+      "operators": {
+        "usn": "البحرية الأمريكية",
+        "uscg": "خفر السواحل الأمريكي",
+        "rn": "البحرية الملكية",
+        "fn": "البحرية الفرنسية",
+        "plan": "البحرية الصينية",
+        "ruf": "البحرية الروسية",
+        "jmsdf": "القوة البحرية اليابانية",
+        "rokn": "البحرية الكورية الجنوبية"
+      },
       "aisDark": "AIS مظلم",
       "vessel": "سفينة",
       "speed": "السرعة",
@@ -2368,9 +2448,8 @@
     "unavailable": "غير متاح",
     "close": "إغلاق",
     "currentVariant": "(الحالي)",
-    "retry": "Retry",
-    "refresh": "Refresh",
-    "all": "الكل",
+    "retry": "إعادة المحاولة",
+    "refresh": "تحديث",
     "loadingGiving": "جارٍ تحميل بيانات العطاء العالمي",
     "rateLimitedMarket": "بيانات السوق غير متاحة مؤقتاً (تقييد معدل الطلبات) — ستتم إعادة المحاولة قريباً",
     "beta": "نسخة تجريبية"

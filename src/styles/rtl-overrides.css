@@ -12,6 +12,10 @@ body.dir-rtl {
   font-family: var(--font-ar);
 }
 
+[dir="rtl"] .should-rtl {
+  direction: rtl;
+}
+
 /* Language selector: flip arrow and margins */
 [dir="rtl"] .lang-select,
 [dir="rtl"] .header-lang-select {
@@ -181,4 +185,25 @@ body.dir-rtl {
 [dir="rtl"] .live-mute-btn.live-toggle-mute-btn {
   margin-right: auto;
   margin-left: 8px;
+}
+
+/* ── Letter-spacing reset for Arabic text readability ─────────────────────── */
+[dir="rtl"] .stat-label,
+[dir="rtl"] .section-label,
+[dir="rtl"] .panel-title,
+[dir="rtl"] .popexp-label,
+[dir="rtl"] .disp-stat-label,
+[dir="rtl"] .climate-badge,
+[dir="rtl"] .variant-option,
+[dir="rtl"] .focus-label,
+[dir="rtl"] .beta-badge,
+[dir="rtl"] .credit-link,
+[dir="rtl"] .header-clock,
+[dir="rtl"] .update-toast-title,
+[dir="rtl"] .update-toast-detail,
+[dir="rtl"] .update-toast-action,
+[dir="rtl"] .map-dim-btn,
+[dir="rtl"] .logo,
+[dir="rtl"] .logo-mobile {
+  letter-spacing: 0;
 }

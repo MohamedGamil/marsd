@@ -1144,7 +1144,7 @@ export class GlobeMap {
     overlay.className = 'globe-loading-overlay';
     overlay.innerHTML = [
       '<div class="globe-loading-spinner"></div>',
-      '<div class="globe-loading-text">Loading globe…</div>',
+      `<div class="globe-loading-text should-rtl">${t('components.globe.loadingGlobe')}</div>`,
     ].join('');
     this.container.appendChild(overlay);
     this.loadingOverlayEl = overlay;

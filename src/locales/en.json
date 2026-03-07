@@ -607,7 +607,18 @@
         "conflictEvents": "conflict events",
         "activeStrikes": "active strikes",
         "aviationDisruptions": "airport disruptions",
-        "gpsJammingZones": "GPS Jamming Zones"
+        "gpsJammingZones": "GPS Jamming Zones",
+        "criticalNews": "Critical News",
+        "aisDisruptions": "AIS Disruptions",
+        "satelliteFires": "Satellite Fires",
+        "temporalAnomalies": "Temporal Anomalies",
+        "cyberThreats": "Cyber Threats",
+        "activeSirens": "Active Sirens",
+        "sirens24h": "Sirens / 24h",
+        "advisoryDoNotTravel": "Do Not Travel",
+        "advisoryReconsider": "Reconsider Travel",
+        "advisoryExerciseCaution": "Exercise Caution",
+        "advisoryLabel": "Advisory: {{label}}"
       },
       "timeAgo": {
         "m": "{{count}}m ago",
@@ -1672,11 +1683,46 @@
       "invalidHlsUrl": "Enter a valid HLS stream URL (.m3u8)",
       "togglePlayback": "Toggle playback",
       "live": "Live",
-      "paused": "Paused"
+      "paused": "Paused",
+      "channels": {
+        "aljazeeramubasher": "AlJazeera Mubasher",
+        "al-hadath": "Al Hadath",
+        "france24_ar": "France24 Arabic",
+        "alarabiya": "AlArabiya",
+        "aljazeera-arabic": "AlJazeera Arabic",
+        "sky-news-arabia": "Sky News Arabia",
+        "trt-world": "TRT World",
+        "iran-intl": "Iran International",
+        "asharq-news": "Asharq News",
+        "alaraby": "Alaraby",
+        "aljazeera": "AlJazeera English",
+        "bbcarabic": "BBC Arabic",
+        "cgtn-arabic": "CGTN Arabic",
+        "sky": "Sky News",
+        "dw": "DW",
+        "bloomberg": "Bloomberg",
+        "euronews": "Euronews",
+        "cnbc": "CNBC",
+        "cnn": "CNN",
+        "france24": "France 24",
+        "bbc-news": "BBC News",
+        "france24-en": "France 24 English",
+        "yahoo": "Yahoo Finance",
+        "nasa": "Sen Space Live",
+        "fox-news": "Fox News",
+        "newsmax": "Newsmax",
+        "abc-news": "ABC News",
+        "cbs-news": "CBS News",
+        "nbc-news": "NBC News",
+        "cbc-news": "CBC News"
+      }
     },
     "map": {
       "showMap": "Show Map",
       "hideMap": "Hide Map"
+    },
+    "globe": {
+      "loadingGlobe": "Loading globe…"
     }
   },
   "popups": {
@@ -2015,6 +2061,21 @@
       "sampled": "Showing a sampled list of {{count}} events."
     },
     "militaryFlight": {
+      "operators": {
+        "usaf": "US Air Force",
+        "usn": "US Navy",
+        "usmc": "US Marines",
+        "usa": "US Army",
+        "raf": "Royal Air Force",
+        "rn": "Royal Navy",
+        "faf": "French Air Force",
+        "gaf": "German Air Force",
+        "plaaf": "PLA Air Force",
+        "plan": "PLA Navy",
+        "vks": "Russian Aerospace",
+        "iaf": "Israeli Air Force",
+        "nato": "NATO"
+      },
       "types": {
         "fighter": "Fighter",
         "bomber": "Bomber",
@@ -2037,6 +2098,28 @@
       "attribution": "Source: OpenSky Network"
     },
     "militaryVessel": {
+      "types": {
+        "carrier": "Aircraft Carrier",
+        "destroyer": "Destroyer",
+        "frigate": "Frigate",
+        "submarine": "Submarine",
+        "amphibious": "Amphibious",
+        "patrol": "Patrol",
+        "auxiliary": "Auxiliary",
+        "research": "Research",
+        "icebreaker": "Icebreaker",
+        "special": "Special"
+      },
+      "operators": {
+        "usn": "US Navy",
+        "uscg": "US Coast Guard",
+        "rn": "Royal Navy",
+        "fn": "French Navy",
+        "plan": "PLA Navy",
+        "ruf": "Russian Navy",
+        "jmsdf": "Japan Maritime SDF",
+        "rokn": "ROK Navy"
+      },
       "aisDark": "AIS DARK",
       "vessel": "Vessel",
       "speed": "SPEED",
