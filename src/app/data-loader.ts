@@ -221,17 +221,18 @@ export class DataLoaderManager implements AppModule {
 
   private async tryFetchDigest(): Promise<ListFeedDigestResponse | null> {
     const now = Date.now();
+    const lang = getCurrentLanguage();
 
     if (this.digestBreaker.state === 'open') {
       if (now < this.digestBreaker.cooldownUntil) {
-        return this.lastGoodDigest ?? await this.loadPersistedDigest();
+        return this.lastGoodDigest ?? await this.loadPersistedDigest(lang);
       }
       this.digestBreaker.state = 'half-open';
     }
 
     try {
       const resp = await fetch(
-        `/api/news/v1/list-feed-digest?variant=${SITE_VARIANT}&lang=${getCurrentLanguage()}`,
+        `/api/news/v1/list-feed-digest?variant=${SITE_VARIANT}&lang=${lang}`,
         { signal: AbortSignal.timeout(this.digestRequestTimeoutMs) },
       );
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -239,7 +240,7 @@ export class DataLoaderManager implements AppModule {
       const catCount = Object.keys(data.categories ?? {}).length;
       console.info(`[News] Digest fetched: ${catCount} categories`);
       this.lastGoodDigest = data;
-      this.persistDigest(data);
+      this.persistDigest(data, lang);
       this.digestBreaker = { state: 'closed', failures: 0, cooldownUntil: 0 };
       return data;
     } catch (e) {
@@ -249,17 +250,17 @@ export class DataLoaderManager implements AppModule {
         this.digestBreaker.state = 'open';
         this.digestBreaker.cooldownUntil = now + this.digestBreakerCooldownMs;
       }
-      return this.lastGoodDigest ?? await this.loadPersistedDigest();
+      return this.lastGoodDigest ?? await this.loadPersistedDigest(lang);
     }
   }
 
-  private persistDigest(data: ListFeedDigestResponse): void {
-    setPersistentCache('digest:last-good', data).catch(() => { });
+  private persistDigest(data: ListFeedDigestResponse, lang: string): void {
+    setPersistentCache(`digest:last-good:${lang}`, data).catch(() => { });
   }
 
-  private async loadPersistedDigest(): Promise<ListFeedDigestResponse | null> {
+  private async loadPersistedDigest(lang: string): Promise<ListFeedDigestResponse | null> {
     try {
-      const envelope = await getPersistentCache<ListFeedDigestResponse>('digest:last-good');
+      const envelope = await getPersistentCache<ListFeedDigestResponse>(`digest:last-good:${lang}`);
       if (!envelope) return null;
       if (Date.now() - envelope.updatedAt > this.persistedDigestMaxAgeMs) return null;
       this.lastGoodDigest = envelope.data;

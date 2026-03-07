@@ -33,6 +33,15 @@ export const SOURCE_TIERS: Record<string, number> = {
   'EuroNews': 2,
   'France 24': 2,
   'Le Monde': 2,
+  // Arabic
+  'Sky News Arabia': 2,
+  'Al Jazeera Arabic': 2,
+  'BBC Arabic': 2,
+  'DW Arabic': 2,
+  'Asharq Al-Awsat': 2,
+  'Anatolia Arabic': 2,
+  'Al Monitor Arabic': 2,
+  'Al Quds Al Arabi': 3,
   // Spanish
   'El País': 2,
   'El Mundo': 2,
@@ -346,6 +355,11 @@ export const SOURCE_TYPES: Record<string, SourceType> = {
   'NPR News': 'mainstream', 'Al Jazeera': 'mainstream',
   'CNN World': 'mainstream', 'Politico': 'mainstream', 'Axios': 'mainstream',
   'EuroNews': 'mainstream', 'France 24': 'mainstream', 'Le Monde': 'mainstream',
+  // Arabic mainstream
+  'Sky News Arabia': 'mainstream', 'Al Jazeera Arabic': 'mainstream',
+  'BBC Arabic': 'mainstream', 'DW Arabic': 'mainstream',
+  'Asharq Al-Awsat': 'mainstream', 'Anatolia Arabic': 'wire',
+  'Al Monitor Arabic': 'intel', 'Al Quds Al Arabi': 'mainstream',
   // European Addition
   'El País': 'mainstream', 'El Mundo': 'mainstream', 'BBC Mundo': 'mainstream',
   'Tagesschau': 'mainstream', 'Der Spiegel': 'mainstream', 'Die Zeit': 'mainstream', 'DW News': 'mainstream',
@@ -476,6 +490,10 @@ const FULL_FEEDS: Record<string, Feed[]> = {
     { name: 'AP News', url: rss('https://news.google.com/rss/search?q=site:apnews.com&hl=en-US&gl=US&ceid=US:en') },
     { name: 'Reuters World', url: rss('https://news.google.com/rss/search?q=site:reuters.com+world&hl=en-US&gl=US&ceid=US:en') },
     { name: 'CNN World', url: rss('https://news.google.com/rss/search?q=site:cnn.com+world+news+when:1d&hl=en-US&gl=US&ceid=US:en') },
+    // Arabic-language feeds (lang: 'ar' — only served when user selects Arabic)
+    { name: 'Sky News Arabia', url: rss('https://www.skynewsarabia.com/api/rss'), lang: 'ar' },
+    { name: 'Al Jazeera Arabic', url: rss('https://www.aljazeera.net/xml/rss/all.xml'), lang: 'ar' },
+    { name: 'DW Arabic', url: rss('https://rss.dw.com/xml/rss-ar-all'), lang: 'ar' },
   ],
   us: [
     { name: 'Reuters US', url: rss('https://news.google.com/rss/search?q=site:reuters.com+US&hl=en-US&gl=US&ceid=US:en') },
@@ -581,6 +599,11 @@ const FULL_FEEDS: Record<string, Feed[]> = {
     { name: 'Oman Observer', url: rss('https://www.omanobserver.om/rssFeed/1') },
     { name: 'Asharq Business', url: rss('https://asharqbusiness.com/rss.xml') },
     { name: 'Asharq News', url: rss('https://asharq.com/snapchat/rss.xml'), lang: 'ar' },
+    // Arabic-only feeds — source names must match server-side _feeds.ts
+    { name: 'Al Jazeera Arabic', url: rss('https://www.aljazeera.net/aljazeerarss/a7c186be-1adb-4b11-a982-4783e765316e/4e17ecdc-8fb9-40de-a5d6-d00f72384a51'), lang: 'ar' },
+    { name: 'BBC Arabic', url: rss('https://feeds.bbci.co.uk/arabic/rss.xml'), lang: 'ar' },
+    { name: 'Asharq Al-Awsat', url: rss('https://aawsat.com/node/feed'), lang: 'ar' },
+    { name: 'Anatolia Arabic', url: rss('https://www.aa.com.tr/ar/rss/default?cat=politics'), lang: 'ar' },
   ],
   tech: [
     { name: 'Hacker News', url: rss('https://hnrss.org/frontpage') },
@@ -1126,6 +1149,10 @@ export const SOURCE_REGION_MAP: Record<string, { labelKey: string; feedKeys: str
 export const INTEL_SOURCES: Feed[] = [
   // Defense & Security (Tier 1)
   { name: 'Defense One', url: rss('https://www.defenseone.com/rss/all/'), type: 'defense' },
+  // Arabic-language intel sources (lang: 'ar' — only served when user selects Arabic)
+  { name: 'Al Monitor Arabic', url: rss('https://www.al-monitor.com/rss/arabic'), lang: 'ar', type: 'intl' },
+  { name: 'Al Quds Al Arabi', url: rss('https://www.alquds.co.uk/feed/'), lang: 'ar', type: 'intl' },
+  { name: 'Asharq Al-Awsat', url: rss('https://aawsat.com/node/feed'), lang: 'ar', type: 'intl' },
   { name: 'Breaking Defense', url: rss('https://breakingdefense.com/feed/'), type: 'defense' },
   { name: 'The War Zone', url: rss('https://www.twz.com/feed'), type: 'defense' },
   { name: 'Defense News', url: rss('https://www.defensenews.com/arc/outboundfeeds/rss/?outputType=xml'), type: 'defense' },
