@@ -68,6 +68,7 @@ export {
   SANCTIONED_COUNTRIES,
   SPACEPORTS,
   CRITICAL_MINERALS,
+  GEOPOLITICAL_BOUNDARIES,
 } from './geo';
 
 export { GAMMA_IRRADIATORS } from './irradiators';

@@ -57,6 +57,7 @@ import { localizeMapLabels } from '@/utils/map-locale';
 import {
   INTEL_HOTSPOTS,
   CONFLICT_ZONES,
+  GEOPOLITICAL_BOUNDARIES,
 
   MILITARY_BASES,
   UNDERSEA_CABLES,
@@ -1793,8 +1794,31 @@ export class DeckGLMap {
     });
   }
 
-  private createGeopoliticalBoundariesLayer(): ScatterplotLayer {
-    return this.createEmptyGhost('geopolitical-boundaries-layer');
+  private createGeopoliticalBoundariesLayer(): PathLayer {
+    const cached = this.layerCache.get('geopolitical-boundaries-layer') as PathLayer | undefined;
+    if (cached) return cached;
+    const layer = new PathLayer({
+      parameters: { depthCompare: 'always' as const, depthWriteEnabled: false },
+      id: 'geopolitical-boundaries-layer',
+      data: GEOPOLITICAL_BOUNDARIES,
+      getPath: (d) => d.points,
+      getColor: (d) => {
+        switch (d.type) {
+          case 'armistice': return [255, 215, 0, 210] as [number, number, number, number];  // gold
+          case 'dmz':       return [255, 215, 0, 210] as [number, number, number, number];  // gold
+          case 'contact-line': return [255, 50, 50, 220] as [number, number, number, number]; // red
+          case 'ceasefire': return [255, 140, 0, 190] as [number, number, number, number];  // orange
+          case 'disputed':  return [200, 100, 255, 180] as [number, number, number, number]; // purple
+          default:          return [200, 200, 200, 160] as [number, number, number, number];
+        }
+      },
+      getWidth: 2,
+      widthMinPixels: 1,
+      widthMaxPixels: 4,
+      pickable: false,
+    });
+    this.layerCache.set('geopolitical-boundaries-layer', layer);
+    return layer;
   }
 
   /** Empty sentinel layer — keeps a stable layer ID for deck.gl interleaved mode without rendering anything. */

@@ -11,7 +11,8 @@
  *  - Posts 'static-ready' with all prepared data
  */
 
-import { MILITARY_BASES, NUCLEAR_FACILITIES, SPACEPORTS, ECONOMIC_CENTERS, STRATEGIC_WATERWAYS, CRITICAL_MINERALS, UNDERSEA_CABLES } from '@/config/geo';
+import { MILITARY_BASES, NUCLEAR_FACILITIES, SPACEPORTS, ECONOMIC_CENTERS, STRATEGIC_WATERWAYS, CRITICAL_MINERALS, UNDERSEA_CABLES, GEOPOLITICAL_BOUNDARIES } from '@/config/geo';
+import type { GeopoliticalBoundary } from '@/config/geo';
 import { PIPELINES } from '@/config/pipelines';
 import { GAMMA_IRRADIATORS } from '@/config/irradiators';
 import { AI_DATA_CENTERS } from '@/config/ai-datacenters';
@@ -96,7 +97,7 @@ export interface GlobePath {
     id: string;
     name: string;
     points: [number, number][];
-    pathType: 'cable' | 'oil' | 'gas' | 'products';
+    pathType: 'cable' | 'oil' | 'gas' | 'products' | 'boundary';
     status: string;
 }
 
@@ -225,6 +226,13 @@ function prepareStaticData(): GlobeStaticReadyMessage {
             points: p.points,
             pathType: p.type,
             status: p.status,
+        })),
+        ...(GEOPOLITICAL_BOUNDARIES as GeopoliticalBoundary[]).map(b => ({
+            id: b.id,
+            name: b.name,
+            points: b.points,
+            pathType: 'boundary' as const,
+            status: b.status,
         })),
     ];
 

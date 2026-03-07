@@ -295,7 +295,7 @@ interface GlobePath {
   id: string;
   name: string;
   points: [number, number][];
-  pathType: 'cable' | 'oil' | 'gas' | 'products';
+  pathType: 'cable' | 'oil' | 'gas' | 'products' | 'boundary';
   status: string;
 }
 interface GlobePolygon {
@@ -699,14 +699,15 @@ export class GlobeMap {
           if (this.cableDegradedIds.has(d.id)) return '#ff8800';
           return 'rgba(0,200,255,0.65)';
         }
+        if (d.pathType === 'boundary') return 'rgba(255,215,0,0.75)';
         if (d.pathType === 'oil') return 'rgba(255,140,0,0.6)';
         if (d.pathType === 'gas') return 'rgba(80,220,120,0.6)';
         return 'rgba(180,160,255,0.6)';
       })
-      .pathStroke((d: GlobePath) => d.pathType === 'cable' ? 0.3 : 0.6)
-      .pathDashLength((d: GlobePath) => d.pathType === 'cable' ? 1 : 0.6)
-      .pathDashGap((d: GlobePath) => d.pathType === 'cable' ? 0 : 0.25)
-      .pathDashAnimateTime((d: GlobePath) => d.pathType === 'cable' ? 0 : 5000)
+      .pathStroke((d: GlobePath) => d.pathType === 'cable' ? 0.3 : d.pathType === 'boundary' ? 0.9 : 0.6)
+      .pathDashLength((d: GlobePath) => d.pathType === 'cable' ? 1 : d.pathType === 'boundary' ? 0.4 : 0.6)
+      .pathDashGap((d: GlobePath) => d.pathType === 'cable' ? 0 : d.pathType === 'boundary' ? 0.2 : 0.25)
+      .pathDashAnimateTime((d: GlobePath) => (d.pathType === 'cable' || d.pathType === 'boundary') ? 0 : 5000)
       .pathLabel((d: GlobePath) => d.name);
 
     // Polygon accessors — set once
@@ -1468,9 +1469,12 @@ export class GlobeMap {
     if (!this.globe || !this.initialized || this.destroyed) return;
     const showCables = this.layers.cables;
     const showPipelines = this.layers.pipelines;
-    const paths = (showCables && showPipelines)
-      ? this.globePaths
-      : this.globePaths.filter(p => p.pathType === 'cable' ? showCables : showPipelines);
+    const showBoundaries = this.layers.geopoliticalBoundaries;
+    const paths = this.globePaths.filter(p => {
+      if (p.pathType === 'cable') return showCables;
+      if (p.pathType === 'boundary') return showBoundaries;
+      return showPipelines; // oil, gas, products
+    });
     (this.globe as any).pathsData(paths);
   }
 
@@ -1648,6 +1652,7 @@ export class GlobeMap {
     ['pipelines', { markers: false, arcs: false, paths: true, polygons: false }],
     ['conflicts', { markers: true, arcs: false, paths: false, polygons: true }],
     ['cables', { markers: true, arcs: false, paths: true, polygons: false }],
+    ['geopoliticalBoundaries', { markers: false, arcs: false, paths: true, polygons: false }],
   ]);
 
   private flushLayerChannels(layer: keyof MapLayers): void {
@@ -2226,7 +2231,7 @@ export class GlobeMap {
       (this.globe as any).pathDashAnimateTime(0);
     } else {
       (this.globe as any).arcDashAnimateTime(5000);
-      (this.globe as any).pathDashAnimateTime((d: GlobePath) => d.pathType === 'cable' ? 0 : 5000);
+      (this.globe as any).pathDashAnimateTime((d: GlobePath) => (d.pathType === 'cable' || d.pathType === 'boundary') ? 0 : 5000);
     }
 
     if (profile.disableAtmosphere) {
