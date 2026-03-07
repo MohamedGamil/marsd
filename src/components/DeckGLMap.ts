@@ -1161,7 +1161,6 @@ export class DeckGLMap {
     const filteredMilitaryVessels = this.cachedFilterByTime('militaryVessels', this.militaryVessels, (vessel) => vessel.lastAisUpdate);
     const filteredMilitaryFlightClusters = this.filterMilitaryFlightClustersByTime(this.militaryFlightClusters);
     const filteredMilitaryVesselClusters = this.filterMilitaryVesselClustersByTime(this.militaryVesselClusters);
-    const filteredUcdpEvents = this.cachedFilterByTime('ucdpEvents', this.ucdpEvents, (event) => event.date_start);
 
     // === Step 1: Base infrastructure ===
     if (this.progressiveLoadStep >= 1) {
@@ -1388,9 +1387,9 @@ export class DeckGLMap {
         layers.push(this.createAPTGroupsLayer());
       }
 
-      // UCDP georeferenced events layer
-      if (mapLayers.ucdpEvents && filteredUcdpEvents.length > 0) {
-        layers.push(this.createUcdpEventsLayer(filteredUcdpEvents));
+      // UCDP georeferenced events layer — historical annual data, not time-filtered
+      if (mapLayers.ucdpEvents && this.ucdpEvents.length > 0) {
+        layers.push(this.createUcdpEventsLayer(this.ucdpEvents));
       }
 
       // Displacement flows arc layer

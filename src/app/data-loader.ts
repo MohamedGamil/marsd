@@ -1366,9 +1366,7 @@ export class DataLoaderManager implements AppModule {
         }));
         const events = deduplicateAgainstAcled(result.data, acledEvents);
         (this.ctx.panels['ucdp-events'] as UcdpEventsPanel)?.setEvents(events);
-        if (this.ctx.mapLayers.ucdpEvents) {
-          this.ctx.map?.setUcdpEvents(events);
-        }
+        this.ctx.map?.setUcdpEvents(events);
         if (events.length > 0) dataFreshness.recordUpdate('ucdp_events', events.length);
       } catch (error) {
         console.error('[Intelligence] UCDP events fetch failed:', error);
