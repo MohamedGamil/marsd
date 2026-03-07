@@ -210,7 +210,7 @@ function getOverlayColors() {
     cableDegraded: [255, 165, 0, 200] as [number, number, number, number],
     earthquake: [255, 100, 50, 200] as [number, number, number, number],
     vesselMilitary: [255, 100, 100, 220] as [number, number, number, number],
-    flightMilitary: [255, 50, 50, 220] as [number, number, number, number],
+    flightMilitary: [160, 190, 225, 220] as [number, number, number, number],
     protest: [255, 150, 0, 200] as [number, number, number, number],
     outage: [255, 50, 50, 180] as [number, number, number, number],
     weather: [100, 150, 255, 180] as [number, number, number, number],
@@ -1356,9 +1356,9 @@ export class DeckGLMap {
         layers.push(this.createMilitaryVesselClustersLayer(filteredMilitaryVesselClusters));
       }
 
-      // Military flights layer
+      // Military flights layer (returns Layer[] for interesting-pulse support)
       if (mapLayers.military && filteredMilitaryFlights.length > 0) {
-        layers.push(this.getCachedLayer('military', 'military-flights-layer', () => this.createMilitaryFlightsLayer(filteredMilitaryFlights)));
+        layers.push(...this.createMilitaryFlightsLayer(filteredMilitaryFlights));
       }
 
       // Military flight clusters layer
@@ -2204,7 +2204,7 @@ export class DeckGLMap {
     });
   }
 
-  private createMilitaryFlightsLayer(flights: MilitaryFlight[]): IconLayer<MilitaryFlight> {
+  private createMilitaryFlightsLayer(flights: MilitaryFlight[]): Layer[] {
     const TYPE_COLORS: Record<string, [number, number, number, number]> = {
       fighter:        [255,  50,  50, 230],
       bomber:         [255, 120,   0, 230],
@@ -2218,7 +2218,17 @@ export class DeckGLMap {
       special_ops:    [255, 160,  40, 220],
       vip:            [220, 180, 255, 220],
     };
-    return new IconLayer<MilitaryFlight>({
+    // Interesting flights use a vivid amber-gold to stand out
+    const INTERESTING_COLOR: [number, number, number, number] = [255, 210, 0, 255];
+
+    console.info(`Creating Military Flights Layer with ${flights.length} flights`, {
+      sample: flights.slice(0, 5)
+    });
+
+    const layers: Layer[] = [];
+
+    // Main icon layer for all flights
+    layers.push(new IconLayer<MilitaryFlight>({
       parameters: { depthCompare: 'always' as const, depthWriteEnabled: false },
       id: 'military-flights-layer',
       data: flights,
@@ -2227,14 +2237,35 @@ export class DeckGLMap {
       iconAtlas: MARKER_ICONS.plane,
       iconMapping: AIRCRAFT_ICON_MAPPING,
       getSize: (d) => d.onGround ? 14 : 20,
-      getColor: (d) => TYPE_COLORS[d.aircraftType] ?? COLORS.flightMilitary,
+      getColor: (d) => d.isInteresting ? INTERESTING_COLOR : (TYPE_COLORS[d.aircraftType] ?? COLORS.flightMilitary),
       getAngle: (d) => -(d.heading ?? 0),
       sizeMinPixels: 6,
       sizeMaxPixels: 24,
       billboard: false,
       pickable: true,
       updateTriggers: { getColor: flights.length, getAngle: flights.length, getSize: flights.length },
-    });
+    }));
+
+    // Static stroke ring for interesting flights
+    const interesting = flights.filter(f => f.isInteresting);
+    if (interesting.length > 0) {
+      layers.push(new ScatterplotLayer<MilitaryFlight>({
+        parameters: { depthCompare: 'always' as const, depthWriteEnabled: false },
+        id: 'military-flights-interesting-ring',
+        data: interesting,
+        getPosition: (d) => [d.lon, d.lat],
+        getRadius: 18000,
+        radiusMinPixels: 9,
+        radiusMaxPixels: 28,
+        stroked: false,
+        filled: false,
+        getLineColor: [255, 210, 0, 200],
+        lineWidthMinPixels: 2,
+        pickable: false,
+      }));
+    }
+
+    return layers;
   }
 
   private createMilitaryFlightClustersLayer(clusters: MilitaryFlightCluster[]): ScatterplotLayer {

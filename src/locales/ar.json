@@ -540,13 +540,13 @@
         "heroDescription": "ترخيص واحد من مراقب العالم يُغني عن كل مفتاح API ومزوّد ذكاء اصطناعي كنت ستحتاج لتهيئته بنفسك. ملخصات ذكية، استخبارات آنية، بيانات أسواق، تتبع نزاعات، كشف حرائق، صور أقمار صناعية — كل شيء مُدار، بدون أي إعداد.",
         "apiKey": {
           "title": "مفتاح الترخيص",
-          "placeholder": "wm_xxxxxxxxxxxxxxxxxxxxxxxx",
+          "placeholder": "marsd_xxxxxxxxxxxxxxxxxxxxxxxx",
           "tabLabel": "Marsd",
           "heroTitle": "مفتاح واحد. كل شيء مشمول.",
           "heroDescription": "ترخيص واحد لـ Marsd يحل محل كل مفتاح API ومزود LLM كنت ستهيئه بنفسك. ملخصات AI، استخبارات فورية، بيانات سوقية، تتبع النزاعات، كشف الحرائق، صور الأقمار الصناعية — الكل مفعّل، الكل مُدار، بدون أي إعداد.",
           "apiKey": {
             "title": "مفتاح الترخيص",
-            "placeholder": "wm_xxxxxxxxxxxxxxxxxxxxxxxx",
+            "placeholder": "marsd_xxxxxxxxxxxxxxxxxxxxxxxx",
             "description": "الصق ترخيصك لفتح جميع مصادر البيانات وميزات AI فوراً.",
             "statusValid": "مُرخَّص",
             "statusMissing": "بدون ترخيص"
@@ -2056,6 +2056,8 @@
     "country": "الدولة",
     "malware": "برمجيات خبيثة",
     "lastSeen": "آخر ظهور",
+    "status": "الحالة",
+    "confidence": "مستوى الثقة",
     "open": "مفتوح",
     "tradingHours": "ساعات التداول",
     "gamma": "غاما",
@@ -2236,7 +2238,7 @@
         "gaf": "سلاح الجو الألماني",
         "plaaf": "سلاح الجو الصيني",
         "plan": "البحرية الصينية",
-        "vks": "الفضاء الجوي الروسي",
+        "vks": "سلاح الجو الروسي",
         "iaf": "سلاح الجو الإسرائيلي",
         "nato": "NATO"
       },
@@ -2245,7 +2247,7 @@
         "bomber": "قاذفة",
         "transport": "نقل",
         "tanker": "ناقلة وقود",
-        "awacs": "AWACS/AEW",
+        "awacs": "قيادة جويّة وإنذار",
         "reconnaissance": "استطلاع",
         "helicopter": "مروحية",
         "drone": "طائرة مسيّرة",
@@ -2259,7 +2261,13 @@
       "heading": "الاتجاه",
       "hexCode": "الرمز السداسي",
       "squawk": "رمز الاستجابة",
-      "attribution": "المصدر: OpenSky Network"
+      "highInterest": "رحلة عالية الاهتمام",
+      "confidenceLevels": {
+        "high": "عالي",
+        "medium": "متوسط",
+        "low": "منخفض"
+      },
+      "attribution": "المصدر: شبكة OpenSky"
     },
     "militaryVessel": {
       "types": {
@@ -2290,17 +2298,17 @@
       "heading": "الاتجاه",
       "mmsi": "MMSI",
       "hull": "رقم الهيكل",
-      "region": "REGION",
-      "strikeGroup": "STRIKE GROUP",
-      "deploymentStatus": "STATUS",
+      "region": "المنطقة",
+      "strikeGroup": "قوة ضاربة",
+      "deploymentStatus": "الحالة",
       "deploymentStatuses": {
         "deployed": "منتشرة",
         "underway": "في عرض البحر",
         "in-port": "في الميناء"
       },
-      "usniIntel": "USNI Intel",
-      "usniSource": "Source: USNI News Fleet Tracker",
-      "approximatePosition": "Position approximate — based on USNI weekly report, not real-time AIS.",
+      "usniIntel": "استخبارات USNI",
+      "usniSource": "المصدر: USNI News Fleet Tracker",
+      "approximatePosition": "الموقع تقريبي — استنادًا إلى تقرير USNI الأسبوعي، وليس AIS في الوقت الفعلي.",
       "darkDescription": "⚠ السفينة أصبحت مظلمة - فُقدت إشارة AIS. قد يشير إلى عمليات حساسة."
     },
     "militaryCluster": {

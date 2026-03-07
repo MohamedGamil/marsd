@@ -14,7 +14,7 @@ import { fetchHotspotContext, formatArticleDate, extractDomain, type GdeltArticl
 import { getNaturalEventIcon } from '@/services/eonet';
 import { getHotspotEscalation, getEscalationChange24h } from '@/services/hotspot-escalation';
 import { getCableHealthRecord } from '@/services/cable-health';
-import { getAircraftWikiTitle, getVesselWikiTitle, getStrikeGroupWikiTitle, fetchWikipediaImage, getCallsignWikiTitle } from '@/services/military-images';
+import { getVesselWikiTitle, getStrikeGroupWikiTitle, fetchWikipediaImage, getCallsignWikiTitle, fetchHexWikiTitle, getMilitaryFlightWikiTitle } from '@/services/military-images';
 
 export type PopupType = 'conflict' | 'hotspot' | 'earthquake' | 'weather' | 'base' | 'waterway' | 'apt' | 'cyberThreat' | 'nuclear' | 'economic' | 'irradiator' | 'pipeline' | 'cable' | 'cable-advisory' | 'repair-ship' | 'outage' | 'datacenter' | 'datacenterCluster' | 'ais' | 'protest' | 'protestCluster' | 'flight' | 'aircraft' | 'militaryFlight' | 'militaryVessel' | 'militaryFlightCluster' | 'militaryVesselCluster' | 'natEvent' | 'port' | 'spaceport' | 'mineral' | 'startupHub' | 'cloudRegion' | 'techHQ' | 'accelerator' | 'techEvent' | 'techHQCluster' | 'techEventCluster' | 'techActivity' | 'geoActivity' | 'stockExchange' | 'financialCenter' | 'centralBank' | 'commodityHub' | 'iranEvent' | 'gpsJamming' | 'ucdpEvent';
 interface TechEventPopupData {
@@ -256,13 +256,23 @@ export class MapPopup {
   private async loadPopupImages(): Promise<void> {
     if (!this.popup) return;
     const mediaEls = Array.from(
-      this.popup.querySelectorAll<HTMLElement>('.popup-media[data-wiki-query]'),
+      this.popup.querySelectorAll<HTMLElement>('.popup-media[data-wiki-query], .popup-media[data-hex-code]'),
     );
     if (mediaEls.length === 0) return;
 
     for (const el of mediaEls) {
+      // Resolve the Wikipedia title: prefer explicit data-wiki-query; fall back
+      // to a live hex lookup via adsbdb when only data-hex-code is set.
+      let wikiTitle: string | null = null;
+
       const encoded = el.getAttribute('data-wiki-query') || '';
-      const wikiTitle = decodeURIComponent(encoded);
+      if (encoded) {
+        wikiTitle = decodeURIComponent(encoded) || null;
+      } else {
+        const hexCode = el.getAttribute('data-hex-code') || '';
+        if (hexCode) wikiTitle = await fetchHexWikiTitle(hexCode);
+      }
+
       if (!wikiTitle) { el.hidden = true; continue; }
 
       const imgUrl = await fetchWikipediaImage(wikiTitle);
@@ -2163,22 +2173,41 @@ export class MapPopup {
     const aircraftType = escapeHtml(typeLabels[flight.aircraftType] || flight.aircraftType);
     const squawk = flight.squawk ? escapeHtml(flight.squawk) : '';
     const note = flight.note ? escapeHtml(flight.note) : '';
+    const statusLabel = flight.onGround ? t('popups.aircraft.ground') : t('popups.aircraft.airborne');
+    const lastSeenLabel = flight.lastSeen ? new Date(flight.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    const confidenceBadge = flight.confidence === 'high' ? 'elevated' : 'low';
+    const countryLabel = flight.operatorCountry ? escapeHtml(getLocalizedGeoName(flight.operatorCountry)) : '';
 
-    // Wikipedia image lookup — embed query title as data attribute; loaded async after mount
-    const wikiTitle = getAircraftWikiTitle(flight.aircraftType, flight.aircraftModel);
-    const mediaHtml = wikiTitle
-      ? `<div class="popup-media popup-media--loading" data-wiki-query="${encodeURIComponent(wikiTitle)}" role="img" aria-label="${escapeHtml(wikiTitle)}"><div class="popup-media__skeleton"></div></div>`
+    const interestingBanner = flight.isInteresting
+      ? `<div class="popup-alert" style="background:rgba(255,210,0,0.15);border-left:3px solid #ffd200;padding:6px 10px;font-size:11px;color:#ffd200;display:flex;align-items:center;gap:6px;">★ ${escapeHtml(t('popups.militaryFlight.highInterest'))}</div>`
       : '';
 
+    // Wikipedia image lookup — resolution priority:
+    //   1. Cached hex lookup (adsbdb) — most accurate when available
+    //   2. Callsign prefix → known aircraft type
+    //   3. Aircraft model → Wikipedia title
+    //   4. Aircraft category fallback
+    // If sync resolution succeeds → embed data-wiki-query for the standard async loader.
+    // If it fails (e.g. type is "unknown" with no model/callsign match) → embed
+    // data-hex-code so the async loader can do a live adsbdb hex lookup as a
+    // last resort.
+    const wikiTitle = getMilitaryFlightWikiTitle(flight);
+    const mediaHtml = wikiTitle
+      ? `<div class="popup-media popup-media--loading" data-wiki-query="${encodeURIComponent(wikiTitle)}" role="img" aria-label="${escapeHtml(wikiTitle)}"><div class="popup-media__skeleton"></div></div>`
+      : flight.hexCode
+        ? `<div class="popup-media popup-media--loading" data-hex-code="${escapeHtml(flight.hexCode)}" role="img" aria-label="${escapeHtml(flight.callsign || flight.hexCode || '')}"><div class="popup-media__skeleton"></div></div>`
+        : '';
+
     return `
-      <div class="popup-header military-flight ${flight.operator}">
+      <div class="popup-header military-flight ${flight.operator}${flight.isInteresting ? ' interesting' : ''}">
         <span class="popup-title">${callsign}</span>
         <span class="popup-badge ${confidenceColors[flight.confidence] || 'low'}">${aircraftTypeBadge}</span>
         <button class="popup-close" aria-label="Close">×</button>
       </div>
+      ${interestingBanner}
       ${mediaHtml}
       <div class="popup-body">
-        <div class="popup-subtitle">${operatorLabel}</div>
+        <div class="popup-subtitle">${operatorLabel}${countryLabel ? ` · ${escapeHtml(countryLabel)}` : ''}</div>
         <div class="popup-stats">
           <div class="popup-stat">
             <span class="stat-label">${t('popups.militaryFlight.altitude')}</span>
@@ -2193,6 +2222,10 @@ export class MapPopup {
             <span class="stat-value">${Math.round(flight.heading)}°</span>
           </div>
           <div class="popup-stat">
+            <span class="stat-label">${t('popups.status')}</span>
+            <span class="stat-value">${statusLabel}</span>
+          </div>
+          <div class="popup-stat">
             <span class="stat-label">${t('popups.militaryFlight.hexCode')}</span>
             <span class="stat-value">${hexCode}</span>
           </div>
@@ -2200,6 +2233,16 @@ export class MapPopup {
             <span class="stat-label">${t('popups.type')}</span>
             <span class="stat-value">${aircraftType}</span>
           </div>
+          <div class="popup-stat">
+            <span class="stat-label">${t('popups.confidence')}</span>
+            <span class="stat-value popup-badge ${confidenceBadge}" style="font-size:10px;">${escapeHtml(t(`popups.militaryFlight.confidenceLevels.${flight.confidence}`))}</span>
+          </div>
+          ${lastSeenLabel ? `
+          <div class="popup-stat">
+            <span class="stat-label">${t('popups.lastSeen')}</span>
+            <span class="stat-value">${lastSeenLabel}</span>
+          </div>
+          ` : ''}
           ${flight.squawk ? `
           <div class="popup-stat">
             <span class="stat-label">${t('popups.militaryFlight.squawk')}</span>

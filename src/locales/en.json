@@ -525,7 +525,7 @@
         "heroDescription": "A single Marsd license replaces every API key and LLM provider you'd otherwise configure yourself. AI summaries, real-time intelligence, market data, conflict tracking, fire detection, satellite imagery — all powered, all managed, zero setup.",
         "apiKey": {
           "title": "License Key",
-          "placeholder": "wm_xxxxxxxxxxxxxxxxxxxxxxxx",
+          "placeholder": "marsd_xxxxxxxxxxxxxxxxxxxxxxxx",
           "description": "Paste your license to unlock every data source and AI feature instantly.",
           "statusValid": "LICENSED",
           "statusMissing": "NO LICENSE"
@@ -2032,6 +2032,8 @@
     "country": "COUNTRY",
     "malware": "MALWARE",
     "lastSeen": "LAST SEEN",
+    "status": "STATUS",
+    "confidence": "CONFIDENCE",
     "open": "OPEN",
     "tradingHours": "TRADING HOURS",
     "gamma": "GAMMA",
@@ -2235,6 +2237,12 @@
       "heading": "HEADING",
       "hexCode": "HEX CODE",
       "squawk": "SQUAWK",
+      "highInterest": "High Interest Flight",
+      "confidenceLevels": {
+        "high": "HIGH",
+        "medium": "MEDIUM",
+        "low": "LOW"
+      },
       "attribution": "Source: OpenSky Network"
     },
     "militaryVessel": {

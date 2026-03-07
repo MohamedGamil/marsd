@@ -20,6 +20,7 @@
 
   /* Text */
   --text: #e8e8e8;
+  --text-inverted: #111;
   --text-secondary: #ccc;
   --text-dim: #888;
   --text-muted: #666;

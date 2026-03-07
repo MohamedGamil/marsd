@@ -870,9 +870,14 @@ export class GlobeMap {
         vip:            '#dd99ff',
         unknown:        '#cccccc',
       };
-      const color = typeColors[d.type] ?? '#cccccc';
-      el.innerHTML = `<div style="transform:rotate(${heading}deg);display:inline-block;line-height:0;">${svgIcon('plane', color, 15)}</div>`;
-      el.title = `${d.callsign} (${d.type})`;
+      const isInteresting = (d as unknown as { isInteresting?: boolean }).isInteresting;
+      const color = isInteresting ? '#ffd200' : (typeColors[d.type] ?? '#cccccc');
+      const iconHtml = svgIcon('plane', color, isInteresting ? 17 : 15);
+      const strokeRing = isInteresting
+        ? `<div style="position:absolute;inset:-5px;border-radius:50%;border:1px solid #ffd200cc;"></div>`
+        : '';
+      el.innerHTML = `<div style="position:relative;display:inline-block;line-height:0;">${strokeRing}<div style="transform:rotate(${heading}deg);display:inline-block;line-height:0;">${iconHtml}</div></div>`;
+      el.title = `${d.callsign} (${d.type})${isInteresting ? ' ★' : ''}`;
     } else if (d._kind === 'vessel') {
       const typeColors: Record<string, string> = {
         carrier: '#ff4444', destroyer: '#ff8800', submarine: '#8844ff',
@@ -1604,6 +1609,7 @@ export class GlobeMap {
         callsign: f.callsign ?? '',
         type: (f as any).aircraftType ?? (f as any).type ?? 'fighter',
         heading: (f as any).heading ?? 0,
+        isInteresting: f.isInteresting ?? false,
       };
     });
     this.flushMarkers();
