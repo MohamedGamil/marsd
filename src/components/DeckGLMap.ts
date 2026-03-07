@@ -1618,9 +1618,9 @@ export class DeckGLMap {
       id: 'bases-layer',
       data,
       getPosition: (d) => [d.lon, d.lat],
-      getIcon: () => 'plane',
-      iconAtlas: MARKER_ICONS.plane,
-      iconMapping: AIRCRAFT_ICON_MAPPING,
+      getIcon: () => 'compass',
+      iconAtlas: MARKER_ICONS.compass,
+      iconMapping: COMPASS_ICON_MAPPING,
       getSize: (d) => highlightedBases.has(d.id) ? 18 : 13,
       getColor: (d) => {
         if (highlightedBases.has(d.id)) {
