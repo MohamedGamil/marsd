@@ -25,7 +25,7 @@ export const FULL_LIVE_CHANNELS_MENA: LiveChannel[] = [
   { id: 'alarabiya', name: 'AlArabiya', handle: '@AlArabiya', fallbackVideoId: 'n7eQejkXbnM', useFallbackOnly: true },
   { id: 'aljazeera-arabic', name: 'AlJazeera Arabic', handle: '@aljazeera', fallbackVideoId: 'bNyUyrR0PHo', useFallbackOnly: true },
   { id: 'sky-news-arabia', name: 'Sky News Arabia', handle: '@skynewsarabia', fallbackVideoId: 'U--OjmpjF5o' },
-  { id: 'trt-world', name: 'TRT World', handle: '@TRTWorld', fallbackVideoId: 'ABfFhWzWs0s' },
+  // { id: 'trt-world', name: 'TRT World', handle: '@TRTWorld', fallbackVideoId: 'ABfFhWzWs0s' },
   { id: 'iran-intl', name: 'Iran International', handle: '@IranIntl' },
   { id: 'asharq-news', name: 'Asharq News', handle: '@asharqnews', fallbackVideoId: 'f6VpkfV7m4Y', useFallbackOnly: true },
   { id: 'alaraby', name: 'Alaraby', handle: '@AlarabyTv_News', fallbackVideoId: 'e2RgSa1Wt5o', useFallbackOnly: true },
