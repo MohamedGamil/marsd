@@ -15,6 +15,12 @@ button {
     direction: ltr !important;
 }
 
+body .map-popup {
+    border-radius: var(--popup-corner-radius);
+    border: 1px solid var(--popup-border-color);
+    box-shadow: var(--popup-box-shadow);
+}
+
 .panel[data-panel="live-news"] .panel-header .panel-header-left {
     display: none !important;
 }
