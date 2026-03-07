@@ -2336,6 +2336,17 @@
     "iranEvent": {
       "relatedEvents": "أحداث ذات صلة"
     },
+    "ucdpEvent": {
+      "title": "نزاع مسلح",
+      "parties": "الأطراف",
+      "deaths": "الوفيات (أفضل تقدير)",
+      "range": "النطاق",
+      "types": {
+        "state-based": "حكومي",
+        "non-state": "غير حكومي",
+        "one-sided": "جانب واحد"
+      }
+    },
     "hotspotSubtexts": {
       "conflict_zone": "منطقة نزاع",
       "dprk_watch": "مراقبة كوريا الشمالية",

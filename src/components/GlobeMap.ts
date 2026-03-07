@@ -127,6 +127,10 @@ interface UcdpMarker extends BaseMarker {
   sideB: string;
   deaths: number;
   country: string;
+  dateStart: string;
+  dateEnd: string;
+  typeOfViolence: 'state-based' | 'non-state' | 'one-sided';
+  sourceOriginal: string;
 }
 interface DisplacementMarker extends BaseMarker {
   _kind: 'displacement';
@@ -1133,6 +1137,30 @@ export class GlobeMap {
       case 'gpsjam':        this.popup.show({ type: 'gpsJamming', data: { h3: d.id, lat: d._lat, lon: d._lng, level: d.level, pct: d.pct, good: 0, bad: 0, total: 0 } as any, x, y }); break;
       case 'tech':          this.popup.show({ type: 'techEvent', data: d as any, x, y }); break;
       case 'aircraftPos':   this.popup.show({ type: 'aircraft', data: d as any, x, y }); break;
+      case 'ucdp': {
+        const ucdpData = d as UcdpMarker;
+        this.popup.show({
+          type: 'ucdpEvent',
+          data: {
+            id: ucdpData.id,
+            date_start: ucdpData.dateStart,
+            date_end: ucdpData.dateEnd,
+            latitude: ucdpData._lat,
+            longitude: ucdpData._lng,
+            country: ucdpData.country,
+            side_a: ucdpData.sideA,
+            side_b: ucdpData.sideB,
+            deaths_best: ucdpData.deaths,
+            deaths_low: 0,
+            deaths_high: 0,
+            type_of_violence: ucdpData.typeOfViolence,
+            source_original: ucdpData.sourceOriginal,
+          } as any,
+          x,
+          y,
+        });
+        break;
+      }
       // Types without a dedicated PopupType — use minimal fallback tooltip
       default:              this.showFallbackTooltip(d, e); break;
     }
@@ -2107,6 +2135,10 @@ export class GlobeMap {
       sideB: e.side_b ?? '',
       deaths: e.deaths_best ?? 0,
       country: e.country ?? '',
+      dateStart: e.date_start ?? '',
+      dateEnd: e.date_end ?? '',
+      typeOfViolence: (e.type_of_violence ?? 'state-based') as 'state-based' | 'non-state' | 'one-sided',
+      sourceOriginal: e.source_original ?? '',
     }));
     this.flushMarkers();
   }

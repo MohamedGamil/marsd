@@ -15,7 +15,7 @@ import { getHotspotEscalation, getEscalationChange24h } from '@/services/hotspot
 import { getCableHealthRecord } from '@/services/cable-health';
 import { getAircraftWikiTitle, getVesselWikiTitle, getStrikeGroupWikiTitle, fetchWikipediaImage, getCallsignWikiTitle } from '@/services/military-images';
 
-export type PopupType = 'conflict' | 'hotspot' | 'earthquake' | 'weather' | 'base' | 'waterway' | 'apt' | 'cyberThreat' | 'nuclear' | 'economic' | 'irradiator' | 'pipeline' | 'cable' | 'cable-advisory' | 'repair-ship' | 'outage' | 'datacenter' | 'datacenterCluster' | 'ais' | 'protest' | 'protestCluster' | 'flight' | 'aircraft' | 'militaryFlight' | 'militaryVessel' | 'militaryFlightCluster' | 'militaryVesselCluster' | 'natEvent' | 'port' | 'spaceport' | 'mineral' | 'startupHub' | 'cloudRegion' | 'techHQ' | 'accelerator' | 'techEvent' | 'techHQCluster' | 'techEventCluster' | 'techActivity' | 'geoActivity' | 'stockExchange' | 'financialCenter' | 'centralBank' | 'commodityHub' | 'iranEvent' | 'gpsJamming';
+export type PopupType = 'conflict' | 'hotspot' | 'earthquake' | 'weather' | 'base' | 'waterway' | 'apt' | 'cyberThreat' | 'nuclear' | 'economic' | 'irradiator' | 'pipeline' | 'cable' | 'cable-advisory' | 'repair-ship' | 'outage' | 'datacenter' | 'datacenterCluster' | 'ais' | 'protest' | 'protestCluster' | 'flight' | 'aircraft' | 'militaryFlight' | 'militaryVessel' | 'militaryFlightCluster' | 'militaryVesselCluster' | 'natEvent' | 'port' | 'spaceport' | 'mineral' | 'startupHub' | 'cloudRegion' | 'techHQ' | 'accelerator' | 'techEvent' | 'techHQCluster' | 'techEventCluster' | 'techActivity' | 'geoActivity' | 'stockExchange' | 'financialCenter' | 'centralBank' | 'commodityHub' | 'iranEvent' | 'gpsJamming' | 'ucdpEvent';
 interface TechEventPopupData {
   id: string;
   title: string;
@@ -71,6 +71,22 @@ interface IranEventPopupData {
   timestamp: string | number;
   severity: string;
   relatedEvents?: IranEventPopupData[];
+}
+
+interface UcdpEventPopupData {
+  id: string;
+  date_start: string;
+  date_end: string;
+  latitude: number;
+  longitude: number;
+  country: string;
+  side_a: string;
+  side_b: string;
+  deaths_best: number;
+  deaths_low: number;
+  deaths_high: number;
+  type_of_violence: 'state-based' | 'non-state' | 'one-sided';
+  source_original: string;
 }
 
 // Finance popup data types
@@ -508,6 +524,8 @@ export class MapPopup {
         return this.renderIranEventPopup(data.data as IranEventPopupData);
       case 'gpsJamming':
         return this.renderGpsJammingPopup(data.data as GpsJammingPopupData);
+      case 'ucdpEvent':
+        return this.renderUcdpEventPopup(data.data as unknown as UcdpEventPopupData);
       default:
         return '';
     }
@@ -2845,6 +2863,64 @@ export class MapPopup {
             <span class="stat-value" style="font-size:10px">${escapeHtml(data.h3)}</span>
           </div>
         </div>
+      </div>
+    `;
+  }
+
+  private renderUcdpEventPopup(event: UcdpEventPopupData): string {
+    const VIOLENCE_COLORS: Record<string, string> = {
+      'state-based': '#ff3232',
+      'non-state': '#ffa500',
+      'one-sided': '#e0d000',
+    };
+    const headerColor = VIOLENCE_COLORS[event.type_of_violence] ?? '#ff3232';
+
+    const violenceLabel = (t(`popups.ucdpEvent.types.${event.type_of_violence}`) || event.type_of_violence).toUpperCase();
+
+    const dateStr = event.date_start === event.date_end
+      ? escapeHtml(event.date_start)
+      : `${escapeHtml(event.date_start)} → ${escapeHtml(event.date_end)}`;
+
+    const deathsStr = event.deaths_best > 0
+      ? `${event.deaths_best.toLocaleString()} (${t('popups.ucdpEvent.range') || 'range'}: ${event.deaths_low.toLocaleString()}–${event.deaths_high.toLocaleString()})`
+      : t('popups.unknown') || 'Unknown';
+
+    const sources = event.source_original
+      ? event.source_original.split(';').map(s => s.trim()).filter(Boolean).slice(0, 3)
+      : [];
+
+    return `
+      <div class="popup-header" style="background:${headerColor}22;border-left:3px solid ${headerColor}">
+        <span class="popup-title">${t('popups.ucdpEvent.title') || 'ARMED CONFLICT'}</span>
+        <span class="popup-badge" style="background:${headerColor};color:#000;font-size:10px;">${escapeHtml(violenceLabel)}</span>
+        <button class="popup-close" aria-label="Close">×</button>
+      </div>
+      <div class="popup-body">
+        <div class="popup-stats">
+          <div class="popup-stat">
+            <span class="stat-label">${t('popups.ucdpEvent.parties') || 'PARTIES'}</span>
+            <span class="stat-value">${escapeHtml(event.side_a)} <span style="opacity:.5;">vs</span> ${escapeHtml(event.side_b)}</span>
+          </div>
+          <div class="popup-stat">
+            <span class="stat-label">${t('popups.location') || 'LOCATION'}</span>
+            <span class="stat-value">${escapeHtml(getLocalizedGeoName(event.country))}</span>
+          </div>
+          <div class="popup-stat">
+            <span class="stat-label">${t('popups.startDate') || 'DATE'}</span>
+            <span class="stat-value">${dateStr}</span>
+          </div>
+          <div class="popup-stat">
+            <span class="stat-label">${t('popups.ucdpEvent.deaths') || 'DEATHS (BEST EST.)'}</span>
+            <span class="stat-value" style="color:${headerColor}">${escapeHtml(deathsStr)}</span>
+          </div>
+        </div>
+        ${sources.length > 0 ? `
+        <div class="popup-section">
+          <span class="section-label">${t('popups.source') || 'SOURCE'}</span>
+          <div style="font-size:10px;opacity:.65;margin-top:4px;line-height:1.5;word-break:break-word;">
+            ${sources.map(s => escapeHtml(s)).join('<br>')}
+          </div>
+        </div>` : ''}
       </div>
     `;
   }

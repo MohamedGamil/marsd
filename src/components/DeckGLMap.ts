@@ -3429,6 +3429,7 @@ export class DeckGLMap {
       'gps-jamming-layer': 'gpsJamming',
       'cable-advisories-layer': 'cable-advisory',
       'repair-ships-layer': 'repair-ship',
+      'ucdp-events-layer': 'ucdpEvent',
     };
 
     const popupType = layerToPopupType[layerId];
@@ -4048,7 +4049,7 @@ export class DeckGLMap {
       },
       radiusMinPixels: 3,
       radiusMaxPixels: 20,
-      pickable: false,
+      pickable: true,
     });
   }
 

@@ -2312,6 +2312,17 @@
     "iranEvent": {
       "relatedEvents": "Related Events"
     },
+    "ucdpEvent": {
+      "title": "ARMED CONFLICT",
+      "parties": "PARTIES",
+      "deaths": "DEATHS (BEST EST.)",
+      "range": "range",
+      "types": {
+        "state-based": "State-Based",
+        "non-state": "Non-State",
+        "one-sided": "One-Sided"
+      }
+    },
     "hotspotSubtexts": {
       "conflict_zone": "Conflict Zone",
       "dprk_watch": "DPRK Watch",
