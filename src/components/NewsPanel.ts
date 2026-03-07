@@ -50,6 +50,7 @@ export class NewsPanel extends Panel {
     this.createSummarizeButton();
     this.setupActivityTracking();
     this.initWindowedList();
+    this.setupTranslateDelegate();
   }
 
   private initWindowedList(): void {
@@ -67,6 +68,17 @@ export class NewsPanel extends Panel {
       ),
       () => this.bindRelatedAssetEvents()
     );
+  }
+
+  private setupTranslateDelegate(): void {
+    // Delegated listener — attached once, survives setContent() innerHTML replacement
+    this.content.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>('.item-translate-btn');
+      if (!btn) return;
+      e.stopPropagation();
+      const text = btn.dataset.text;
+      if (text) this.handleTranslate(btn, text);
+    });
   }
 
   private setupActivityTracking(): void {
@@ -387,6 +399,7 @@ export class NewsPanel extends Panel {
       .join('');
 
     this.setContent(html);
+    this.bindRelatedAssetEvents();
   }
 
   private renderClusters(clusters: ClusteredEvent[]): void {
@@ -626,15 +639,6 @@ export class NewsPanel extends Panel {
       });
     });
 
-    // Translation buttons
-    const translateBtns = this.content.querySelectorAll<HTMLElement>('.item-translate-btn');
-    translateBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const text = btn.dataset.text;
-        if (text) this.handleTranslate(btn, text);
-      });
-    });
   }
 
   private getLocalizedAssetLabel(type: RelatedAsset['type']): string {
